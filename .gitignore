@@ -1,0 +1,5 @@
+# Machine-specific / sensitive — never versioned
+agent-memory/
+settings.local.json
+*.bak-*
+.env
