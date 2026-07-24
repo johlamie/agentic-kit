@@ -1,0 +1,35 @@
+name: Validate agentic kit
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  claude-native-install:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Install Claude Code with the official native installer
+        run: curl -fsSL https://claude.ai/install.sh | bash
+      - name: Verify the native binary
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          command -v claude
+          claude --version
+
+  offline-validation:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install validation dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq shellcheck
+      - name: Lint shell scripts
+        run: shellcheck setup/*.sh scripts/*.sh
+      - name: Validate manifests and configuration
+        run: ./scripts/validate-kit.sh
+      - name: Smoke-test isolated installation
+        run: ./scripts/smoke-install.sh
