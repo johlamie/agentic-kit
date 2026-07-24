@@ -38,7 +38,7 @@ démo seedées · QA PASS sur la cible déployée (mobile 390px + desktop, erreu
 3G lent) · README + guide utilisateur 1 page · limitations connues · commande
 de rollback.
 
-## Installation (VPS neuve Ubuntu 24.04)
+## Installation (VPS neuve Ubuntu 22.04)
 
 ```bash
 git clone <ton-repo-du-kit> ~/agentic-kit && cd ~/agentic-kit
@@ -50,7 +50,28 @@ claude                      # login première fois
 export SUPABASE_ACCESS_TOKEN=sbp_...   # token depuis le dashboard Supabase
 ./setup/mcp-setup.sh        # mobbin, context7, playwright, github, supabase, firebase
 # dans claude : /mcp → authentifier mobbin et github (OAuth navigateur)
+./scripts/check-runtime.sh  # valide le kit, les binaires, Claude doctor et les MCP
 ```
+
+Claude Code est installé avec son installeur natif dans le compte utilisateur,
+et non avec `sudo npm -g`. Cela permet à `claude update` de fonctionner sans
+droits root. Le bootstrap conserve Node/npm global uniquement pour PM2,
+Firebase Tools et EAS CLI.
+
+## Validation du kit
+
+Avant de pousser une modification des agents, skills ou scripts :
+
+```bash
+./scripts/validate-kit.sh   # hors-ligne : JSON, Bash, manifests, templates, garde-fous
+./scripts/smoke-install.sh  # installe les symlinks dans un HOME temporaire
+./scripts/check-runtime.sh  # diagnostic VPS : outils, Claude doctor, état des MCP
+```
+
+La CI GitHub reprend les deux premiers contrôles, exécute ShellCheck et vérifie
+l'installation native de Claude Code sur Ubuntu 22.04. `check-runtime.sh` reste
+un diagnostic de machine : il ne modifie rien, mais ses résultats MCP dépendent
+des authentifications locales.
 
 ## Faire évoluer le kit (git)
 

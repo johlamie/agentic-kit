@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bootstrap-vps.sh — Fresh Ubuntu 24.04 VPS → full agentic dev environment
+# bootstrap-vps.sh — Fresh Ubuntu 22.04 VPS → full agentic dev environment
 # Run as a sudo-capable NON-root user. Review before running; idempotent-ish.
 set -euo pipefail
 
@@ -13,7 +13,21 @@ if ! command -v node >/dev/null || [ "$(node -v | cut -c2-3)" -lt 22 ]; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
   sudo apt-get install -y nodejs
 fi
-sudo npm install -g @anthropic-ai/claude-code pm2 firebase-tools eas-cli
+sudo npm install -g pm2 firebase-tools eas-cli
+
+# Install Claude Code as a user-owned native binary. Anthropic discourages a
+# sudo-owned global npm install because it prevents automatic updates.
+if command -v claude >/dev/null; then
+  claude install stable
+else
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+export PATH="$HOME/.local/bin:$PATH"
+command -v claude >/dev/null || {
+  echo "ERROR: Claude Code was installed but is not available on PATH." >&2
+  echo 'Add export PATH="$HOME/.local/bin:$PATH" to your shell profile.' >&2
+  exit 1
+}
 
 echo "== [3/7] Supabase CLI =="
 if ! command -v supabase >/dev/null; then
@@ -27,7 +41,7 @@ echo "== [4/7] Playwright (browsers + deps for headless QA) =="
 npx -y playwright install --with-deps chromium
 
 echo "== [5/7] Firewall (adjust SSH port to your setup BEFORE enabling) =="
-sudo ufw allow 2222/tcp   # SSH — change if your sshd listens elsewhere
+sudo ufw allow 22/tcp   # SSH — change if your sshd listens elsewhere
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw --force enable
@@ -46,5 +60,5 @@ DONE. Manual steps remaining:
   2. Register MCP servers:       ./mcp-setup.sh   (needs tokens, see comments)
   3. Login CLIs used by devops:  supabase login · firebase login --no-localhost
   4. Point a wildcard DNS (*.yourdomain.tld) at this VPS for per-project subdomains.
-  5. Verify: claude --version (>= 2.1.33 for agent memory), then in claude: /mcp
+  5. Verify the complete kit:     cd ~/agentic-kit && ./scripts/check-runtime.sh
 EOF
