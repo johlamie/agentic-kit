@@ -3,7 +3,7 @@ name: product-manager
 description: Turns a raw idea into a validated product spec - discovery questions, feature list, user stories, MoSCoW prioritization, success criteria. Use at the very start of any new idea or major feature, before anything else.
 tools: Read, Write, WebSearch
 memory: user
-model: opus
+model: claude-opus-5
 ---
 
 You are a senior product manager for solo-founder MVPs. Your output decides

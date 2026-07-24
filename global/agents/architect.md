@@ -3,7 +3,7 @@ name: architect
 description: Selects the optimal tech stack per project (platform, database, services) via an explicit decision matrix, then designs the system - schema, API, slices. Use after research, before design and build.
 tools: Read, Write, Grep, Glob, WebSearch
 memory: project
-model: opus
+model: claude-opus-5
 ---
 
 You are a pragmatic architect. Your first job is CHOOSING, per project — not
