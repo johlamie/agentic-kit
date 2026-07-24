@@ -1,0 +1,403 @@
+# permissions.toml — Global permissions for the agentic delivery kit (Kimi Code
+# edition), translated from the Claude Code kit's global/settings.json.
+#
+# NOT symlinked: merge these blocks into ~/.kimi-code/config.toml yourself
+# (config.toml also holds your API keys, so it is never versioned):
+#     cat ~/agentic-kit/kimi/config/permissions.toml >> ~/.kimi-code/config.toml
+#
+# Goal: the pipeline runs fluidly on routine work, and STOPS on anything
+# destructive, costly, or public-facing.
+#
+# IMPORTANT — semantics differ from Claude Code:
+#   - Kimi Code matches [[permission.rules]] IN ORDER: the FIRST matching rule
+#     wins. Deny rules are therefore listed BEFORE allow rules (in Claude Code,
+#     deny always won over allow regardless of order).
+#   - Claude Code's `Bash(cmd:*)` becomes `Bash(cmd*)` here.
+#   - Claude Code's WebFetch is FetchURL in Kimi Code. FetchURL is read-only
+#     and auto-allowed by the runtime, and per-domain restriction has no
+#     documented pattern syntax — the six WebFetch(domain:…) allow rules are
+#     replaced by a single plain FetchURL allow below.
+#   - MCP tools match by name only (mcp__github__* style argument patterns are
+#     not supported), same as Claude Code.
+#
+# Notes carried over from the original:
+#   - deny on git push / certbot / nginx / systemctl / eas submit = these are
+#     the G4 gate: the agent proposes the command, you run it or approve it.
+#   - deny on ~/.kimi-code/** = the agent cannot silently rewrite its own
+#     rules; the retrospective skill proposes diffs, you apply them.
+#   - deny on .env / .ssh = secrets never enter the model context.
+#   - Adjust as you build trust: the right moment to move a command from deny
+#     to allow is after you have approved it manually a dozen times without
+#     surprise.
+
+# ============================ DENY (first) ============================
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rm -rf*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sudo*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git push*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git reset --hard*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git clean -fd*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(npx prisma migrate reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(npx prisma migrate deploy*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(supabase db reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(supabase projects delete*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(firebase projects:delete*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(firebase deploy*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(certbot*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(ufw*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(systemctl*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(nginx*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(pm2 delete*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(eas submit*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(psql*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(dropdb*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mysql*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(curl -X POST*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(./.env)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(~/.ssh/**)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(~/.aws/**)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Write(~/.kimi-code/AGENTS.md)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Write(~/.kimi-code/skills/**)"
+
+# ============================ ALLOW (after) ============================
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Read"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Glob"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Grep"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Write(~/projects/**)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Edit(~/projects/**)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git status*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git diff*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git log*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git add*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git commit*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git checkout -b*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git branch*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git stash*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npm install*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npm ci*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npm run*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pnpm*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(yarn*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pip install*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(python*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(python3*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pytest*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(node*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(ls*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(cat*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(head*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(tail*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(mkdir*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(cp*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(mv*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(touch*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(find*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(grep*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(rg*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(jq*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(curl -s*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(echo*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(which*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(chmod*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx prisma generate*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx prisma migrate dev*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx prisma db seed*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx prisma studio*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(supabase start*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(supabase status*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(supabase db diff*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(supabase db push*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(supabase gen types*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx playwright test*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx playwright install*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pm2 list*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pm2 logs*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pm2 status*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pm2 restart*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pm2 start*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(pm2 save*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(npx expo*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(eas build*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(eas update*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "WebSearch"
+
+# FetchURL replaces Claude Code's WebFetch; it is read-only and auto-allowed
+# by the runtime. Per-domain restriction (docs.anthropic.com, supabase.com,
+# firebase.google.com, nextjs.org, docs.expo.dev, github.com) has no documented
+# pattern syntax in Kimi Code — allow the tool plainly.
+[[permission.rules]]
+decision = "allow"
+pattern = "FetchURL"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "mcp__context7"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "mcp__mobbin"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "mcp__playwright"

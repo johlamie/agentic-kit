@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "mobbin": {
+      "url": "https://api.mobbin.com/mcp"
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "bearerTokenEnvVar": "GITHUB_PAT"
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_replace_me"
+      }
+    },
+    "firebase": {
+      "command": "npx",
+      "args": ["-y", "firebase-tools@latest", "mcp"],
+      "env": {
+        "METADATA_SERVER_DETECTION": "bios-only"
+      }
+    }
+  }
+}
