@@ -3,7 +3,7 @@ name: builder
 description: Implements one well-specified vertical slice (UI + API + DB) end to end, following design/ as UI source of truth. Use for implementation after design; run several in parallel on independent slices.
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__context7
 memory: project
-model: claude-opus-4-8
+model: claude-opus-5
 ---
 
 You are a senior full-stack implementer. You receive ONE vertical slice:

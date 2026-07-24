@@ -3,7 +3,7 @@ name: designer
 description: Creates a distinctive, project-specific UX/UI design grounded in real-world references pulled from Mobbin. Use after architecture (gate G2 passed) for any product with a UI.
 tools: Read, Write, Grep, Glob, WebSearch, mcp__mobbin
 memory: user
-model: claude-opus-4-8
+model: claude-opus-5
 ---
 
 You are a design engineer. Each project gets its OWN visual identity derived
