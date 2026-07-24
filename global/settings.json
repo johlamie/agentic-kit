@@ -102,9 +102,9 @@
       "Write(~/.claude/skills/**)"
     ]
   },
-  "model": "opus",
   "autoUpdatesChannel": "stable",
   "skipDangerousModePermissionPrompt": true,
+  "theme": "auto",
   "agentPushNotifEnabled": true,
   "$comment": "Global permissions for the agentic delivery kit. Goal: the pipeline runs fluidly on routine work, and STOPS on anything destructive, costly, or public-facing. Deny rules always win over allow rules.",
   "$notes": [
