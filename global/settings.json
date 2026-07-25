@@ -84,6 +84,14 @@
       "Bash(supabase projects delete:*)",
       "Bash(firebase projects:delete:*)",
       "Bash(firebase deploy:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(yarn deploy:*)",
+      "Bash(pnpm deploy:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(npx firebase projects:delete:*)",
+      "Bash(npx supabase db reset:*)",
+      "Bash(npx supabase projects delete:*)",
+      "Bash(npx eas submit:*)",
       "Bash(certbot:*)",
       "Bash(ufw:*)",
       "Bash(systemctl:*)",
@@ -112,6 +120,7 @@
     "deny on git push / certbot / nginx / systemctl / eas submit = these are the G4 gate: the agent proposes the command, you run it or approve it.",
     "deny on ~/.claude/** = the agent cannot silently rewrite its own rules; the retrospective skill proposes diffs, you apply them.",
     "deny on .env / .ssh = secrets never enter the model context.",
+    "Deny patterns match the literal command string, so a denied binary stays reachable through a wrapper: `npm run deploy` and `npx firebase deploy` both bypass `Bash(firebase deploy:*)` because `Bash(npm run:*)` and `Bash(npx:*)` are allowed. Whenever you deny a G4-class command, deny its npm-script and npx spellings too — and when adopting a project, read its package.json scripts for new wrappers around denied commands.",
     "Adjust as you build trust: the right moment to move a command from deny to allow is after you have approved it manually a dozen times without surprise."
   ]
 }
