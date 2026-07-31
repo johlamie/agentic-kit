@@ -34,7 +34,10 @@ phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI")
 - **G2** after tech selection (stack + anything that costs money — list monthly cost)
 - **G3** after design direction (before mass building)
 - **G4** before exposing anything publicly (deploy) and before store/production steps
+- **G5** before merging any PR into main — even after reviewer + qa PASS
 Everything between gates runs autonomously. Batch questions; never drip.
+Preview deployments (per-branch, behind Basic Auth) are NOT a gate: devops
+stands them up on its own so the user can click through before deciding G5.
 
 ## Session ritual (MANDATORY)
 
@@ -69,8 +72,23 @@ builder's word.
 mobbin (design references — designer only) · playwright (E2E — qa) ·
 supabase / firebase CLIs+MCP (provisioning — devops) · context7 (up-to-date
 library docs — builders SHOULD check before using an unfamiliar API) ·
-github (repos/PRs). If a needed MCP is missing, log it in CAPABILITY_GAPS.md
-and tell the user the exact `mcp.json` entry to add.
+github (repos/PRs/reviews — reviewer, devops; see "Git & PRs"). If a needed
+MCP is missing, log it in CAPABILITY_GAPS.md and tell the user the exact
+`mcp.json` entry to add.
+
+## Git & PRs
+
+All build work happens on a feature branch (`feature/<slug>`, created off
+main in Phase 0), never directly on main. Commits happen throughout (already
+allowed); pushing only ever goes through
+`~/.kimi-code/scripts/git-safe-push.sh <remote> <branch>` — raw `git push` is
+denied, and the wrapper itself refuses main/master/production/release in
+code. Once reviewer + qa PASS on the branch: push it, open a PR
+(`mcp__github`), let the `devops` skill stand up a preview deployment, let
+the `reviewer` skill post its verdict as a PR review. Then **G5**: present
+the PR + preview link, wait for explicit approval, and only then merge
+(squash) via the github MCP — never call the merge tool speculatively. After
+merge, dispatch `devops` to tear the preview down.
 
 ## Non-negotiables
 

@@ -23,6 +23,20 @@ for item in AGENTS.md skills templates; do
   echo "linked: ~/.kimi-code/$item -> kimi/$item"
 done
 
+# agent-scripts/ has a different name on each side of the symlink: it's the
+# runtime wrapper scripts (git-safe-push.sh, preview-*.sh), kept apart from
+# kimi/scripts/ (the kit's own validate-kit.sh / smoke-install.sh, which stay
+# unlinked and run from the repo checkout).
+target="$KIMI_DIR/scripts"
+if [ -e "$target" ] && [ ! -L "$target" ]; then
+  echo "Backing up existing scripts -> scripts.bak-$STAMP"
+  mv "$target" "$target.bak-$STAMP"
+fi
+rm -f "$target"
+ln -s "$REPO/agent-scripts" "$target"
+chmod +x "$REPO"/agent-scripts/*.sh
+echo "linked: ~/.kimi-code/scripts -> kimi/agent-scripts"
+
 # These stay LOCAL, never symlinked into the repo (machine-specific / sensitive):
 #   ~/.kimi-code/agent-memory/  (user-scope agent memories: server map, preferences)
 #   ~/.kimi-code/config.toml    (API keys + permission rules, merge manually)

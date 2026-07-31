@@ -2,8 +2,9 @@
 
 Une idée entre ; un MVP déployé et accessible sort. Le système reproduit une
 équipe d'agence complète : PM → recherche → choix tech → design → provisioning →
-build parallèle → revue → QA E2E → déploiement → handoff → rétrospective.
-Toi, tu n'interviens qu'à 4 portes de validation.
+build parallèle → revue → QA E2E → PR + preview → déploiement → handoff →
+rétrospective.
+Toi, tu n'interviens qu'à 5 portes de validation.
 
 ## L'équipe (8 agents, mémoire persistante)
 
@@ -23,13 +24,17 @@ le devops tient la carte du serveur, le designer tes contraintes — pas tes
 palettes : chaque projet a sa propre identité visuelle, tirée de références
 Mobbin décomposées). Mémoire `project` = patterns propres au codebase.
 
-## Les 4 portes (tout le reste est autonome)
+## Les 5 portes (tout le reste est autonome)
 
 - **G1** — périmètre : tu valides SPEC.md
 - **G2** — stack & budget : tu valides TECH.md (matrice de décision Supabase /
   Firebase / local + coût mensuel)
 - **G3** — direction design : tu choisis entre 2 directions
-- **G4** — exposition publique : tu valides le déploiement
+- **G4** — exposition publique : tu valides le déploiement en production
+- **G5** — merge : tu valides le merge d'une PR dans `main`, même après
+  PASS reviewer + qa. Les previews par branche (derrière Basic Auth) ne sont
+  PAS une porte : `devops` les déploie seul pour que tu aies un lien cliquable
+  avant de te décider.
 
 ## Definition of Done (non négociable)
 
@@ -48,6 +53,9 @@ chmod +x setup/*.sh
                             # + link-kit.sh : ~/.claude/ symlinké vers le repo
 claude                      # login première fois
 export SUPABASE_ACCESS_TOKEN=sbp_...   # token depuis le dashboard Supabase
+export GITHUB_PAT=github_pat_...       # PAT fine-grained (repos/PRs/issues)
+export PREVIEW_DOMAIN=preview.tondomaine.tld   # sous-domaines de preview par branche
+export CERTBOT_EMAIL=toi@exemple.com   # notifications d'expiration de certificat
 ./setup/mcp-setup.sh        # mobbin, context7, playwright, github, supabase, firebase
 # dans claude : /mcp → authentifier mobbin et github (OAuth navigateur)
 ./scripts/check-runtime.sh  # valide le kit, les binaires, Claude doctor et les MCP
@@ -109,11 +117,39 @@ headless. Pas sur une VPS qui héberge tes projets et tes clés.
 L'agent ne peut pas réécrire ses propres règles (`deny` sur `~/.claude/**`) :
 la rétrospective te propose des diffs, tu les appliques.
 
+## Git & PRs
+
+Tout le travail de build se fait sur une branche `feature/<slug>` (créée hors
+de `main` en Phase 0) — jamais directement sur `main`.
+
+- **Push** : uniquement via `~/.claude/scripts/git-safe-push.sh <remote> <branche>`.
+  `git push` brut est dans la `deny` list ; le wrapper lui-même refuse
+  `main`/`master`/`production`/`release*` dans son code (pas juste par pattern
+  matching sur ce que l'agent tape) — impossible à contourner en bidouillant
+  le refspec.
+- **PR** : dès que reviewer + qa sont PASS sur la branche, l'orchestrateur
+  pousse et ouvre une PR (MCP `github`, câblé sur `reviewer` et `devops`).
+- **Preview** : `devops` déploie automatiquement (pas de porte) un
+  environnement par branche sur `<projet>-<branche>.$PREVIEW_DOMAIN`, protégé
+  par un Basic Auth partagé (généré une fois, réutilisé pour toutes les
+  previews du serveur — jamais sur le domaine de prod). Mobile : `eas build
+  --profile preview` sur la branche, lien/QR livré de la même façon. Tout est
+  détruit automatiquement à la fermeture/au merge de la PR.
+- **Revue** : `reviewer` poste son verdict PASS/FAIL directement comme review
+  GitHub sur la PR (approve / request changes), en plus de son rapport local.
+- **Merge = G5** : même après reviewer + qa PASS, l'agent ne merge jamais de
+  sa propre initiative — il te présente la PR + le lien de preview, attend ton
+  feu vert explicite, puis merge (squash) via le MCP `github`. C'est la seule
+  chose que le système ne peut pas techniquement bloquer par permission (le
+  moteur de permissions ne sait pas filtrer un appel MCP par branche cible) —
+  c'est donc une règle procédurale dans `CLAUDE.md`, au même titre que G1-G3.
+
 ## Organisation
 
 ```
 ~/.claude/                     ← global : CLAUDE.md orchestrateur, agents/, skills/,
-│                                templates/, agent-memory (scope user)
+│                                templates/, scripts/ (git-safe-push, preview-*),
+│                                agent-memory (scope user)
 ~/projects/<projet>/           ← créé par le pipeline, un par idée
 ├── CLAUDE.md                  ← delta uniquement (port, commandes)
 ├── SPEC.md  RESEARCH.md  TECH.md  ARCHITECTURE.md  GUIDE.md

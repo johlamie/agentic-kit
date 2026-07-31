@@ -12,7 +12,7 @@ mkdir -p "$CLAUDE_DIR"
 
 # Backup anything real that we are about to replace with a symlink
 STAMP="$(date +%F-%H%M)"
-for item in CLAUDE.md settings.json agents skills templates; do
+for item in CLAUDE.md settings.json agents skills templates scripts; do
   target="$CLAUDE_DIR/$item"
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     echo "Backing up existing $item -> $item.bak-$STAMP"
@@ -22,6 +22,7 @@ for item in CLAUDE.md settings.json agents skills templates; do
   ln -s "$REPO/global/$item" "$target"
   echo "linked: ~/.claude/$item -> global/$item"
 done
+chmod +x "$CLAUDE_DIR"/scripts/*.sh
 
 # These stay LOCAL, never symlinked into the repo (machine-specific / sensitive):
 #   ~/.claude/agent-memory/   (user-scope agent memories: server map, preferences)

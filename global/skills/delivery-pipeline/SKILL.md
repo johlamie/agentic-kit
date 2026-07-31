@@ -5,11 +5,12 @@ description: Full agency pipeline from raw idea to deployed, accessible MVP. Use
 
 # Delivery Pipeline — Idea → Deployed MVP
 
-Phases run autonomously between the four user gates (G1-G4). Update
+Phases run autonomously between the five user gates (G1-G5). Update
 `.claude/memory/PROJECT_STATE.md` at every phase transition.
 
 ## Phase 0 — Project shell
-Create/confirm the project directory, `git init`, copy memory templates from
+Create/confirm the project directory, `git init`, `git checkout -b feature/<slug>`
+(all build work happens here, never on main), copy memory templates from
 `~/.claude/templates/memory/` to `.claude/memory/`, `.gitignore` (with `.env`,
 `node_modules`, `qa/evidence`).
 
@@ -46,8 +47,24 @@ reviewer (static) PASS → qa (dynamic, local) PASS → slice DONE.
 FAIL → back to the same builder with the report. 3 fails on one slice →
 escalate to user with diagnosis.
 
+## Phase 7.5 — Propose → orchestrator, then `devops` + `reviewer`
+Once every slice for this checkpoint is reviewer+qa PASS: orchestrator pushes
+`feature/<slug>` with `~/.claude/scripts/git-safe-push.sh` and opens a PR
+(`mcp__github`) summarizing the slices, linking SPEC.md/DECISIONS.md. Then,
+in parallel: `devops` stands up a preview deployment and posts the link on
+the PR; `reviewer` posts its PASS/FAIL verdict as a PR review. No gate yet —
+this phase is autonomous so the user always has something clickable to look
+at before deciding.
+
+**GATE G5**: present the PR + preview link; wait for explicit merge approval,
+even though reviewer+qa already PASSed — this is the last human checkpoint
+before code lands on main. On approval: merge (squash) via `mcp__github`,
+then tell `devops` to tear the preview down. On rejection: back to the
+relevant builder with the feedback, repeat from Phase 6.
+
 ## Phase 8 — Ship → `devops`
-**GATE G4**: user approves public exposure + any remaining cost.
+**GATE G4**: user approves public exposure + any remaining cost. First ship
+of a project, or promoting a newly merged main to production after G5.
 Deploy (web: subdomain+SSL; mobile: Expo link/QR + web preview), run seed,
 then `qa` re-runs the full flow against the PUBLIC target.
 
