@@ -6,7 +6,7 @@ type: prompt
 
 # Delivery Pipeline — Idea → Deployed MVP
 
-Phases run autonomously between the four user gates (G1-G4). Update
+Phases run autonomously between the five user gates (G1-G5). Update
 `.kimi-code/memory/PROJECT_STATE.md` at every phase transition.
 
 Kimi Code has no custom subagents: `→ <role>` below means dispatching a
@@ -16,7 +16,8 @@ expected return format). Several `coder` subagents can run in parallel on
 disjoint work.
 
 ## Phase 0 — Project shell
-Create/confirm the project directory, `git init`, copy memory templates from
+Create/confirm the project directory, `git init`, `git checkout -b feature/<slug>`
+(all build work happens here, never on main), copy memory templates from
 `~/.kimi-code/templates/memory/` to `.kimi-code/memory/`, `.gitignore` (with
 `.env`, `node_modules`, `qa/evidence`).
 
@@ -54,8 +55,24 @@ reviewer (static) PASS → qa (dynamic, local) PASS → slice DONE.
 FAIL → back to the same builder with the report. 3 fails on one slice →
 escalate to user with diagnosis.
 
+## Phase 7.5 — Propose → orchestrator, then `coder` + skill `devops` / `reviewer`
+Once every slice for this checkpoint is reviewer+qa PASS: orchestrator pushes
+`feature/<slug>` with `~/.kimi-code/scripts/git-safe-push.sh` and opens a PR
+(`mcp__github`) summarizing the slices, linking SPEC.md/DECISIONS.md. Then,
+in parallel: `devops` stands up a preview deployment and posts the link on
+the PR; `reviewer` posts its PASS/FAIL verdict as a PR review. No gate yet —
+this phase is autonomous so the user always has something clickable to look
+at before deciding.
+
+**GATE G5**: present the PR + preview link; wait for explicit merge approval,
+even though reviewer+qa already PASSed — this is the last human checkpoint
+before code lands on main. On approval: merge (squash) via `mcp__github`,
+then dispatch `devops` to tear the preview down. On rejection: back to the
+relevant builder with the feedback, repeat from Phase 6.
+
 ## Phase 8 — Ship → `coder` + skill `devops`
-**GATE G4**: user approves public exposure + any remaining cost.
+**GATE G4**: user approves public exposure + any remaining cost. First ship
+of a project, or promoting a newly merged main to production after G5.
 Deploy (web: subdomain+SSL; mobile: Expo link/QR + web preview), run seed,
 then `qa` re-runs the full flow against the PUBLIC target.
 

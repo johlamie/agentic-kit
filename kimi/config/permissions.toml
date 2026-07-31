@@ -21,8 +21,18 @@
 #     not supported), same as Claude Code.
 #
 # Notes carried over from the original:
-#   - deny on git push / certbot / nginx / systemctl / eas submit = these are
-#     the G4 gate: the agent proposes the command, you run it or approve it.
+#   - deny on certbot / nginx / systemctl / eas submit = these are the G4
+#     gate: the agent proposes the command, you run it or approve it.
+#   - raw `git push`/`git merge` are denied outright; the ONLY sanctioned push
+#     path is agent-scripts/git-safe-push.sh, which refuses
+#     main/master/production/release in code. Merging into main is gate G5:
+#     procedural (explicit go-ahead in chat), like G1-G3 — Kimi Code's
+#     permission patterns can't key off which PR/branch an MCP call targets
+#     any more than Claude Code's can. See README "Git & PRs".
+#   - preview-deploy.sh / preview-teardown.sh are the ONLY sanctioned path to
+#     nginx/certbot/pm2 for per-branch previews; they validate the
+#     subdomain/pm2-name they touch and sit behind shared Basic Auth, which is
+#     what lets devops run them without a gate.
 #   - deny on ~/.kimi-code/** = the agent cannot silently rewrite its own
 #     rules; the retrospective skill proposes diffs, you apply them.
 #   - deny on .env / .ssh = secrets never enter the model context.
@@ -43,6 +53,10 @@ pattern = "Bash(sudo*)"
 [[permission.rules]]
 decision = "deny"
 pattern = "Bash(git push*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git merge*)"
 
 [[permission.rules]]
 decision = "deny"
@@ -378,6 +392,22 @@ pattern = "Bash(eas build*)"
 decision = "allow"
 pattern = "Bash(eas update*)"
 
+# The ONLY sanctioned push/preview paths — raw `git push`/`git merge` are
+# denied above and never reach these rules. git-safe-push.sh refuses
+# main/master/production/release in code; preview-*.sh validate the
+# subdomain/pm2-name they touch. See README "Git & PRs".
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(~/.kimi-code/scripts/git-safe-push.sh*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(~/.kimi-code/scripts/preview-deploy.sh*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(~/.kimi-code/scripts/preview-teardown.sh*)"
+
 [[permission.rules]]
 decision = "allow"
 pattern = "WebSearch"
@@ -401,3 +431,7 @@ pattern = "mcp__mobbin"
 [[permission.rules]]
 decision = "allow"
 pattern = "mcp__playwright"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "mcp__github"

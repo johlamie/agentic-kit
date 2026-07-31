@@ -15,11 +15,23 @@ else
   fail "global/settings.json is not valid JSON"
 fi
 
-for script in setup/*.sh scripts/*.sh; do
+for script in setup/*.sh scripts/*.sh global/scripts/*.sh; do
   if bash -n "$script"; then
     pass "$script has valid Bash syntax"
   else
     fail "$script has invalid Bash syntax"
+  fi
+done
+
+required_runtime_scripts=(git-safe-push.sh preview-deploy.sh preview-teardown.sh)
+for name in "${required_runtime_scripts[@]}"; do
+  file="global/scripts/$name"
+  if [[ ! -f "$file" ]]; then
+    fail "missing runtime script: $file"
+  elif [[ ! -x "$file" ]]; then
+    fail "runtime script not executable: $file"
+  else
+    pass "runtime script present and executable: $file"
   fi
 done
 
@@ -54,16 +66,29 @@ done
 pass "required skill manifests were inspected"
 
 for file in PROJECT_STATE.md DECISIONS.md LESSONS.md CAPABILITY_GAPS.md; do
-  [[ -s "global/templates/memory/$file" ]] \
-    && pass "memory template exists: $file" \
-    || fail "missing or empty memory template: $file"
+  if [[ -s "global/templates/memory/$file" ]]; then
+    pass "memory template exists: $file"
+  else
+    fail "missing or empty memory template: $file"
+  fi
 done
 
-for denied in 'Bash(git push:*)' 'Read(./.env)' 'Write(~/.claude/CLAUDE.md)'; do
-  jq -e --arg rule "$denied" '.permissions.deny | index($rule) != null' \
-    global/settings.json >/dev/null \
-    && pass "critical deny rule present: $denied" \
-    || fail "critical deny rule missing: $denied"
+for denied in 'Bash(git push:*)' 'Bash(git merge:*)' 'Read(./.env)' 'Write(~/.claude/CLAUDE.md)'; do
+  if jq -e --arg rule "$denied" '.permissions.deny | index($rule) != null' \
+    global/settings.json >/dev/null; then
+    pass "critical deny rule present: $denied"
+  else
+    fail "critical deny rule missing: $denied"
+  fi
+done
+
+for allowed in 'mcp__github' 'Bash(~/.claude/scripts/git-safe-push.sh:*)'; do
+  if jq -e --arg rule "$allowed" '.permissions.allow | index($rule) != null' \
+    global/settings.json >/dev/null; then
+    pass "critical allow rule present: $allowed"
+  else
+    fail "critical allow rule missing: $allowed"
+  fi
 done
 
 if (( failures > 0 )); then
