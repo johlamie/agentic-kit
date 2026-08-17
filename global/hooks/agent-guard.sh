@@ -34,11 +34,13 @@ PROJECTS_ROOT="${CLAUDE_PROJECTS_ROOT:-$HOME/projects}"
 # Commands reserved to the orchestrator: server surface, publication, and
 # anything that reaches production. Role agents propose these and return them;
 # they never run them. This is the pre-judge behaviour, preserved verbatim.
-ORCHESTRATOR_ONLY='(^|[;&|[:space:]])(sudo|nginx|certbot|systemctl|ufw|dropdb|psql|mysql)([[:space:]]|$)|pm2[[:space:]]+(delete|stop)|git[[:space:]]+(push|merge)|(firebase|npm[[:space:]]+run|yarn|pnpm|npx[[:space:]]+firebase)[[:space:]]+deploy|prisma[[:space:]]+migrate[[:space:]]+deploy|eas[[:space:]]+submit|(supabase|firebase)[[:space:]]+projects[:[:space:]]*delete'
+# Every alternative ends on a word boundary. Without it `git merge` also matches
+# `git merge-base`, a read-only lookup — which this hook duly refused once.
+ORCHESTRATOR_ONLY='(^|[;&|[:space:]])(sudo|nginx|certbot|systemctl|ufw|dropdb|psql|mysql)([[:space:]]|$)|pm2[[:space:]]+(delete|stop)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|(firebase|npm[[:space:]]+run|yarn|pnpm|npx[[:space:]]+firebase)[[:space:]]+deploy([[:space:]]|$)|prisma[[:space:]]+migrate[[:space:]]+deploy([[:space:]]|$)|eas[[:space:]]+submit([[:space:]]|$)|(supabase|firebase)[[:space:]]+projects[:[:space:]]*delete([[:space:]]|$)'
 
 # Commands that change a running system. Harmless on a scratch project, worth a
 # prompt on one that is already serving users.
-MUTATING='(^|[;&|[:space:]])(rm|nginx|certbot|systemctl|sudo)([[:space:]]|$)|pm2[[:space:]]+(restart|reload|stop|delete|start)|git[[:space:]]+(push|merge)|deploy|migrate|db[[:space:]]+(push|reset)|eas[[:space:]]+(submit|update)'
+MUTATING='(^|[;&|[:space:]])(rm|nginx|certbot|systemctl|sudo)([[:space:]]|$)|pm2[[:space:]]+(restart|reload|stop|delete|start)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|deploy|migrate|db[[:space:]]+(push|reset)([[:space:]]|$)|eas[[:space:]]+(submit|update)([[:space:]]|$)'
 
 emit() { # emit <allow|deny|ask> <reason>
   jq -cn --arg d "$1" --arg r "$2" \
@@ -201,6 +203,12 @@ self_test() {
   # ...but a shell invoker really does run its quoted argument.
   check "sh -c hiding a server command" deny  "builder" "sh -c \"sudo systemctl stop nginx\"" "$P/demo"
   check "bash -c hiding a push"         deny  "builder" "bash -c 'git push origin main'" "$P/demo"
+
+  # Read-only lookups whose names merely start like a restricted one. The first
+  # was refused for real: `git merge` matched the prefix of `git merge-base`.
+  check "git merge-base is read-only"   none  "claude"  "git merge-base main HEAD"    "$P/demo"
+  check "git push is still caught"      deny  "claude"  "git push origin feature/x"   "$P/demo"
+  check "git merge is still caught"     deny  "claude"  "git merge feature/x"         "$P/demo"
 
   # Production projects
   local tmp; tmp="$(mktemp)"; printf '# live\nlive-app\n' > "$tmp"
