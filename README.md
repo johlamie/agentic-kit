@@ -151,9 +151,20 @@ pour qu'il ne puisse jamais s'en retirer discrètement.
 tu n'en as plus besoin — c'est précisément ce qu'il remplace.
 
 ⚠️ **Limite connue** : `~/.claude` est un symlink vers ce repo, donc le `deny` sur
-`~/.claude/**` ne couvre pas les mêmes fichiers atteints par leur chemin repo
-(`~/agentic-kit/global/…`). Modifier le kit reste possible — c'est voulu — mais
+`~/.claude/**` ne couvre pas les mêmes fichiers atteints par leur chemin de clone
+(`<ton-clone>/global/…`). Modifier le kit reste possible — c'est voulu — mais
 garde-le comme un acte délibéré et relis le diff.
+
+### Portabilité
+
+Rien dans `global/settings.json` ne nomme une machine, un domaine ou un
+fournisseur : un clone frais se comporte à l'identique. Le seul bloc qui gagne à
+être personnalisé est `autoMode.environment` (ton org de source control, tes
+buckets, tes domaines internes) — il est marqué comme tel dans le fichier.
+Les préférences personnelles (modèle, thème) vont dans
+`~/.claude/settings.local.json`, qui n'est pas versionné.
+Le gardien suit la même règle : il lit `~/projects` par défaut, surchargeable
+via `CLAUDE_PROJECTS_ROOT`, et n'a aucun chemin en dur.
 
 ### Git & branches
 

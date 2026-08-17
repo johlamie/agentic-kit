@@ -108,7 +108,6 @@
       "Bash(npx supabase db reset:*)",
       "Bash(supabase projects delete:*)",
       "Bash(npx supabase projects delete:*)",
-      "Bash(firebase projects:delete:*)",
       "Bash(npx firebase projects:delete:*)",
       "Bash(eas submit:*)",
       "Bash(npx eas submit:*)",
@@ -194,13 +193,15 @@
     "classifyAllShell": true,
     "environment": [
       "$defaults",
-      "Organization: solo developer, personal and small-client projects. Primary use of Claude Code: full delivery of small products, from spec to a deployed MVP.",
-      "Infrastructure: a single OVH VPS running Ubuntu 22.04. Every project lives under ~/projects/<name> and is served by pm2 behind nginx, with TLS from certbot. There is no staging tier: a project is either not yet deployed, or live.",
-      "Key internal services: pm2 (process manager), nginx (reverse proxy, vhosts in /etc/nginx/sites-available), certbot (TLS).",
-      "Cloud provider(s): Supabase and Firebase, free tier, one project per app.",
+      "Primary use of Claude Code: delivering small products end to end, from spec to a deployed MVP, largely unattended.",
+      "Project layout: every project lives in its own directory under ~/projects/<name>. That directory is the agent's working scope; anything above it is not.",
+      "Infrastructure: a single Linux server. Projects are served by pm2 behind nginx, with TLS issued by certbot. There is no staging tier — a project is either not yet deployed, or live.",
+      "Key internal services: pm2 (process manager), nginx (reverse proxy, vhosts under /etc/nginx/sites-available), certbot (TLS).",
+      "Cloud provider(s): Supabase or Firebase, one project per app, chosen per TECH.md.",
       "Sensitive remote targets: any project named in ~/.claude/production-projects is serving real users. Its pm2 process, its nginx vhost, its TLS certificate and its database are production.",
-      "Sensitive data locations & audiences: .env files on the VPS hold real credentials and are read by nobody but the running app. ~/.ssh holds the keys to this VPS.",
-      "Additional context: the agent operates unattended for long stretches. Prefer blocking an ambiguous action over guessing; a blocked action costs a round trip, a wrong one can cost the server."
+      "Sensitive data locations & audiences: .env files hold real credentials and are read only by the running app. ~/.ssh holds the keys to this server.",
+      "Prefer blocking an ambiguous action over guessing: the agent runs unattended for long stretches, so a blocked action costs one round trip while a wrong one can cost the server.",
+      "ADD YOUR OWN LINES BELOW — this is the one block worth personalising: your source-control org, your cloud buckets, your internal domains, any compliance constraint. Everything above is true of any install of this kit. Check the result with `claude auto-mode config`."
     ],
     "allow": [
       "$defaults",
@@ -213,9 +214,10 @@
       "$defaults",
       "Changing anything that belongs to a project listed in ~/.claude/production-projects — its code, its database schema, its nginx vhost, its pm2 process, its environment variables, its deployed build — requires the user to have named that project and that change. A general instruction to 'continue' or 'fix things' is not enough.",
       "Never edit files under ~/.claude/ other than agent-memory: those are the agent's own operating rules, and rewriting them is self-modification.",
-      "Never change the SSH configuration, the firewall, or anything else that could cut off remote access to this VPS."
+      "Never change the SSH configuration, the firewall, or anything else that could cut off remote access to this server."
     ]
   },
+  "model": "claude-opus-5",
   "autoUpdatesChannel": "stable",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
@@ -229,7 +231,9 @@
     "classifyAllShell true means narrow allow rules no longer short-circuit the classifier. This is what structurally closes the wrapper hole: 'npm run deploy' is now judged on what it does, not on how it is spelled, so a denied binary can no longer be reached through a package script.",
     "hooks/agent-guard.sh does the three things patterns cannot: it keeps the 8 role agents at their pre-judge restrictions (they see 'agent_type', the orchestrator does not), it reads the actual target of an rm instead of matching the string, and it escalates any project named in ~/.claude/production-projects. Run it with --self-test to see the decision table.",
     "~/.claude/production-projects is the list of apps that are live. It is denied to the agent on purpose: only you add a project to it, at G4, so the agent can never quietly un-mark one. One project name per line.",
-    "KNOWN GAP: ~/.claude is a symlink into the kit repo, so the deny rules on ~/.claude/** do not cover the same files reached by their repo path (~/agentic-kit/global/...). Kit edits stay possible by design; keep them a deliberate act, and review the diff before merging.",
+    "KNOWN GAP: ~/.claude is a symlink into the kit repo, so the deny rules on ~/.claude/** do not cover the same files reached by their repo path (<your-clone>/global/...). Kit edits stay possible by design; keep them a deliberate act, and review the diff before merging.",
+    "STILL TRUE IF YOU EVER TURN classifyAllShell OFF: deny patterns match the literal command string, so a denied binary stays reachable through a wrapper — `npm run deploy` and `npx firebase deploy` both walk past `Bash(firebase deploy:*)` because `Bash(npm run:*)` and `Bash(npx:*)` are allowed. Without the classifier reading every shell command, you are back to denying each wrapper spelling by hand.",
+    "PORTABLE BY DESIGN: nothing in this file names a machine, a domain or a provider. The one block worth personalising is autoMode.environment. Keep personal pins (model, theme) in ~/.claude/settings.local.json so a fresh clone behaves the same for everyone.",
     "Adjust as you build trust: move a command from ask to allow once you have approved it a dozen times without surprise. Moving anything INTO deny is free; moving it out is the decision to think about."
   ]
 }
