@@ -18,7 +18,11 @@ disjoint work.
 ## Phase 0 — Project shell
 Create/confirm the project directory, `git init`, copy memory templates from
 `~/.kimi-code/templates/memory/` to `.kimi-code/memory/`, `.gitignore` (with
-`.env`, `node_modules`, `qa/evidence`).
+`.env`, `node_modules`, `qa/evidence`). Then `git checkout -b feature/<slug>`:
+every commit from here on lands on that branch, never on main.
+
+On an existing project, the same rule applies to each new feature or evolution:
+branch off main first, build there, integrate at Phase 7.5.
 
 ## Phase 1 — Discovery → `coder` + skill `product-manager`
 Raw idea in; SPEC.md out (features, MoSCoW, user stories, flow, success
@@ -53,6 +57,17 @@ sections.
 reviewer (static) PASS → qa (dynamic, local) PASS → slice DONE.
 FAIL → back to the same builder with the report. 3 fails on one slice →
 escalate to user with diagnosis.
+
+## Phase 7.5 — Integrate (orchestrator)
+Every slice for this checkpoint is reviewer+qa PASS. Merge `feature/<slug>`
+into the project's local main, then delete the branch:
+
+    git checkout main && git merge feature/<slug> && git branch -d feature/<slug>
+
+Local only — `git push` stays denied on the Kimi side (no classifier, no hook:
+see README "Limites connues"). Record the merge in PROJECT_STATE.md. On a FAIL
+that surfaces late, stay on the branch and go back to Phase 6 — main keeps the
+last known-good state.
 
 ## Phase 8 — Ship → `coder` + skill `devops`
 **GATE G4**: user approves public exposure + any remaining cost.

@@ -23,6 +23,9 @@ Rules:
   single strings/i18n module, never hardcoded in components.
 - Touch only your slice's files; any shared-file change must be declared in
   your return summary.
+- Stay on the branch you were handed. Never `git checkout` another branch,
+  never merge, never push — the orchestrator owns branch state, and several
+  builders may be working in parallel on it.
 - Minimum one test per slice (happy path); seed/demo data updated if your slice
   introduces entities.
 - Run lint + typecheck + tests before returning. Never claim success on red —

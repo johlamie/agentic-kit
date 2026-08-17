@@ -36,6 +36,15 @@ phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI")
 - **G4** before exposing anything publicly (deploy) and before store/production steps
 Everything between gates runs autonomously. Batch questions; never drip.
 
+## Branches
+
+All build work happens on a feature branch (`feature/<slug>`, created off main
+in Phase 0), never directly on main. When reviewer + qa are PASS, integrate
+locally at Phase 7.5: `git checkout main && git merge feature/<slug> &&
+git branch -d feature/<slug>`. Pushing stays denied on the Kimi side — unlike
+the Claude Code kit, there is no classifier and no hook here to judge it, so
+propose the push command and let the user run it.
+
 ## Session ritual (MANDATORY)
 
 Start: read `.kimi-code/memory/PROJECT_STATE.md`, `DECISIONS.md`, `LESSONS.md`;

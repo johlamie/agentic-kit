@@ -94,26 +94,86 @@ jamais un agent. Deux couches de fiabilité : le tableau de l'équipe dans
 `CLAUDE.md` et la séquence imposée par `delivery-pipeline`. Tu peux toujours
 forcer : « fais relire ça par le reviewer ».
 
-### Permissions
+### Permissions — trois étages et un juge
 
-`global/settings.json` contient une **allowlist** : le pipeline tourne sans
-confirmation sur le routinier (npm, git commit, prisma, playwright, pm2 restart)
-et **s'arrête** sur le destructif ou le public (`git push`, `certbot`, `nginx`,
-`rm -rf`, `sudo`, `migrate deploy`, `eas submit`, lecture de `.env`/`.ssh`).
-Les règles `deny` l'emportent toujours. C'est la porte G4, matérialisée.
+L'agent **exécute** maintenant les commandes qui l'arrêtaient avant : déploiements,
+nginx, certbot, pm2, migrations, push, merge, rm. Tu n'as plus à revenir dans le
+terminal pour les taper. Ce qui le retient tient en trois étages, évalués dans
+cet ordre par Claude Code :
 
-`--dangerously-skip-permissions` supprime TOUTE confirmation : à réserver aux
-environnements **jetables** (container recréable), typiquement pour du cron
-headless. Pas sur une VPS qui héberge tes projets et tes clés.
+| Étage | Contenu | Comportement |
+|---|---|---|
+| **`deny`** | ce qui met le serveur en PLS : `ufw`, arrêt de SSH, `mkfs`, `dd`, `apt purge`, `sudo rm`, reboot, `rm -rf /`, plus `.env`/`.ssh` et les règles de l'agent | **jamais**, par personne — même un hook qui répond « allow » ne peut pas débloquer |
+| **`ask`** | irréversible mais légitime : désinstaller une lib ou une app, montées de version en masse, migration de schéma en prod, suppression d'un projet cloud, publication sur un store | **on te demande, à chaque fois** — accepter / refuser / « non, fais plutôt ça » |
+| **le juge** | tout le reste | il évalue au moment de l'appel et décide |
 
-L'agent ne peut pas réécrire ses propres règles (`deny` sur `~/.claude/**`) :
-la rétrospective te propose des diffs, tu les appliques.
+Le juge n'est pas un script maison : c'est le **mode auto** de Claude Code, un
+second modèle qui relit chaque action. Tu le configures en français dans le bloc
+`autoMode` de `settings.json` — il connaît ta VPS, pm2, nginx, et sait qu'un
+projet listé comme live n'est pas un bac à sable.
+
+```bash
+claude auto-mode config      # les règles réellement appliquées
+claude auto-mode critique    # une IA relit tes règles et signale les ambiguës
+```
+
+**`classifyAllShell: true`** fait passer *toute* commande shell par le juge, même
+celles couvertes par une règle d'autorisation étroite. C'est ce qui ferme
+structurellement le trou du wrapper : `npm run deploy` est désormais jugé sur ce
+qu'il **fait**, plus sur la façon dont il est **écrit**.
+
+### Le gardien — ce que les patterns ne savent pas dire
+
+`global/hooks/agent-guard.sh` (~150 lignes, aucun appel LLM, ~5 ms) ajoute trois
+choses impossibles à exprimer en motifs texte :
+
+- **Deux étages d'agents.** Les 8 agents gardent exactement leurs restrictions
+  d'avant : un `builder` ne peut toujours pas toucher nginx ni pousser. Seul
+  l'orchestrateur passe par le juge. Le hook les distingue via le champ
+  `agent_type`, présent uniquement dans un sous-agent.
+- **`rm` conscient du chemin.** `Bash(rm -rf:*)` en deny bloquait aussi bien un
+  `node_modules` qu'un `/etc`. Ici la cible est analysée : dans un projet →
+  routine ; le dossier entier d'un projet → on te demande ; ailleurs → refusé.
+- **Les projets en production.** « Déjà en ligne » est un fait, pas un motif.
+  Tout projet nommé dans `~/.claude/production-projects` voit ses commandes
+  modifiantes remontées vers toi.
+
+```bash
+./global/hooks/agent-guard.sh --self-test   # la table de décision, 13 cas
+```
+
+**`~/.claude/production-projects`** — une ligne par app en ligne. Le fichier est
+en `deny` pour l'agent **volontairement** : toi seul y ajoutes un projet, à G4,
+pour qu'il ne puisse jamais s'en retirer discrètement.
+
+`--dangerously-skip-permissions` supprime TOUTE confirmation, y compris les
+étages ci-dessus : à réserver aux environnements **jetables**. Avec le mode auto
+tu n'en as plus besoin — c'est précisément ce qu'il remplace.
+
+⚠️ **Limite connue** : `~/.claude` est un symlink vers ce repo, donc le `deny` sur
+`~/.claude/**` ne couvre pas les mêmes fichiers atteints par leur chemin repo
+(`~/agentic-kit/global/…`). Modifier le kit reste possible — c'est voulu — mais
+garde-le comme un acte délibéré et relis le diff.
+
+### Git & branches
+
+Tout dev de feature ou d'évolution se fait sur `feature/<slug>`, créée hors de
+`main` en Phase 0. Quand reviewer + qa sont PASS, l'orchestrateur intègre :
+
+```bash
+git checkout main && git merge feature/<slug> && git branch -d feature/<slug>
+```
+
+Autonome pour un projet pas encore en ligne. Pour un projet listé en production,
+le gardien remonte le merge vers toi. Aucun GitHub requis : tout est local.
 
 ## Organisation
 
 ```
 ~/.claude/                     ← global : CLAUDE.md orchestrateur, agents/, skills/,
-│                                templates/, agent-memory (scope user)
+│                                templates/, hooks/ (agent-guard.sh),
+│                                production-projects (les apps en ligne — à toi),
+│                                agent-memory (scope user)
 ~/projects/<projet>/           ← créé par le pipeline, un par idée
 ├── CLAUDE.md                  ← delta uniquement (port, commandes)
 ├── SPEC.md  RESEARCH.md  TECH.md  ARCHITECTURE.md  GUIDE.md

@@ -180,7 +180,18 @@ pattern = "Bash(git commit*)"
 
 [[permission.rules]]
 decision = "allow"
-pattern = "Bash(git checkout -b*)"
+pattern = "Bash(git checkout*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git switch*)"
+
+# Local integration of a finished feature branch. `git push` stays denied above:
+# Kimi Code has no auto-mode classifier and no PreToolUse hook, so nothing here
+# could judge a push the way the Claude Code side does. See README "Limites".
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(git merge*)"
 
 [[permission.rules]]
 decision = "allow"

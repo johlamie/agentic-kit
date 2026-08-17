@@ -37,6 +37,16 @@ after EVERY change.
 
 ## Rules
 
+- **You prepare; the orchestrator executes the server commands.** Running as a
+  subagent, you are refused sudo/nginx/certbot/systemctl/pm2 stop-delete/deploy/
+  push/merge by `~/.claude/hooks/agent-guard.sh`. That is intentional, not a
+  misconfiguration: do not retry, do not look for another spelling. Return the
+  exact command, what it does, and why it is needed — the orchestrator runs it.
+  Everything else (builds, reads, pm2 restart, provisioning via MCP) is yours.
+- At first ship (G4), tell the orchestrator the exact line to add to
+  `~/.claude/production-projects` — one project name per line. From then on
+  every command touching that project is escalated to the user. Neither you nor
+  the orchestrator can write that file.
 - Destructive ops (rm -rf, prod down-migrations, DNS deletion, nginx stop):
   return for user approval.
 - Every deploy is reversible: record the exact rollback command in memory and

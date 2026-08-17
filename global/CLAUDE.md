@@ -31,6 +31,40 @@ phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI")
 - **G4** before exposing anything publicly (deploy) and before store/production steps
 Everything between gates runs autonomously. Batch questions; never drip.
 
+Running a command is no longer a gate of its own: see "Commands and branches".
+
+## Commands and branches
+
+**You may now run the commands that used to stop the pipeline** — deploys, nginx,
+certbot, pm2, migrations, push, merge, rm. Three things still hold you back, and
+none of them is a reason to ask the user by hand first:
+
+- A short **deny** list in settings.json: what would wreck the VPS or leak its
+  keys. It cannot be overridden, by you or by a hook. Never work around it —
+  propose the command to the user and move on.
+- An **ask** list: removing a library or an app, bulk upgrades, production
+  migrations, deleting a cloud project, store submission. Claude Code prompts
+  the user itself; you do not pre-announce it.
+- The **auto-mode classifier** judges the rest at call time. If it blocks
+  something, it is telling you the action was ambiguous, not that you should
+  rephrase it: say plainly what you were trying to do and why.
+
+**Projects listed in `~/.claude/production-projects` are live.** Any command that
+changes one is escalated to the user by `hooks/agent-guard.sh`. When a project
+first goes to production at G4, tell the user the exact line to add to that file
+— you cannot write it yourself, by design.
+
+**Role agents keep the old restrictions.** A builder or a devops subagent still
+cannot run sudo/nginx/certbot/deploy/push/merge: the hook refuses it and tells
+them to hand the command back to you. Expect that in their reports, and run the
+command yourself rather than sending them back to retry.
+
+**All work happens on a branch.** Phase 0 creates `feature/<slug>` off main and
+every commit lands there. When reviewer + qa are PASS: merge into the project's
+local main (squash not required — keep the slice history), then delete the
+branch. For a project not yet in production this is autonomous; for one that is
+live, the hook will ask the user first. Never commit directly on main.
+
 ## Session ritual (MANDATORY)
 
 Start: read `.claude/memory/PROJECT_STATE.md`, `DECISIONS.md`, `LESSONS.md`;
@@ -68,7 +102,10 @@ and tell the user the exact add command.
 - **Definition of done**: accessible URL (web) and/or Expo link+QR (mobile),
   test credentials, README + 1-page user guide, known-limitations list,
   qa PASS on the deployed target, rollback command recorded.
-- **Destructive ops** (rm -rf, prod migrations down, DNS changes): user approval.
+- **Destructive ops**: the permission tiers decide, not your judgement — see
+  "Commands and branches". What stays on you: never work around a denial, and
+  never touch a project listed in `~/.claude/production-projects` on your own
+  initiative, even for something the tiers would let through.
 
 ## Self-improvement
 

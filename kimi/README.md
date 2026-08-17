@@ -77,6 +77,15 @@ dispatch du sous-agent indique le chemin — voir « Delegation rules » dans
 
 ## Limites connues
 
+- **Pas de juge de commandes.** C'est désormais la divergence majeure avec le
+  côté Claude Code, qui laisse l'agent exécuter `nginx`, `certbot`, `deploy`,
+  `push` et `rm` sous le contrôle du mode auto (un second modèle qui évalue
+  chaque action) plus un hook `PreToolUse`. Kimi Code n'a **ni l'un ni l'autre**.
+  Les `deny` de `permissions.toml` restent donc à leur périmètre d'origine : ici
+  l'agent propose toujours ces commandes et tu les exécutes. Ne recopie pas le
+  `settings.json` allégé du dossier `global/` dans Kimi — il y perdrait son seul
+  garde-fou. Les **branches**, elles, sont bien portées : `feature/<slug>` en
+  Phase 0, merge local en Phase 7.5.
 - **Choix du modèle par agent impossible** (`model: opus|sonnet` du frontmatter
   Claude) : Kimi Code n'a qu'un seul modèle par session. La répartition
   « opus pour le jugement, sonnet pour le volume » est perdue.
