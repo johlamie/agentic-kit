@@ -25,6 +25,9 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 command -v claude >/dev/null || {
   echo "ERROR: Claude Code was installed but is not available on PATH." >&2
+  # Single quotes on purpose: this line is meant to be copied verbatim into a
+  # shell profile, where $HOME expands then — not here.
+  # shellcheck disable=SC2016
   echo 'Add export PATH="$HOME/.local/bin:$PATH" to your shell profile.' >&2
   exit 1
 }

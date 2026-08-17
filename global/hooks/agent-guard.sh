@@ -51,6 +51,11 @@ emit() { # emit <allow|deny|ask> <reason>
 # Expand ~ and relative paths so the safe-zone test compares real locations.
 abs_path() {
   local p="$1"
+  # The quotes below are the whole point: these patterns match the LITERAL text
+  # "~/" and "$HOME/" as it appears in a command the agent wrote, before any
+  # shell got to expand it. Letting them expand here would compare the pattern
+  # against itself and match nothing.
+  # shellcheck disable=SC2088,SC2016
   case "$p" in
     '~')    p="$HOME" ;;
     '~/'*)  p="$HOME/${p#\~/}" ;;

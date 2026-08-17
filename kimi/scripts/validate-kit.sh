@@ -90,15 +90,19 @@ done
 pass "required skill manifests were inspected"
 
 for file in PROJECT_STATE.md DECISIONS.md LESSONS.md CAPABILITY_GAPS.md; do
-  [[ -s "templates/memory/$file" ]] \
-    && pass "memory template exists: $file" \
-    || fail "missing or empty memory template: $file"
+  if [[ -s "templates/memory/$file" ]]; then
+    pass "memory template exists: $file"
+  else
+    fail "missing or empty memory template: $file"
+  fi
 done
 
 for denied in 'Bash(git push*)' 'Read(./.env)' 'Write(~/.kimi-code/AGENTS.md)'; do
-  grep -Fq "pattern = \"$denied\"" config/permissions.toml \
-    && pass "critical deny rule present: $denied" \
-    || fail "critical deny rule missing: $denied"
+  if grep -Fq "pattern = \"$denied\"" config/permissions.toml; then
+    pass "critical deny rule present: $denied"
+  else
+    fail "critical deny rule missing: $denied"
+  fi
 done
 
 # Converted files must not keep functional .claude references. Only README.md

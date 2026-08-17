@@ -31,6 +31,9 @@ else
   fail "global/hooks/agent-guard.sh missing or not executable"
 fi
 
+# The tilde is intentionally unexpanded: we are asserting the literal string
+# stored in settings.json, which Claude Code expands itself at hook time.
+# shellcheck disable=SC2088
 if hook_cmd=$(jq -er '.hooks.PreToolUse[0].hooks[0].command' global/settings.json 2>/dev/null) \
    && [[ "$hook_cmd" == "~/.claude/hooks/agent-guard.sh" ]]; then
   pass "settings.json registers the guard hook on PreToolUse"
