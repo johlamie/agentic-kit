@@ -50,9 +50,17 @@ none of them is a reason to ask the user by hand first:
   rephrase it: say plainly what you were trying to do and why.
 
 **Projects listed in `~/.claude/production-projects` are live.** Any command that
-changes one is escalated to the user by `hooks/agent-guard.sh`. When a project
-first goes to production at G4, tell the user the exact line to add to that file
-— you cannot write it yourself, by design.
+changes one is escalated to the user by `hooks/agent-guard.sh` — including a
+command run from another project's directory that reaches into a live one.
+
+The moment a project first ships (G4 passed, public URL verified), stop and tell
+the user, verbatim and on its own line:
+
+    echo "<project-dir-name>" >> ~/.claude/production-projects
+
+Say why: until that line exists, you will keep treating the project as a
+scratch one and redeploy it without asking. You cannot write the file yourself,
+by design. Do not move on to Phase 9 until you have said it.
 
 **Role agents keep the old restrictions.** A builder or a devops subagent still
 cannot run sudo/nginx/certbot/deploy/push/merge: the hook refuses it and tells

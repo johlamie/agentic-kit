@@ -208,7 +208,7 @@
     "allow": [
       "$defaults",
       "Reloading nginx, renewing or issuing a TLS certificate, and restarting a pm2 process are routine operations on this VPS, not production incidents — this is how every deploy finishes.",
-      "Creating, editing and deleting files under ~/projects/ is ordinary work, including build output, node_modules, and generated files.",
+      "Creating, editing and deleting files inside the project currently being worked on is ordinary work, including build output, node_modules, and generated files. Reaching into a DIFFERENT project under ~/projects/ is not ordinary: keep treating that as leaving the working scope, so it needs the user to have named the file or the project.",
       "Deploying a project that is NOT listed in ~/.claude/production-projects is routine: it has no users yet.",
       "Merging a feature branch into the local main of a project repository, and deleting the merged branch, is routine version control."
     ],

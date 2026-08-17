@@ -142,9 +142,52 @@ choses impossibles à exprimer en motifs texte :
 ./global/hooks/agent-guard.sh --self-test   # la table de décision, 13 cas
 ```
 
-**`~/.claude/production-projects`** — une ligne par app en ligne. Le fichier est
-en `deny` pour l'agent **volontairement** : toi seul y ajoutes un projet, à G4,
-pour qu'il ne puisse jamais s'en retirer discrètement.
+### Marquer un projet comme « en production » — à faire au premier déploiement
+
+`~/.claude/production-projects` liste les apps qui ont de vrais utilisateurs.
+**Tant qu'un projet n'y figure pas, le juge le traite comme un bac à sable** et
+déploiera dessus sans rien te demander. C'est voulu — mais ça veut dire que
+cette ligne est ta seule protection sur une app en ligne.
+
+**Au premier déploiement réussi d'un projet (G4), ajoute-le :**
+
+```bash
+echo "mon-projet" >> ~/.claude/production-projects
+```
+
+Une ligne par projet, le **nom du dossier** sous `~/projects/`, sans chemin. Les
+lignes vides et celles commençant par `#` sont ignorées.
+
+À partir de là, toute commande qui modifie ce projet — déploiement, `pm2`,
+migration, merge, suppression de fichier — s'arrête et te demande. Y compris
+quand elle vient d'ailleurs : si tu travailles sur le projet A et qu'une
+commande touche un fichier du projet B marqué en production, c'est B qui décide.
+
+Le fichier est en `deny` pour l'agent **volontairement** : toi seul y ajoutes un
+projet, pour qu'il ne puisse jamais s'en retirer discrètement. L'agent te
+rappellera la ligne exacte à taper au moment du ship.
+
+Vérifier ce qui est marqué :
+
+```bash
+./scripts/check-runtime.sh   # affiche "production-projects list present (N project(s) marked live)"
+```
+
+### Puis-je supprimer un fichier dans un autre projet ?
+
+Oui, **si tu le demandes explicitement**. C'est une règle du classifier : agir
+dans le projet courant est de la routine, aller dans un *autre* projet est une
+sortie de périmètre — bloquée par défaut, sauf si ton message décrit précisément
+l'action.
+
+| Ce que tu écris | Résultat |
+|---|---|
+| « supprime `~/projects/B/vieux-script.ts` » | ✅ passe — action nommée |
+| « nettoie mes projets » | ❌ bloqué — demande générale |
+| idem, mais B est marqué en production | ⏸️ le gardien te demande confirmation d'abord |
+
+La même logique vaut pour tout le reste : une intention **précise** de ta part
+lève les blocages souples du juge. Une consigne vague, non.
 
 `--dangerously-skip-permissions` supprime TOUTE confirmation, y compris les
 étages ci-dessus : à réserver aux environnements **jetables**. Avec le mode auto

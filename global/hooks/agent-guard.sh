@@ -119,6 +119,28 @@ project_of() {
   esac
 }
 
+# Every project a command could affect: the working directory's, PLUS any
+# project named by a path in the command itself. Without the second half,
+# deleting a file in a live project while sitting in a scratch one would sail
+# through — the working directory says "scratch", the damage says otherwise.
+projects_touched() {
+  local cmd="$1" tok p name
+  name="$(project_of "$CWD")"
+  [ -n "$name" ] && printf '%s\n' "$name"
+  # Deliberate word splitting: we are inspecting shell tokens.
+  # shellcheck disable=SC2086
+  set -- $cmd
+  for tok in "$@"; do
+    case "$tok" in -*) continue ;; esac
+    p="$(abs_path "$tok")"
+    case "$p" in
+      "$PROJECTS_ROOT"/*)
+        p="${p#"$PROJECTS_ROOT"/}"
+        printf '%s\n' "${p%%/*}" ;;
+    esac
+  done
+}
+
 is_production() {
   local name="$1"
   [ -n "$name" ] || return 1
@@ -158,10 +180,15 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
     emit deny "Reserved to the orchestrator (you are running as '$agent_type'). Return the exact command and why it is needed; the orchestrator runs it."
   fi
 
-  # -- 3. Projects that are already live.
-  local project; project="$(project_of "$CWD")"
-  if is_production "$project" && printf '%s' "$scan" | grep -Eq "$MUTATING"; then
-    emit ask "'$project' is listed as running in production ($PRODUCTION_LIST). This command changes it. Confirm, refuse, or say what to do instead."
+  # -- 3. Projects that are already live — the working directory's and any the
+  # command reaches into.
+  if printf '%s' "$scan" | grep -Eq "$MUTATING"; then
+    local project
+    for project in $(projects_touched "$cmd" | sort -u); do
+      if is_production "$project"; then
+        emit ask "'$project' is listed as running in production ($PRODUCTION_LIST). This command changes it. Confirm, refuse, or say what to do instead."
+      fi
+    done
   fi
 
   return 0
@@ -216,6 +243,11 @@ self_test() {
   check "mutating a live project asks" ask   ""        "pm2 restart live-app"        "$P/live-app"
   check "reading a live project is ok" none  ""        "npm test"                    "$P/live-app"
   check "mutating a scratch project"   none  ""        "pm2 restart demo"            "$P/demo"
+  # Reaching into another project from the one you are sitting in. The working
+  # directory alone would have called these routine.
+  check "deleting into a live project" ask   ""        "rm $P/live-app/config.ts"    "$P/demo"
+  check "deleting into a scratch one"  none  ""        "rm $P/other/config.ts"       "$P/demo"
+  check "reading a live project file"  none  ""        "cat $P/live-app/config.ts"   "$P/demo"
   rm -f "$tmp"
 
   if [ "$fails" -gt 0 ]; then
