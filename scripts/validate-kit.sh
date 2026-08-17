@@ -115,6 +115,28 @@ for rule in 'Bash(git push:*)' 'Bash(git merge:*)' 'Bash(sudo nginx:*)' \
   assert_rule allow "$rule"
 done
 
+# 44e17e9's doctrine, applied to the ask tier: a rule that only covers the `npx`
+# spelling leaves the bare binary unguarded, and vice versa. This check exists
+# because exactly that happened once, silently, while resolving a merge conflict.
+missing_pair=$(jq -r '
+  .permissions.ask as $ask
+  | [ $ask[]
+      | select(startswith("Bash(npx "))
+      | sub("^Bash\\(npx "; "Bash(") as $bare
+      | select(($ask | index($bare)) == null)
+      | "\(.)  (bare form missing: \($bare))" ]
+  + [ $ask[]
+      | select(startswith("Bash(") and (startswith("Bash(npx ") | not))
+      | sub("^Bash\\("; "Bash(npx ") as $npx
+      | select(($ask | index($npx)) != null | not)
+      | empty ]
+  | join("; ")' global/settings.json)
+if [[ -z "$missing_pair" ]]; then
+  pass "every npx-spelled ask rule has its bare counterpart"
+else
+  fail "ask rule covers only the npx spelling: $missing_pair"
+fi
+
 # A denied command must never also be allowed: deny wins, so the allow entry
 # would be a lie about what the kit can do.
 if overlap=$(jq -r '[.permissions.allow[] as $a | .permissions.deny[] | select(. == $a)] | join(", ")' \

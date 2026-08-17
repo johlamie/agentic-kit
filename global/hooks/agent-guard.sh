@@ -126,11 +126,23 @@ is_production() {
 }
 
 evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON or nothing
-  local agent_type="$1" cmd="$2"
+  local agent_type="$1" cmd="$2" scan
   CWD="$3"
 
+  # Quoted text is DATA, not a command. A commit message or a grep pattern that
+  # merely mentions `firebase projects:delete` is not an attempt to run it —
+  # this hook refused its own commit over exactly that. So strip quoted segments
+  # before pattern-matching, EXCEPT when the command hands a string to a shell,
+  # where the quoted part really is the command being run.
+  scan="$cmd"
+  if ! printf '%s' "$cmd" \
+       | grep -Eq '(^|[;&|[:space:]])(sh|bash|zsh|dash|ksh|eval|env|xargs|timeout|nohup)([[:space:]]|$)'; then
+    scan="$(printf '%s' "$cmd" | sed -e "s/'[^']*'/''/g" -e 's/"[^"]*"/""/g')"
+  fi
+
   # -- 1. Path-aware rm, before anything else: the worst outcome on this list.
-  if printf '%s' "$cmd" | grep -Eq '(^|[;&|[:space:]])rm([[:space:]]|$)'; then
+  # Detected on the stripped text, but targets are read from the real command.
+  if printf '%s' "$scan" | grep -Eq '(^|[;&|[:space:]])rm([[:space:]]|$)'; then
     case "$(rm_verdict "$cmd")" in
       outside)
         emit deny "Refused: this rm reaches outside $PROJECTS_ROOT. Deleting files outside a project is not something an agent does unattended — tell the user the exact path and let them run it." ;;
@@ -140,13 +152,13 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
   fi
 
   # -- 2. Two tiers: role agents keep their pre-judge restrictions.
-  if [ -n "$agent_type" ] && printf '%s' "$cmd" | grep -Eq "$ORCHESTRATOR_ONLY"; then
+  if [ -n "$agent_type" ] && printf '%s' "$scan" | grep -Eq "$ORCHESTRATOR_ONLY"; then
     emit deny "Reserved to the orchestrator (you are running as '$agent_type'). Return the exact command and why it is needed; the orchestrator runs it."
   fi
 
   # -- 3. Projects that are already live.
   local project; project="$(project_of "$CWD")"
-  if is_production "$project" && printf '%s' "$cmd" | grep -Eq "$MUTATING"; then
+  if is_production "$project" && printf '%s' "$scan" | grep -Eq "$MUTATING"; then
     emit ask "'$project' is listed as running in production ($PRODUCTION_LIST). This command changes it. Confirm, refuse, or say what to do instead."
   fi
 
@@ -179,6 +191,17 @@ self_test() {
   check "builder can run tests"        none  "builder" "npm test"                    "$P/demo"
   check "orchestrator may reload nginx" none ""        "sudo systemctl reload nginx" "$P/demo"
   check "devops cannot deploy alone"   deny  "devops"  "firebase deploy"             "$P/demo"
+  # Quoted text is data, not commands. Every case below is a real command this
+  # hook wrongly refused, or would have: the first one blocked its own commit.
+  check "commit message naming a sensitive command" \
+                                       none  "claude"  "git commit -m \"restore firebase projects:delete in ask\"" "$P/demo"
+  check "grep for a sensitive command"  none  "builder" "grep -rn 'sudo systemctl' ."  "$P/demo"
+  check "echo describing a deploy"      none  "devops"  "echo 'run firebase deploy next'" "$P/demo"
+  check "rm mentioned in a commit msg"  none  "claude"  "git commit -m \"guard rm -rf /etc\"" "$P/demo"
+  # ...but a shell invoker really does run its quoted argument.
+  check "sh -c hiding a server command" deny  "builder" "sh -c \"sudo systemctl stop nginx\"" "$P/demo"
+  check "bash -c hiding a push"         deny  "builder" "bash -c 'git push origin main'" "$P/demo"
+
   # Production projects
   local tmp; tmp="$(mktemp)"; printf '# live\nlive-app\n' > "$tmp"
   PRODUCTION_LIST="$tmp"
