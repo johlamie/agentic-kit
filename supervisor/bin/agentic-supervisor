@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SUPERVISOR_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+ENTRYPOINT="$SUPERVISOR_ROOT/dist/src/cli/main.js"
+
+if [[ ! -f "$ENTRYPOINT" ]]; then
+  echo "Agentic Supervisor is not built. Run: cd $SUPERVISOR_ROOT && npm run build" >&2
+  exit 50
+fi
+
+exec node "$ENTRYPOINT" "$@"

@@ -2,8 +2,8 @@
 # agent-guard.sh — PreToolUse gate for the agentic delivery kit.
 #
 # settings.json holds ONE permission set for the whole session, and its patterns
-# match the literal command string. That leaves three jobs it cannot do, which
-# are exactly this script's three jobs:
+# match the literal command string. This script adds the context-aware checks
+# that static patterns cannot express:
 #
 #   1. TWO TIERS. A subagent inherits the session's permissions; there is no
 #      per-agent rule syntax. This hook reads `agent_type` — present only inside
@@ -18,6 +18,9 @@
 #   3. PRODUCTION PROJECTS. "already live" is a fact, not a text pattern. Any
 #      project listed in ~/.claude/production-projects escalates mutating
 #      commands to a prompt, whatever the command happens to be called.
+#
+#   4. FILE-TOOL SCOPE. Write/Edit/NotebookEdit calls are checked against the
+#      current project, production list, agent rules, and protected locations.
 #
 # CONTRACT: always exit 0. Printing nothing means "no opinion" and the normal
 # flow continues (deny rules, then ask rules, then the auto-mode classifier).
@@ -154,6 +157,60 @@ is_production() {
   grep -qxF -- "$name" <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$PRODUCTION_LIST" | grep -v '^$')
 }
 
+# A shell command can bypass a Read permission rule (for example, `cat .env`).
+# Keep a narrow second line of defence for commands that can disclose or move
+# protected credentials. Template env files remain readable.
+references_sensitive_path() {
+  local cleaned
+  cleaned="$(printf '%s' "$1" | sed -E 's/\.env\.(example|sample|template)([^A-Za-z0-9_-]|$)/ENV_TEMPLATE\2/g')"
+  # Literal $HOME is command text at this point; expansion would be a bug.
+  # shellcheck disable=SC2016
+  printf '%s' "$cleaned" | grep -Eq '(^|[/[:space:]"'"'"'=<])\.env($|[./[:space:]"'"'"'>])' \
+    || printf '%s' "$cleaned" | grep -Eq '(~|\$HOME|/home/[^/[:space:]]+)/\.(ssh|aws|config/gcloud|codex/(auth\.json|config\.toml))(/|$|[[:space:]"'"'"'>])'
+}
+
+can_disclose_files() {
+  printf '%s' "$1" | grep -Eq '(^|[;&|[:space:]])(cat|head|tail|less|more|sed|awk|grep|rg|find|cp|mv|tar|zip|unzip|base64|xxd|strings|source|curl|wget|python|python3|node|ruby|perl|sh|bash|zsh|dash)([[:space:]]|$)'
+}
+
+evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
+  local tool_name="$1" file_path="$3" cwd="$4"
+  local target cwd_abs current_project target_project base
+  [ -n "$file_path" ] || return 0
+  CWD="$cwd"
+  target="$(abs_path "$file_path")"
+  cwd_abs="$(abs_path "$cwd")"
+  base="${target##*/}"
+
+  case "$target" in
+    "$HOME/.claude"|"$HOME/.claude/"*|"$HOME/.ssh"|"$HOME/.ssh/"*|"$HOME/.aws"|"$HOME/.aws/"*|"$HOME/.config/gcloud"|"$HOME/.config/gcloud/"*|"$HOME/.codex/auth.json"|"$HOME/.codex/config.toml")
+      emit deny "Refused: $tool_name cannot modify protected agent rules or credential locations." ;;
+  esac
+
+  case "$base" in
+    .env|.env.local|.env.development|.env.test|.env.staging|.env.production)
+      emit ask "This $tool_name changes a credential-bearing environment file. Confirm the exact non-secret change; do not place credentials in the agent context." ;;
+  esac
+
+  current_project="$(project_of "$cwd")"
+  case "$target" in
+    "$PROJECTS_ROOT"/*)
+      target_project="${target#"$PROJECTS_ROOT"/}"
+      target_project="${target_project%%/*}"
+      if is_production "$target_project"; then
+        emit ask "'$target_project' is listed as running in production ($PRODUCTION_LIST). Confirm this $tool_name change."
+      fi
+      if [ -n "$current_project" ] && [ "$current_project" != "$target_project" ]; then
+        emit ask "This $tool_name reaches from '$current_project' into a different project ('$target_project'). Confirm the cross-project change."
+      fi
+      return 0 ;;
+    "$cwd_abs"|"$cwd_abs/"*|/tmp/*)
+      return 0 ;;
+    *)
+      emit deny "Refused: $tool_name targets '$target', outside the current project scope." ;;
+  esac
+}
+
 evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON or nothing
   local agent_type="$1" cmd="$2" scan
   CWD="$3"
@@ -167,6 +224,11 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
   if ! printf '%s' "$cmd" \
        | grep -Eq '(^|[;&|[:space:]])(sh|bash|zsh|dash|ksh|eval|env|xargs|timeout|nohup)([[:space:]]|$)'; then
     scan="$(printf '%s' "$cmd" | sed -e "s/'[^']*'/''/g" -e 's/"[^"]*"/""/g')"
+  fi
+
+  # A Bash tool can otherwise read paths denied to Claude's Read tool.
+  if can_disclose_files "$scan" && references_sensitive_path "$cmd"; then
+    emit deny "Refused: this shell command can disclose or move protected credentials. Use a non-secret fixture or ask the user for a narrow human-assisted step."
   fi
 
   # -- 1. Path-aware rm, before anything else: the worst outcome on this list.
@@ -255,6 +317,30 @@ self_test() {
   check "reading a live project file"  none  ""        "cat $P/live-app/config.ts"   "$P/demo"
   rm -f "$tmp"
 
+  # File tools use the same scope and production policy as Bash mutations.
+  tmp="$(mktemp)"; printf 'live-app\n' > "$tmp"
+  PRODUCTION_LIST="$tmp"
+  check_file() { # check_file <label> <expected> <tool> <agent> <path> <cwd>
+    got="$( evaluate_file "$3" "$4" "$5" "$6" | jq -r '.hookSpecificOutput.permissionDecision // "none"' 2>/dev/null )"
+    [ -n "$got" ] || got=none
+    if [ "$got" = "$2" ]; then
+      printf 'PASS  %-52s -> %s\n' "$1" "$got"
+    else
+      printf 'FAIL  %-52s -> %s (expected %s)\n' "$1" "$got" "$2" >&2
+      fails=$((fails + 1))
+    fi
+  }
+  check_file "write inside current project" none Write builder "$P/demo/src/app.ts" "$P/demo"
+  check_file "edit live project asks" ask Edit builder "$P/live-app/src/app.ts" "$P/live-app"
+  check_file "cross-project edit asks" ask Edit builder "$P/other/src/app.ts" "$P/demo"
+  check_file "write outside project denied" deny Write builder "/etc/nginx/site" "$P/demo"
+  check_file "self-modifying agent rules denied" deny Edit builder "$HOME/.claude/settings.json" "$P/demo"
+  check_file "environment secret write asks" ask Write builder "$P/demo/.env" "$P/demo"
+  check "Bash cannot read .env" deny "" "cat .env" "$P/demo"
+  check "Bash can read env template" none "" "cat .env.example" "$P/demo"
+  check "Bash cannot read SSH keys" deny "" "head -1 ~/.ssh/id_ed25519" "$P/demo"
+  rm -f "$tmp"
+
   if [ "$fails" -gt 0 ]; then
     printf '\n%d self-test failure(s).\n' "$fails" >&2
     return 1
@@ -271,10 +357,13 @@ command -v jq >/dev/null || exit 0   # no jq, no opinion — never block on tool
 
 payload="$(cat)"
 # Malformed input is not our problem to report: stay silent, stay non-blocking.
-[ "$(jq -r '.tool_name // ""' <<<"$payload" 2>/dev/null)" = "Bash" ] || exit 0
-
-evaluate \
-  "$(jq -r '.agent_type // ""'          <<<"$payload" 2>/dev/null)" \
-  "$(jq -r '.tool_input.command // ""'  <<<"$payload" 2>/dev/null)" \
-  "$(jq -r '.cwd // ""'                 <<<"$payload" 2>/dev/null)"
+tool_name="$(jq -r '.tool_name // ""' <<<"$payload" 2>/dev/null)"
+agent_type="$(jq -r '.agent_type // ""' <<<"$payload" 2>/dev/null)"
+cwd="$(jq -r '.cwd // ""' <<<"$payload" 2>/dev/null)"
+case "$tool_name" in
+  Bash)
+    evaluate "$agent_type" "$(jq -r '.tool_input.command // ""' <<<"$payload" 2>/dev/null)" "$cwd" ;;
+  Write|Edit|NotebookEdit)
+    evaluate_file "$tool_name" "$agent_type" "$(jq -r '.tool_input.file_path // .tool_input.notebook_path // ""' <<<"$payload" 2>/dev/null)" "$cwd" ;;
+esac
 exit 0

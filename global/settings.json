@@ -1,6 +1,6 @@
 {
-  "defaultMode": "auto",
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Read",
       "Glob",
@@ -180,12 +180,91 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
             "command": "~/.claude/hooks/agent-guard.sh",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|WebSearch|WebFetch|Agent|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
           }
         ]
       }
@@ -229,9 +308,9 @@
     "READ THIS FIRST — evaluation order is deny, then ask, then allow, then the auto-mode classifier. Deny wins over everything, including the hook: a PreToolUse hook returning 'allow' cannot unblock a denied command. So the deny list below is deliberately short. It holds only what would wreck the server or leak its keys; everything else is judged at call time.",
     "deny = the machine dies or you lose access: firewall, SSH, disk, package removal, ownership of system paths, reboot, and rm at the filesystem root. Plus secrets (.env, .ssh, .aws) and the agent's own rules (~/.claude/CLAUDE.md, settings.json, agents, skills, hooks).",
     "ask = you decide, every time. These are the irreversible-but-legitimate ones: removing a library or an app, bulk version upgrades, production schema migrations, deleting a cloud project, submitting to a store. The prompt offers accept / refuse / 'no, do this instead'.",
-    "The auto-mode classifier judges the rest. Configure it in the autoMode block above, in plain prose — 'claude auto-mode config' prints the effective rules, 'claude auto-mode critique' reviews the ones written here. defaultMode 'auto' only takes effect from ~/.claude/settings.json, which is what this file is symlinked to.",
+    "The auto-mode classifier judges the rest. Configure it in the autoMode block above, in plain prose — 'claude auto-mode config' prints the effective rules, 'claude auto-mode critique' reviews the ones written here. permissions.defaultMode 'auto' only takes effect from ~/.claude/settings.json, which is what this file is symlinked to.",
     "classifyAllShell true means narrow allow rules no longer short-circuit the classifier. This is what structurally closes the wrapper hole: 'npm run deploy' is now judged on what it does, not on how it is spelled, so a denied binary can no longer be reached through a package script.",
-    "hooks/agent-guard.sh does the three things patterns cannot: it keeps the 8 role agents at their pre-judge restrictions (they see 'agent_type', the orchestrator does not), it reads the actual target of an rm instead of matching the string, and it escalates any project named in ~/.claude/production-projects. Run it with --self-test to see the decision table.",
+    "hooks/agent-guard.sh handles the context patterns cannot: role-agent restrictions, path-aware rm, production-project escalation, Write/Edit scope, and obvious Bash credential reads. Run it with --self-test to see the decision table.",
     "~/.claude/production-projects is the list of apps that are live. It is denied to the agent on purpose: only you add a project to it, at G4, so the agent can never quietly un-mark one. One project name per line.",
     "KNOWN GAP: ~/.claude is a symlink into the kit repo, so the deny rules on ~/.claude/** do not cover the same files reached by their repo path (<your-clone>/global/...). Kit edits stay possible by design; keep them a deliberate act, and review the diff before merging.",
     "STILL TRUE IF YOU EVER TURN classifyAllShell OFF: deny patterns match the literal command string, so a denied binary stays reachable through a wrapper — `npm run deploy` and `npx firebase deploy` both walk past `Bash(firebase deploy:*)` because `Bash(npm run:*)` and `Bash(npx:*)` are allowed. Without the classifier reading every shell command, you are back to denying each wrapper spelling by hand.",

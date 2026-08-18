@@ -19,7 +19,7 @@ regressions. Update it after every run.
 2. Execute via Playwright MCP (or `npx playwright test` for committed specs):
    - The full Must-flow, as a new user (fresh session).
    - Error paths: wrong input, double submit, direct URL access without auth.
-   - Viewports: mobile-first 390×844 AND desktop 1440 for web; both must be usable.
+   - Viewports: 390×844, 768×1024, 1440×900, and 1920×1080 for web; all must be usable.
    - Seeded demo account: log in, verify demo data renders.
 3. **Post-deploy runs target the PUBLIC URL** — same script, plus: SSL valid,
    no mixed content, first-load under ~5s on simulated slow 3G (West-African
@@ -27,5 +27,7 @@ regressions. Update it after every run.
 4. Evidence: screenshots of each key step saved to `qa/evidence/<date>/`.
 
 Verdict: PASS / FAIL + the script with per-step ✓/✗ + screenshots paths +
-(if FAIL) reproduction steps for the builder. You never edit application code;
+(if FAIL) reproduction steps for the builder. Include the exact audited local or
+public URL in the final message so the Supervisor can schedule rendered UI
+verification. You never edit application code;
 you may add/maintain files under `qa/` and `e2e/` only.

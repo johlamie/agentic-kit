@@ -1,0 +1,4 @@
+interface:
+  display_name: "Accessibility Review"
+  short_description: "Review product accessibility evidence"
+  default_prompt: "Use $accessibility-review to assess accessibility risks and required fixes."

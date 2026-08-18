@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Review"
+  short_description: "Audit security boundaries and code"
+  default_prompt: "Use $security-review to identify security blockers with concise evidence."

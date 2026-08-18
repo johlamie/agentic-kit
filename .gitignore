@@ -3,3 +3,10 @@ agent-memory/
 settings.local.json
 *.bak-*
 .env
+
+# Codex Supervisor build/runtime state
+supervisor/node_modules/
+supervisor/dist/
+supervisor/*.sqlite3*
+.claude/supervisor/
+.playwright-mcp/

@@ -27,7 +27,9 @@ rationale per score). Decisions to make explicitly:
 3. **Framework**: Next.js / Expo / FastAPI-only / static — simplest thing that
    serves the Must-flow.
 4. **Services**: per SPEC integration, pick from RESEARCH.md options; list env
-   vars and monthly cost (free tier explicit).
+   vars and monthly cost (free tier explicit). Require source due-diligence
+   evidence for every external data/API dependency; do not accept scraping as
+   the default when an official or structured source may exist.
 
 Default stack (Next.js/Expo + Supabase + FastAPI-if-needed + PM2/Nginx) is the
 tiebreaker, never the reflex. Output ends with: total monthly cost estimate and

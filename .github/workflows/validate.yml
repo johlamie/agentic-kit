@@ -28,13 +28,39 @@ jobs:
       - name: Install validation dependencies
         run: sudo apt-get update && sudo apt-get install -y jq shellcheck
       - name: Lint shell scripts
-        run: shellcheck setup/*.sh scripts/*.sh global/hooks/*.sh
+        run: shellcheck setup/*.sh scripts/*.sh global/hooks/*.sh supervisor/bin/* supervisor/scripts/*.sh
       - name: Validate manifests and configuration
         run: ./scripts/validate-kit.sh
       - name: Guard hook decision table
         run: ./global/hooks/agent-guard.sh --self-test
       - name: Smoke-test isolated installation
         run: ./scripts/smoke-install.sh
+
+  supervisor-validation:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: supervisor/package-lock.json
+      - name: Install locked Supervisor dependencies
+        working-directory: supervisor
+        run: npm ci
+      - name: Audit production dependencies
+        working-directory: supervisor
+        run: npm audit --omit=dev --audit-level=high
+      - name: Typecheck
+        working-directory: supervisor
+        run: npm run typecheck
+      - name: Unit and integration tests with mocked Codex
+        working-directory: supervisor
+        run: npm test
+      - name: Production build
+        working-directory: supervisor
+        run: npm run build
 
   kimi-offline-validation:
     runs-on: ubuntu-22.04

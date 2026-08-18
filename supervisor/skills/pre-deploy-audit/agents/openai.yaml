@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pre-deploy Audit"
+  short_description: "Gate release readiness safely"
+  default_prompt: "Use $pre-deploy-audit to verify release readiness without deploying anything."

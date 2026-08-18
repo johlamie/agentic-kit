@@ -1,0 +1,682 @@
+import { randomUUID, createHash } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { basename, dirname, resolve } from "node:path";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import type {
+  AuditDecision,
+  AuditFinding,
+  AuditRecord,
+  AuditResult,
+  AuditType,
+  GateResult,
+  NormalizedEvent,
+  QueueCounts,
+  Severity,
+} from "./types.js";
+
+type Row = Record<string, unknown>;
+
+const MIGRATION_001 = `
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version INTEGER PRIMARY KEY,
+  applied_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS projects (
+  id TEXT PRIMARY KEY,
+  path TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  claude_session_id TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  ended_at TEXT,
+  status TEXT NOT NULL,
+  UNIQUE(project_id, claude_session_id)
+);
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  session_id TEXT REFERENCES sessions(id) ON DELETE SET NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  producer TEXT NOT NULL,
+  candidate_id TEXT,
+  audit_target TEXT,
+  event_type TEXT NOT NULL,
+  agent_type TEXT,
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  processed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS events_project_created_idx ON events(project_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS audits (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  project_path TEXT NOT NULL,
+  session_id TEXT REFERENCES sessions(id) ON DELETE SET NULL,
+  trigger_event_id TEXT REFERENCES events(id) ON DELETE SET NULL,
+  audit_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  decision TEXT,
+  severity TEXT,
+  summary TEXT,
+  result_json TEXT,
+  context_json TEXT NOT NULL,
+  producer TEXT NOT NULL DEFAULT 'claude',
+  candidate_id TEXT,
+  audit_target TEXT,
+  codex_thread_id TEXT,
+  coalesce_key TEXT,
+  not_before TEXT NOT NULL,
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  max_attempts INTEGER NOT NULL DEFAULT 3,
+  started_at TEXT,
+  completed_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  last_error TEXT
+);
+CREATE INDEX IF NOT EXISTS audits_queue_idx ON audits(status, not_before, created_at);
+CREATE INDEX IF NOT EXISTS audits_project_idx ON audits(project_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS audits_event_type_unique
+  ON audits(trigger_event_id, audit_type)
+  WHERE trigger_event_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS audits_active_coalesce_unique
+  ON audits(coalesce_key)
+  WHERE coalesce_key IS NOT NULL AND status IN ('pending', 'running');
+CREATE TABLE IF NOT EXISTS audit_findings (
+  id TEXT PRIMARY KEY,
+  audit_id TEXT NOT NULL REFERENCES audits(id) ON DELETE CASCADE,
+  severity TEXT NOT NULL,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  evidence_json TEXT NOT NULL,
+  recommended_action TEXT NOT NULL,
+  evidence_classification TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS human_requests (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  audit_id TEXT REFERENCES audits(id) ON DELETE SET NULL,
+  type TEXT NOT NULL,
+  message TEXT NOT NULL,
+  requested_action TEXT NOT NULL,
+  safe_to_continue INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  telegram_message_id TEXT,
+  created_at TEXT NOT NULL,
+  resolved_at TEXT
+);
+CREATE TABLE IF NOT EXISTS codex_runs (
+  id TEXT PRIMARY KEY,
+  audit_id TEXT NOT NULL REFERENCES audits(id) ON DELETE CASCADE,
+  thread_id TEXT,
+  status TEXT NOT NULL,
+  duration_ms INTEGER NOT NULL,
+  stdout_excerpt TEXT NOT NULL,
+  stderr_excerpt TEXT NOT NULL,
+  error TEXT,
+  created_at TEXT NOT NULL
+);
+`;
+
+function now(): string { return new Date().toISOString(); }
+
+function projectId(projectPath: string): string {
+  const name = basename(projectPath).replace(/[^A-Za-z0-9_-]+/gu, "-").slice(0, 40) || "project";
+  const hash = createHash("sha256").update(projectPath).digest("hex").slice(0, 12);
+  return `${name}-${hash}`;
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === "number" ? value : Number(value ?? 0);
+}
+
+function rowToAudit(row: Row): AuditRecord {
+  return {
+    id: String(row.id),
+    project_id: String(row.project_id),
+    project_path: String(row.project_path),
+    session_id: asString(row.session_id),
+    trigger_event_id: asString(row.trigger_event_id),
+    audit_type: String(row.audit_type) as AuditType,
+    status: String(row.status) as AuditRecord["status"],
+    decision: asString(row.decision) as AuditDecision | null,
+    severity: asString(row.severity) as Severity | null,
+    summary: asString(row.summary),
+    result_json: asString(row.result_json),
+    context_json: String(row.context_json),
+    producer: String(row.producer),
+    candidate_id: asString(row.candidate_id),
+    audit_target: asString(row.audit_target),
+    coalesce_key: asString(row.coalesce_key),
+    not_before: String(row.not_before),
+    attempt_count: asNumber(row.attempt_count),
+    max_attempts: asNumber(row.max_attempts),
+    started_at: asString(row.started_at),
+    completed_at: asString(row.completed_at),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+    last_error: asString(row.last_error),
+  };
+}
+
+export interface EnqueueAuditInput {
+  projectPath: string;
+  claudeSessionId?: string | null;
+  triggerEventId?: string | null;
+  auditType: AuditType;
+  context?: Record<string, unknown>;
+  coalesceKey?: string | null;
+  notBefore?: string;
+  maxAttempts?: number;
+  producer?: string;
+  candidateId?: string | null;
+  auditTarget?: string | null;
+}
+
+export class SupervisorDatabase {
+  private readonly database: DatabaseSync;
+
+  public constructor(public readonly path: string) {
+    if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    this.database = new DatabaseSync(path);
+    this.database.exec("PRAGMA foreign_keys = ON;");
+    if (path !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
+    this.migrate();
+  }
+
+  public close(): void { this.database.close(); }
+
+  public ping(): boolean {
+    return asNumber((this.database.prepare("SELECT 1 AS ok").get() as Row | undefined)?.ok) === 1;
+  }
+
+  private migrate(): void {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      this.database.exec(MIGRATION_001);
+      const existing = this.database.prepare("SELECT version FROM schema_migrations WHERE version = 1").get();
+      if (!existing) {
+        this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(1, ?)").run(now());
+      }
+      this.database.exec("COMMIT;");
+    } catch (error) {
+      this.database.exec("ROLLBACK;");
+      throw error;
+    }
+  }
+
+  public ensureProject(projectPathInput: string): string {
+    const projectPath = resolve(projectPathInput);
+    const id = projectId(projectPath);
+    const timestamp = now();
+    this.database.prepare(`
+      INSERT INTO projects(id, path, name, created_at, updated_at)
+      VALUES(?, ?, ?, ?, ?)
+      ON CONFLICT(path) DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at
+    `).run(id, projectPath, basename(projectPath), timestamp, timestamp);
+    return id;
+  }
+
+  public ensureSession(projectIdValue: string, claudeSessionId: string, startedAt = now()): string {
+    const existing = this.database.prepare(
+      "SELECT id FROM sessions WHERE project_id = ? AND claude_session_id = ?",
+    ).get(projectIdValue, claudeSessionId) as Row | undefined;
+    if (existing) return String(existing.id);
+    const id = randomUUID();
+    this.database.prepare(`
+      INSERT INTO sessions(id, project_id, claude_session_id, started_at, status)
+      VALUES(?, ?, ?, ?, 'active')
+    `).run(id, projectIdValue, claudeSessionId, startedAt);
+    return id;
+  }
+
+  public insertEvent(event: NormalizedEvent): { projectId: string; sessionId: string } {
+    const id = this.ensureProject(event.project_path);
+    const sessionId = this.ensureSession(id, event.claude_session_id, event.timestamp);
+    this.database.prepare(`
+      INSERT OR IGNORE INTO events(
+        id, session_id, project_id, producer, candidate_id, audit_target,
+        event_type, agent_type, payload_json, created_at
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      event.id,
+      sessionId,
+      id,
+      event.producer,
+      event.candidate_id,
+      event.audit_target,
+      event.event_type,
+      event.agent_type,
+      JSON.stringify(event),
+      event.timestamp,
+    );
+    if (event.event_type === "claude.stopping") {
+      this.database.prepare("UPDATE sessions SET ended_at = ?, status = 'stopping' WHERE id = ?").run(event.timestamp, sessionId);
+    }
+    return { projectId: id, sessionId };
+  }
+
+  public markEventProcessed(eventId: string): void {
+    this.database.prepare("UPDATE events SET processed_at = ? WHERE id = ?").run(now(), eventId);
+  }
+
+  public enqueueAudit(input: EnqueueAuditInput): AuditRecord {
+    const normalizedPath = resolve(input.projectPath);
+    const id = this.ensureProject(normalizedPath);
+    const sessionId = input.claudeSessionId ? this.ensureSession(id, input.claudeSessionId) : null;
+    if (input.coalesceKey) {
+      const active = this.database.prepare(`
+        SELECT * FROM audits WHERE coalesce_key = ? AND status IN ('pending', 'running') LIMIT 1
+      `).get(input.coalesceKey) as Row | undefined;
+      if (active) {
+        const record = rowToAudit(active);
+        const prior = JSON.parse(record.context_json) as Record<string, unknown>;
+        const evidence = Array.isArray(prior.coalesced_evidence) ? prior.coalesced_evidence : [];
+        evidence.push(input.context ?? {});
+        prior.coalesced_evidence = evidence.slice(-20);
+        const notBefore = input.notBefore && input.notBefore > record.not_before ? input.notBefore : record.not_before;
+        this.database.prepare("UPDATE audits SET context_json = ?, not_before = ?, updated_at = ? WHERE id = ?")
+          .run(JSON.stringify(prior), notBefore, now(), record.id);
+        return this.getAudit(record.id) as AuditRecord;
+      }
+    }
+    if (input.triggerEventId) {
+      const duplicate = this.database.prepare(
+        "SELECT * FROM audits WHERE trigger_event_id = ? AND audit_type = ? LIMIT 1",
+      ).get(input.triggerEventId, input.auditType) as Row | undefined;
+      if (duplicate) return rowToAudit(duplicate);
+    }
+    const auditId = randomUUID();
+    const timestamp = now();
+    this.database.prepare(`
+      INSERT INTO audits(
+        id, project_id, project_path, session_id, trigger_event_id, audit_type,
+        status, context_json, producer, candidate_id, audit_target, coalesce_key,
+        not_before, max_attempts, created_at, updated_at
+      ) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      auditId,
+      id,
+      normalizedPath,
+      sessionId,
+      input.triggerEventId ?? null,
+      input.auditType,
+      JSON.stringify(input.context ?? {}),
+      input.producer ?? "claude",
+      input.candidateId ?? null,
+      input.auditTarget ?? null,
+      input.coalesceKey ?? null,
+      input.notBefore ?? timestamp,
+      input.maxAttempts ?? 3,
+      timestamp,
+      timestamp,
+    );
+    return this.getAudit(auditId) as AuditRecord;
+  }
+
+  public recoverInterruptedAudits(): { recovered: number; failed: number } {
+    const timestamp = now();
+    const failed = this.database.prepare(`
+      UPDATE audits SET status = 'failed', last_error = 'Supervisor restarted after retry budget was exhausted',
+        updated_at = ? WHERE status = 'running' AND attempt_count >= max_attempts
+    `).run(timestamp).changes;
+    const recovered = this.database.prepare(`
+      UPDATE audits SET status = 'pending', started_at = NULL,
+        last_error = 'Recovered after Supervisor restart', not_before = ?, updated_at = ?
+      WHERE status = 'running' AND attempt_count < max_attempts
+    `).run(timestamp, timestamp).changes;
+    return { recovered: Number(recovered), failed: Number(failed) };
+  }
+
+  public claimNextAudit(): AuditRecord | null {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const row = this.database.prepare(`
+        SELECT * FROM audits
+        WHERE status = 'pending' AND not_before <= ?
+        ORDER BY CASE audit_type
+          WHEN 'final' THEN 0 WHEN 'deployment' THEN 1 WHEN 'security' THEN 2 ELSE 3 END,
+          created_at ASC
+        LIMIT 1
+      `).get(now()) as Row | undefined;
+      if (!row) {
+        this.database.exec("COMMIT;");
+        return null;
+      }
+      const timestamp = now();
+      this.database.prepare(`
+        UPDATE audits SET status = 'running', attempt_count = attempt_count + 1,
+          started_at = ?, updated_at = ?, last_error = NULL
+        WHERE id = ? AND status = 'pending'
+      `).run(timestamp, timestamp, String(row.id));
+      this.database.exec("COMMIT;");
+      return this.getAudit(String(row.id));
+    } catch (error) {
+      this.database.exec("ROLLBACK;");
+      throw error;
+    }
+  }
+
+  public completeAudit(auditId: string, result: AuditResult, threadId: string | null): void {
+    const timestamp = now();
+    const severity = highestSeverity(result.findings);
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      this.database.prepare(`
+        UPDATE audits SET status = 'completed', decision = ?, severity = ?, summary = ?,
+          result_json = ?, codex_thread_id = ?, completed_at = ?, updated_at = ?, last_error = NULL
+        WHERE id = ?
+      `).run(result.decision, severity, result.summary, JSON.stringify(result), threadId, timestamp, timestamp, auditId);
+      this.database.prepare("DELETE FROM audit_findings WHERE audit_id = ?").run(auditId);
+      const audit = this.getAudit(auditId);
+      if (!audit) throw new Error("Audit disappeared during completion");
+      for (const finding of result.findings) this.insertFinding(auditId, finding, timestamp);
+      if (result.human_request) {
+        this.database.prepare(`
+          INSERT INTO human_requests(
+            id, project_id, audit_id, type, message, requested_action,
+            safe_to_continue, status, created_at
+          ) VALUES(?, ?, ?, 'audit', ?, ?, ?, 'open', ?)
+        `).run(
+          randomUUID(), audit.project_id, auditId, result.human_request.reason,
+          result.human_request.requested_action,
+          result.human_request.safe_to_continue_other_work ? 1 : 0,
+          timestamp,
+        );
+      }
+      this.database.exec("COMMIT;");
+    } catch (error) {
+      this.database.exec("ROLLBACK;");
+      throw error;
+    }
+  }
+
+  private insertFinding(auditId: string, finding: AuditFinding, timestamp: string): void {
+    this.database.prepare(`
+      INSERT INTO audit_findings(
+        id, audit_id, severity, category, title, description, evidence_json,
+        recommended_action, evidence_classification, created_at
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(), auditId, finding.severity, finding.category, finding.title,
+      finding.description, JSON.stringify(finding.evidence), finding.recommended_action,
+      finding.evidence_classification, timestamp,
+    );
+  }
+
+  public failAudit(auditId: string, error: string, backoffMs: number): AuditRecord {
+    const audit = this.getAudit(auditId);
+    if (!audit) throw new Error("Unknown audit");
+    const retry = audit.attempt_count < audit.max_attempts;
+    const timestamp = now();
+    const notBefore = new Date(Date.now() + Math.max(0, backoffMs)).toISOString();
+    this.database.prepare(`
+      UPDATE audits SET status = ?, last_error = ?, not_before = ?, completed_at = ?, updated_at = ?
+      WHERE id = ?
+    `).run(retry ? "pending" : "failed", error, notBefore, retry ? null : timestamp, timestamp, auditId);
+    return this.getAudit(auditId) as AuditRecord;
+  }
+
+  public recordCodexRun(input: {
+    auditId: string;
+    threadId: string | null;
+    status: "completed" | "failed";
+    durationMs: number;
+    stdout: string;
+    stderr: string;
+    error?: string | null;
+  }): string {
+    const id = randomUUID();
+    this.database.prepare(`
+      INSERT INTO codex_runs(
+        id, audit_id, thread_id, status, duration_ms, stdout_excerpt,
+        stderr_excerpt, error, created_at
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, input.auditId, input.threadId, input.status, input.durationMs,
+      input.stdout.slice(-8_000), input.stderr.slice(-8_000), input.error ?? null, now(),
+    );
+    return id;
+  }
+
+  public getAudit(id: string): AuditRecord | null {
+    const row = this.database.prepare("SELECT * FROM audits WHERE id = ?").get(id) as Row | undefined;
+    return row ? rowToAudit(row) : null;
+  }
+
+  public listAudits(projectPath?: string, limit = 50): AuditRecord[] {
+    const bounded = Math.max(1, Math.min(limit, 500));
+    const rows = projectPath
+      ? this.database.prepare("SELECT * FROM audits WHERE project_path = ? ORDER BY created_at DESC, rowid DESC LIMIT ?")
+          .all(resolve(projectPath), bounded)
+      : this.database.prepare("SELECT * FROM audits ORDER BY created_at DESC, rowid DESC LIMIT ?").all(bounded);
+    return (rows as Row[]).map(rowToAudit);
+  }
+
+  public listEvents(projectPath?: string, limit = 50): NormalizedEvent[] {
+    const bounded = Math.max(1, Math.min(limit, 500));
+    const rows = projectPath
+      ? this.database.prepare(`
+          SELECT e.payload_json FROM events e JOIN projects p ON p.id = e.project_id
+          WHERE p.path = ? ORDER BY e.created_at DESC LIMIT ?
+        `).all(resolve(projectPath), bounded)
+      : this.database.prepare("SELECT payload_json FROM events ORDER BY created_at DESC LIMIT ?").all(bounded);
+    return (rows as Row[]).map((row) => JSON.parse(String(row.payload_json)) as NormalizedEvent);
+  }
+
+  public queueCounts(): QueueCounts {
+    const result: QueueCounts = { pending: 0, running: 0, completed: 0, failed: 0 };
+    const rows = this.database.prepare("SELECT status, COUNT(*) AS count FROM audits GROUP BY status").all() as Row[];
+    for (const row of rows) {
+      const status = String(row.status) as keyof QueueCounts;
+      if (status in result) result[status] = asNumber(row.count);
+    }
+    return result;
+  }
+
+  public retryAudit(id: string): boolean {
+    const changed = this.database.prepare(`
+      UPDATE audits SET status = 'pending', attempt_count = 0, completed_at = NULL,
+        started_at = NULL, last_error = NULL, not_before = ?, updated_at = ?
+      WHERE id = ? AND status = 'failed'
+    `).run(now(), now(), id).changes;
+    return Number(changed) === 1;
+  }
+
+  public resolveHumanRequest(id: string): boolean {
+    const changed = this.database.prepare(`
+      UPDATE human_requests SET status = 'resolved', resolved_at = ?
+      WHERE id = ? AND status = 'open'
+    `).run(now(), id).changes;
+    return Number(changed) === 1;
+  }
+
+  public openHumanRequestCount(projectPath?: string): number {
+    const row = projectPath
+      ? this.database.prepare(`
+          SELECT COUNT(*) AS count FROM human_requests h JOIN projects p ON p.id = h.project_id
+          WHERE h.status = 'open' AND p.path = ?
+        `).get(resolve(projectPath))
+      : this.database.prepare("SELECT COUNT(*) AS count FROM human_requests WHERE status = 'open'").get();
+    return asNumber((row as Row | undefined)?.count);
+  }
+
+  public listHumanRequests(projectPath?: string, limit = 50): Array<Record<string, unknown>> {
+    const bounded = Math.max(1, Math.min(limit, 500));
+    const rows = projectPath
+      ? this.database.prepare(`
+          SELECT h.id, h.audit_id, h.type, h.message, h.requested_action,
+            h.safe_to_continue, h.status, h.created_at, h.resolved_at
+          FROM human_requests h JOIN projects p ON p.id = h.project_id
+          WHERE p.path = ? ORDER BY h.created_at DESC, h.rowid DESC LIMIT ?
+        `).all(resolve(projectPath), bounded)
+      : this.database.prepare(`
+          SELECT id, audit_id, type, message, requested_action, safe_to_continue,
+            status, created_at, resolved_at
+          FROM human_requests ORDER BY created_at DESC, rowid DESC LIMIT ?
+        `).all(bounded);
+    return (rows as Row[]).map((row) => ({ ...row, safe_to_continue: asNumber(row.safe_to_continue) === 1 }));
+  }
+
+  public latestAudit(projectPath: string, types?: AuditType[]): AuditRecord | null {
+    const path = resolve(projectPath);
+    if (!types?.length) {
+      const row = this.database.prepare("SELECT * FROM audits WHERE project_path = ? ORDER BY created_at DESC, rowid DESC LIMIT 1")
+        .get(path) as Row | undefined;
+      return row ? rowToAudit(row) : null;
+    }
+    const placeholders = types.map(() => "?").join(",");
+    const row = this.database.prepare(`
+      SELECT * FROM audits WHERE project_path = ? AND audit_type IN (${placeholders})
+      ORDER BY created_at DESC, rowid DESC LIMIT 1
+    `).get(path, ...types as SQLInputValue[]) as Row | undefined;
+    return row ? rowToAudit(row) : null;
+  }
+
+  public findActiveAudit(projectPath: string, sessionId: string | null, auditType: AuditType): AuditRecord | null {
+    const row = sessionId
+      ? this.database.prepare(`
+          SELECT * FROM audits WHERE project_path = ? AND session_id = ? AND audit_type = ?
+            AND status IN ('pending', 'running') ORDER BY created_at DESC, rowid DESC LIMIT 1
+        `).get(resolve(projectPath), sessionId, auditType)
+      : this.database.prepare(`
+          SELECT * FROM audits WHERE project_path = ? AND audit_type = ?
+            AND status IN ('pending', 'running') ORDER BY created_at DESC, rowid DESC LIMIT 1
+        `).get(resolve(projectPath), auditType);
+    return row ? rowToAudit(row as Row) : null;
+  }
+
+  public recentChangedFiles(projectPath: string, limit = 200): string[] {
+    const rows = this.database.prepare(`
+      SELECT e.payload_json FROM events e JOIN projects p ON p.id = e.project_id
+      WHERE p.path = ? AND e.event_type = 'tool.completed'
+      ORDER BY e.created_at DESC LIMIT ?
+    `).all(resolve(projectPath), Math.max(1, Math.min(limit, 1_000))) as Row[];
+    const files = new Set<string>();
+    for (const row of rows) {
+      const event = JSON.parse(String(row.payload_json)) as NormalizedEvent;
+      const changedFile = event.metadata.changed_file;
+      if (typeof changedFile === "string") files.add(changedFile);
+    }
+    return [...files];
+  }
+
+  public gate(projectPath: string, phase: string): GateResult {
+    const phaseTypes: Record<string, AuditType[]> = {
+      research: ["research"],
+      architecture: ["architecture", "security"],
+      design: ["design_due_diligence"],
+      code: ["code", "reviewer_meta", "qa", "visual_ux_audit"],
+      slice: ["code", "reviewer_meta", "qa", "visual_ux_audit"],
+      deploy: ["deployment", "security"],
+      "pre-deploy": ["deployment", "security"],
+      final: ["final"],
+    };
+    const types = phaseTypes[phase];
+    if (!types) return { decision: "ERROR", exit_code: 50, summary: `Unknown phase: ${phase}`, audit_id: null };
+    const openHumanRequest = this.latestOpenHumanRequest(projectPath, types);
+    if (openHumanRequest) return {
+      decision: "HUMAN_REQUIRED",
+      exit_code: 30,
+      summary: String(openHumanRequest.message ?? openHumanRequest.requested_action ?? "Human action remains unresolved"),
+      audit_id: asString(openHumanRequest.audit_id),
+    };
+    const latestByType = new Map<AuditType, AuditRecord>();
+    for (const audit of this.listAudits(projectPath, 500)) {
+      if (types.includes(audit.audit_type) && !latestByType.has(audit.audit_type)) latestByType.set(audit.audit_type, audit);
+    }
+    const audits = [...latestByType.values()];
+    if (!audits.length) return { decision: "PENDING", exit_code: 40, summary: `No ${phase} audit exists`, audit_id: null };
+    const pending = audits.find((audit) => audit.status === "pending" || audit.status === "running");
+    if (pending) return { decision: "PENDING", exit_code: 40, summary: `${pending.audit_type} audit is ${pending.status}`, audit_id: pending.id };
+    for (const decision of ["HUMAN_REQUIRED", "BLOCK"] as const) {
+      const audit = audits.find((entry) => entry.status === "completed" && entry.decision === decision);
+      if (audit) return {
+        decision,
+        exit_code: decision === "BLOCK" ? 20 : 30,
+        summary: audit.summary ?? decision,
+        audit_id: audit.id,
+      };
+    }
+    const failed = audits.find((audit) => audit.status === "failed" || !audit.decision);
+    if (failed) return { decision: "ERROR", exit_code: 50, summary: failed.last_error ?? "Audit failed", audit_id: failed.id };
+    const challenged = audits.find((audit) => audit.decision === "CHALLENGE");
+    if (challenged) return { decision: "CHALLENGE", exit_code: 10, summary: challenged.summary ?? "CHALLENGE", audit_id: challenged.id };
+    const latest = audits[0] as AuditRecord;
+    return { decision: "PASS", exit_code: 0, summary: latest.summary ?? "All recorded phase audits passed", audit_id: latest.id };
+  }
+
+  public stopGate(projectPath: string): GateResult {
+    const openHumanRequest = this.latestOpenHumanRequest(projectPath);
+    if (openHumanRequest) return {
+      decision: "HUMAN_REQUIRED",
+      exit_code: 30,
+      summary: String(openHumanRequest.message ?? openHumanRequest.requested_action ?? "Human action remains unresolved"),
+      audit_id: asString(openHumanRequest.audit_id),
+    };
+    const latestByType = new Map<AuditType, AuditRecord>();
+    for (const audit of this.listAudits(projectPath, 250)) {
+      if (!latestByType.has(audit.audit_type)) latestByType.set(audit.audit_type, audit);
+    }
+    const audits = [...latestByType.values()];
+    const pending = audits.find((audit) => audit.status === "pending" || audit.status === "running");
+    if (pending) return {
+      decision: "PENDING",
+      exit_code: 40,
+      summary: `${pending.audit_type} audit is ${pending.status}`,
+      audit_id: pending.id,
+    };
+    const order: AuditDecision[] = ["HUMAN_REQUIRED", "BLOCK", "CHALLENGE"];
+    for (const decision of order) {
+      const audit = audits.find((entry) => entry.status === "completed" && entry.decision === decision);
+      if (audit) return {
+        decision,
+        exit_code: decision === "CHALLENGE" ? 10 : decision === "BLOCK" ? 20 : 30,
+        summary: audit.summary ?? decision,
+        audit_id: audit.id,
+      };
+    }
+    const failed = audits.find((audit) => audit.status === "failed");
+    if (failed) return { decision: "ERROR", exit_code: 50, summary: failed.last_error ?? "Audit failed", audit_id: failed.id };
+    return { decision: "PASS", exit_code: 0, summary: "No unresolved Supervisor gate", audit_id: null };
+  }
+
+  private latestOpenHumanRequest(projectPath: string, types?: AuditType[]): Row | null {
+    const path = resolve(projectPath);
+    const row = types?.length
+      ? this.database.prepare(`
+          SELECT h.audit_id, h.message, h.requested_action
+          FROM human_requests h
+          JOIN projects p ON p.id = h.project_id
+          JOIN audits a ON a.id = h.audit_id
+          WHERE h.status = 'open' AND p.path = ?
+            AND a.audit_type IN (${types.map(() => "?").join(",")})
+          ORDER BY h.created_at DESC, h.rowid DESC LIMIT 1
+        `).get(path, ...types as SQLInputValue[])
+      : this.database.prepare(`
+          SELECT h.audit_id, h.message, h.requested_action
+          FROM human_requests h JOIN projects p ON p.id = h.project_id
+          WHERE h.status = 'open' AND p.path = ?
+          ORDER BY h.created_at DESC, h.rowid DESC LIMIT 1
+        `).get(path);
+    return row ? row as Row : null;
+  }
+}
+
+const SEVERITY_ORDER: Severity[] = ["info", "low", "medium", "high", "critical"];
+function highestSeverity(findings: AuditFinding[]): Severity {
+  let highest = 0;
+  for (const finding of findings) highest = Math.max(highest, SEVERITY_ORDER.indexOf(finding.severity));
+  return SEVERITY_ORDER[highest] ?? "info";
+}

@@ -28,7 +28,16 @@ Answer honestly: during this task, did I lack...
 If a lesson invalidates or should amend a rule in CLAUDE.md or a skill,
 propose the exact diff to the user. Never edit CLAUDE.md rules without approval.
 
-## Step 4 — Report
+## Step 4 — Supervisor evidence
+
+Read `.claude/supervisor/STATE.json` and the relevant concise audit reports when
+present. Record: audits run, challenges, blocks, false positives noticed,
+issues missed by earlier reviewers, human escalations, capability gaps,
+unreliable sources, UI score movement, and tooling improvements. Keep Claude
+and Codex attribution separate. A retrospective may propose tuning, but it must
+never silently lower thresholds, disable a required gate, or weaken permissions.
+
+## Step 5 — Report
 
 3-part summary to the user (French, concise):
 1. Ce qui a bien marché

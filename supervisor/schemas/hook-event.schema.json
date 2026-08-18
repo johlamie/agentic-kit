@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "producer": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "project_path": { "type": "string", "minLength": 1 },
+    "claude_session_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "session.started",
+        "prompt.submitted",
+        "agent.started",
+        "agent.completed",
+        "tool.completed",
+        "permission.requested",
+        "claude.stopping",
+        "phase.completed",
+        "audit.requested",
+        "human.resolved"
+      ]
+    },
+    "agent_type": { "type": ["string", "null"] },
+    "agent_id": { "type": ["string", "null"] },
+    "candidate_id": { "type": ["string", "null"] },
+    "audit_target": { "type": ["string", "null"] },
+    "transcript_path": { "type": ["string", "null"] },
+    "agent_transcript_path": { "type": ["string", "null"] },
+    "last_message": { "type": ["string", "null"] },
+    "metadata": { "type": "object" }
+  },
+  "required": [
+    "id",
+    "timestamp",
+    "producer",
+    "project_id",
+    "project_path",
+    "claude_session_id",
+    "event_type",
+    "agent_type",
+    "agent_id",
+    "candidate_id",
+    "audit_target",
+    "transcript_path",
+    "agent_transcript_path",
+    "last_message",
+    "metadata"
+  ],
+  "additionalProperties": false
+}

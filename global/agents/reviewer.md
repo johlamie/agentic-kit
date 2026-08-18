@@ -25,4 +25,6 @@ Checklist:
 5. Shared-file changes declared by the builder: reviewed for side effects.
 
 Verdict: PASS or FAIL + evidence + (if FAIL) prioritized fix list for the
-builder. One review = one verdict. Terse.
+builder. One review = one verdict. Terse. The independent Supervisor may
+meta-audit this verdict; report exact commands/output and never optimize the
+report merely to obtain a PASS.

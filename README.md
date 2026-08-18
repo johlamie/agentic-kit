@@ -31,6 +31,21 @@ Mobbin décomposées). Mémoire `project` = patterns propres au codebase.
 - **G3** — direction design : tu choisis entre 2 directions
 - **G4** — exposition publique : tu valides le déploiement
 
+## Supervisor indépendant
+
+Le kit inclut désormais un daemon local séparé : Claude propose et construit,
+Codex vérifie indépendamment les jalons, puis rend `PASS`, `CHALLENGE`, `BLOCK`
+ou `HUMAN_REQUIRED`. Les audits couvrent recherche/sources, architecture,
+sécurité, code, reviewer/QA, design, frontend réellement rendu, responsive,
+accessibilité, pré-déploiement et final. Ils sont asynchrones, persistés dans
+SQLite et ne remplacent aucune porte G1–G4.
+
+Le Supervisor est isolé sous `supervisor/`, lié uniquement à `127.0.0.1`, lance
+Codex en sandbox lecture seule et peut notifier Telegram sans accepter de
+commande distante. Les propositions de refonte restent sous
+`.claude/supervisor/proposals/` et n'écrasent jamais le frontend Claude. Kimi
+n'est pas relié à ce service. Voir [le guide opérationnel](supervisor/README.md).
+
 ## Definition of Done (non négociable)
 
 URL publique (web) et/ou lien Expo + QR (mobile) · compte de test · données de
@@ -49,7 +64,9 @@ chmod +x setup/*.sh
 claude                      # login première fois
 export SUPABASE_ACCESS_TOKEN=sbp_...   # token depuis le dashboard Supabase
 ./setup/mcp-setup.sh        # mobbin, context7, playwright, github, supabase, firebase
-# dans claude : /mcp → authentifier mobbin et github (OAuth navigateur)
+./setup/supervisor-setup.sh # build, config privée, skills, daemon PM2
+./setup/codex-mcp-setup.sh --playwright --context7
+# Claude MCP et Codex MCP restent deux configurations indépendantes
 ./scripts/check-runtime.sh  # valide le kit, les binaires, Claude doctor et les MCP
 ```
 
@@ -65,6 +82,7 @@ Avant de pousser une modification des agents, skills ou scripts :
 ```bash
 ./scripts/validate-kit.sh   # hors-ligne : JSON, Bash, manifests, templates, garde-fous
 ./scripts/smoke-install.sh  # installe les symlinks dans un HOME temporaire
+cd supervisor && npm ci && npm run typecheck && npm test && npm run build
 ./scripts/check-runtime.sh  # diagnostic VPS : outils, Claude doctor, état des MCP
 ```
 
@@ -124,7 +142,7 @@ qu'il **fait**, plus sur la façon dont il est **écrit**.
 
 ### Le gardien — ce que les patterns ne savent pas dire
 
-`global/hooks/agent-guard.sh` (~150 lignes, aucun appel LLM, ~5 ms) ajoute trois
+`global/hooks/agent-guard.sh` (aucun appel LLM) ajoute quatre
 choses impossibles à exprimer en motifs texte :
 
 - **Deux étages d'agents.** Les 8 agents gardent exactement leurs restrictions
@@ -137,9 +155,12 @@ choses impossibles à exprimer en motifs texte :
 - **Les projets en production.** « Déjà en ligne » est un fait, pas un motif.
   Tout projet nommé dans `~/.claude/production-projects` voit ses commandes
   modifiantes remontées vers toi.
+- **La portée Write/Edit.** Les outils de fichiers respectent le projet courant,
+  la liste de production et les emplacements protégés ; Bash ne peut pas
+  contourner les interdictions de lecture évidentes avec `cat .env`.
 
 ```bash
-./global/hooks/agent-guard.sh --self-test   # la table de décision, 13 cas
+./global/hooks/agent-guard.sh --self-test   # table de décision complète
 ```
 
 ### Marquer un projet comme « en production » — à faire au premier déploiement

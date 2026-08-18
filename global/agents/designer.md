@@ -27,7 +27,9 @@ do not. Update memory only with confirmed preferences, tagged by project.
    underneath. Never build from a screenshot you haven't decomposed.
 3. **Direction**: propose 2 distinct design directions (mood in words + palette
    + type pairing + one ASCII wireframe of the core screen each). Orchestrator
-   presents them at gate G3; user picks.
+   sends both to independent design due diligence, then presents the compact
+   comparison at gate G3; user picks. A Codex alternative is proposal evidence,
+   not permission to replace either direction.
 4. **System (deliverables in `design/`)**:
    - `DESIGN.md`: screen inventory mapped 1:1 to SPEC flow steps; per screen:
      purpose, hierarchy, states (empty/loading/error/success), navigation.
@@ -40,5 +42,9 @@ do not. Update memory only with confirmed preferences, tagged by project.
 - Every screen traces to a SPEC flow step; orphans are flagged as scope creep.
 - Accessibility floor: AA contrast, touch targets ≥44px, French labels with
   proper typography (espaces insécables, capitales accentuées).
+- Explicitly cover 390×844, 768×1024, 1440×900, and 1920×1080 behavior,
+  information hierarchy, navigation, loading/empty/error/success states, and
+  trust signals. Avoid generic card-wall/dashboard patterns unless the product
+  jobs genuinely justify them.
 - Boring navigation (tabs, stacks, sheets), distinctive surface (color, type,
   micro-copy). Return: direction summary + open questions (≤3), not the docs.

@@ -15,7 +15,7 @@ else
   fail "global/settings.json is not valid JSON"
 fi
 
-for script in setup/*.sh scripts/*.sh global/hooks/*.sh; do
+for script in setup/*.sh scripts/*.sh global/hooks/*.sh supervisor/bin/* supervisor/scripts/*.sh; do
   if bash -n "$script"; then
     pass "$script has valid Bash syntax"
   else
@@ -34,8 +34,8 @@ fi
 # The tilde is intentionally unexpanded: we are asserting the literal string
 # stored in settings.json, which Claude Code expands itself at hook time.
 # shellcheck disable=SC2088
-if hook_cmd=$(jq -er '.hooks.PreToolUse[0].hooks[0].command' global/settings.json 2>/dev/null) \
-   && [[ "$hook_cmd" == "~/.claude/hooks/agent-guard.sh" ]]; then
+if jq -e '.hooks.PreToolUse[] | select(.matcher | test("Bash")) | .hooks[] | select(.command == "~/.claude/hooks/agent-guard.sh")' \
+     global/settings.json >/dev/null 2>&1; then
   pass "settings.json registers the guard hook on PreToolUse"
 else
   fail "settings.json does not register ~/.claude/hooks/agent-guard.sh on PreToolUse"
@@ -149,16 +149,104 @@ else
   fail "rules present in BOTH allow and deny: $overlap"
 fi
 
-if [[ "$(jq -r '.defaultMode' global/settings.json)" == "auto" ]]; then
-  pass "defaultMode is auto (the classifier judges what allow/ask/deny do not)"
+if [[ "$(jq -r '.permissions.defaultMode' global/settings.json)" == "auto" ]]; then
+  pass "permissions.defaultMode is auto (current Claude settings syntax)"
 else
-  fail "defaultMode is not auto — the judge would never run"
+  fail "permissions.defaultMode is not auto — the judge would never run"
 fi
 
 if [[ "$(jq -r '.autoMode.classifyAllShell' global/settings.json)" == "true" ]]; then
   pass "classifyAllShell is on (closes the npm-script wrapper hole)"
 else
   fail "autoMode.classifyAllShell is not true — narrow allow rules bypass the judge"
+fi
+
+# Independent Supervisor structure and hook integration.
+required_hook_events=(SessionStart UserPromptSubmit SubagentStart SubagentStop PostToolUse Notification Stop)
+for event_name in "${required_hook_events[@]}"; do
+  if jq -e --arg event "$event_name" '.hooks[$event][]?.hooks[]? | select(.command == "~/.claude/hooks/supervisor-hook.sh")' \
+       global/settings.json >/dev/null; then
+    pass "Supervisor hook registered: $event_name"
+  else
+    fail "Supervisor hook missing: $event_name"
+  fi
+done
+
+required_supervisor_files=(
+  supervisor/package.json supervisor/package-lock.json supervisor/tsconfig.json
+  supervisor/config/supervisor.example.env supervisor/schemas/hook-event.schema.json
+  supervisor/schemas/audit-result.schema.json supervisor/ecosystem.config.cjs
+  supervisor/bin/agentic-supervisor supervisor/README.md
+  setup/supervisor-setup.sh setup/codex-mcp-setup.sh
+)
+for file in "${required_supervisor_files[@]}"; do
+  if [[ -s "$file" ]]; then pass "Supervisor file exists: $file"; else fail "missing Supervisor file: $file"; fi
+done
+
+for schema in supervisor/schemas/*.json supervisor/package.json supervisor/package-lock.json; do
+  if jq empty "$schema" >/dev/null 2>&1; then pass "valid JSON: $schema"; else fail "invalid JSON: $schema"; fi
+done
+
+if [[ "$(jq -r '.engines.node' supervisor/package.json)" == ">=22" ]]; then
+  pass "Supervisor requires Node.js 22+"
+else
+  fail "Supervisor Node.js engine requirement is missing"
+fi
+
+if grep -qx 'SUPERVISOR_UI_PROPOSAL_MODE=isolated' supervisor/config/supervisor.example.env \
+   && grep -qx 'SUPERVISOR_HOST=127.0.0.1' supervisor/config/supervisor.example.env; then
+  pass "Supervisor example keeps proposals isolated and HTTP on loopback"
+else
+  fail "unsafe Supervisor example configuration"
+fi
+
+required_supervisor_skills=(
+  accessibility-review api-source-due-diligence architecture-challenge
+  pre-deploy-audit security-review ui-ux-due-diligence visual-quality-audit
+)
+for name in "${required_supervisor_skills[@]}"; do
+  file="supervisor/skills/$name/SKILL.md"
+  interface="supervisor/skills/$name/agents/openai.yaml"
+  if [[ ! -r "$file" || ! -r "$interface" ]]; then
+    fail "missing Supervisor skill files: $name"
+    continue
+  fi
+  if [[ "$(sed -n '1p' "$file")" == "---" ]] \
+     && grep -qx "name: $name" "$file" \
+     && grep -Eq '^description: .+' "$file" \
+     && grep -Fq '$' "$interface"; then
+    pass "Supervisor skill metadata valid: $name"
+  else
+    fail "invalid Supervisor skill metadata: $name"
+  fi
+  while IFS= read -r reference; do
+    resolved="$(cd "$(dirname "$file")" && realpath -m "$reference")"
+    if [[ -r "$resolved" && "$resolved" == "$ROOT/shared/protocols/"* ]]; then
+      pass "Supervisor skill protocol resolves: $name -> $(basename "$resolved")"
+    else
+      fail "Supervisor skill has missing/unsafe protocol reference: $name -> $reference"
+    fi
+  done < <(grep -oE '\.\./\.\./\.\./shared/protocols/[A-Za-z0-9._-]+\.md' "$file" | sort -u)
+done
+
+if grep -RIEq -- '--dangerously-bypass|--yolo|danger-full-access|chmod[[:space:]]+777' \
+     supervisor/src supervisor/scripts supervisor/skills shared/protocols; then
+  fail "Supervisor contains a privilege-escalation instruction"
+else
+  pass "Supervisor contains no known privilege-escalation instruction"
+fi
+
+if grep -RIEq '\b(kimi|grok)\b' supervisor/src supervisor/scripts supervisor/package.json setup/codex-mcp-setup.sh; then
+  fail "Kimi/Grok integration found in Supervisor executable paths"
+else
+  pass "Supervisor executable paths contain no Kimi/Grok integration"
+fi
+
+tracked_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -Ev '\.env\.(example|sample|template)$' || true)"
+if [[ -n "$tracked_env" ]]; then
+  fail "tracked environment file may contain secrets: $tracked_env"
+else
+  pass "no tracked runtime .env file"
 fi
 
 if (( failures > 0 )); then

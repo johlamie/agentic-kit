@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI/UX Due Diligence"
+  short_description: "Challenge product design before G3"
+  default_prompt: "Use $ui-ux-due-diligence to challenge this product design direction before G3."

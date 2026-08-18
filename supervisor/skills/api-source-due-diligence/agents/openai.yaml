@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Source Due Diligence"
+  short_description: "Verify APIs and data-source choices"
+  default_prompt: "Use $api-source-due-diligence to verify this proposed API or data source independently."

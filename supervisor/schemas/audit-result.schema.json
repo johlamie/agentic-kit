@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "decision": {
+      "type": "string",
+      "enum": ["PASS", "CHALLENGE", "BLOCK", "HUMAN_REQUIRED"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["info", "low", "medium", "high", "critical"]
+          },
+          "category": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "evidence": {
+            "type": "array",
+            "maxItems": 20,
+            "items": { "type": "string", "maxLength": 1000 }
+          },
+          "recommended_action": { "type": "string", "minLength": 1, "maxLength": 2000 },
+          "evidence_classification": {
+            "type": "string",
+            "enum": ["VERIFIED", "PROBABLE", "UNVERIFIED", "INCORRECT", "BLOCKED"]
+          }
+        },
+        "required": [
+          "severity",
+          "category",
+          "title",
+          "description",
+          "evidence",
+          "recommended_action",
+          "evidence_classification"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "human_request": {
+      "type": ["object", "null"],
+      "properties": {
+        "reason": { "type": "string", "maxLength": 2000 },
+        "requested_action": { "type": "string", "maxLength": 2000 },
+        "safe_to_continue_other_work": { "type": "boolean" }
+      },
+      "required": ["reason", "requested_action", "safe_to_continue_other_work"],
+      "additionalProperties": false
+    },
+    "design_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "design_dimensions": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "rationale": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "key_issue": { "type": "string", "maxLength": 1000 },
+          "recommended_action": { "type": "string", "maxLength": 1000 }
+        },
+        "required": ["name", "score", "rationale", "key_issue", "recommended_action"],
+        "additionalProperties": false
+      }
+    },
+    "redesign_recommended": { "type": "boolean" },
+    "proposal_mode": {
+      "type": "string",
+      "enum": ["none", "targeted_changes", "design_system_revision", "screen_redesign", "full_direction_alternative"]
+    },
+    "infrastructure_error": {
+      "type": ["object", "null"],
+      "properties": {
+        "code": { "type": "string", "maxLength": 100 },
+        "message": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "decision",
+    "confidence",
+    "summary",
+    "findings",
+    "human_request",
+    "design_score",
+    "design_dimensions",
+    "redesign_recommended",
+    "proposal_mode",
+    "infrastructure_error"
+  ],
+  "additionalProperties": false
+}

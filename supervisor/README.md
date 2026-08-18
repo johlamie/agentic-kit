@@ -1,0 +1,283 @@
+# Codex Supervisor
+
+Service d'audit indépendant pour Agentic Delivery Kit. Claude reste l'agent de
+construction principal ; le Supervisor persiste ses jalons structurés, lance
+Codex en lecture seule hors du chemin critique, puis rend l'une des décisions
+`PASS`, `CHALLENGE`, `BLOCK` ou `HUMAN_REQUIRED`.
+
+```text
+Claude Code hooks ──HTTP loopback──> Supervisor ──queue SQLite──> Codex CLI
+       ▲                                │                            │
+       └──── rapport/gate local ────────┴──── Telegram (escalade) <──┘
+```
+
+Le Supervisor ne remplace ni les reviewers/QA Claude, ni les portes humaines
+G1–G4, ni le système de permissions. Il ne pousse, ne déploie, ne paie, ne crée
+pas de compte et n'accepte aucune condition juridique.
+
+## Installation
+
+Prérequis : Node.js 22+, npm, SQLite disponible via `node:sqlite`, Codex CLI
+authentifié et PM2. Depuis la racine du kit :
+
+```bash
+./setup/link-kit.sh
+./setup/supervisor-setup.sh
+./setup/codex-mcp-setup.sh --playwright --context7
+agentic-supervisor doctor
+```
+
+`supervisor-setup.sh` est relançable : il préserve les fichiers de configuration
+existants, génère une fois un token de hook privé, construit TypeScript, lie le
+CLI dans `~/.local/bin`, lie les skills dans `~/.agents/skills`, puis charge le
+service PM2. Il ne modifie jamais la configuration MCP Codex ; cette action reste
+explicite dans le second script.
+
+Pour préparer sans toucher à PM2 :
+
+```bash
+./setup/supervisor-setup.sh --no-start
+```
+
+Installation manuelle de développement :
+
+```bash
+cd supervisor
+npm ci
+npm run typecheck
+npm test
+npm run build
+SUPERVISOR_ENV_FILE="$HOME/.config/agentic-kit/supervisor.env" npm start
+```
+
+## Exploitation
+
+```bash
+agentic-supervisor status
+agentic-supervisor doctor
+agentic-supervisor events --project "$PWD"
+agentic-supervisor audits --project "$PWD"
+agentic-supervisor requests --project "$PWD"
+agentic-supervisor gate --project "$PWD" --phase code
+agentic-supervisor wait --project "$PWD" --phase code --timeout 900
+agentic-supervisor tail --project "$PWD"
+agentic-supervisor retry <audit-id>
+agentic-supervisor resolve <human-request-id>
+agentic-supervisor mcp-status
+agentic-supervisor skills
+agentic-supervisor design-score --project "$PWD"
+pm2 status
+pm2 logs agentic-supervisor
+pm2 restart agentic-supervisor
+```
+
+Codes de sortie de `gate`/`wait` : `0` PASS, `10` CHALLENGE, `20` BLOCK,
+`30` HUMAN_REQUIRED, `40` PENDING/timeout, `50` erreur Supervisor. Une erreur
+d'infrastructure ne devient jamais un PASS.
+
+Un besoin humain ouvert reste `HUMAN_REQUIRED` même si un audit technique plus
+récent retourne PASS. Après l'action humaine, utiliser `resolve <request-id>`
+puis relancer l'audit concerné afin d'obtenir une preuve fraîche.
+
+Audit manuel :
+
+```bash
+agentic-supervisor audit --project "$PWD" --type research
+agentic-supervisor audit --project "$PWD" --type architecture
+agentic-supervisor audit --project "$PWD" --type security
+agentic-supervisor audit --project "$PWD" --type design
+agentic-supervisor audit --project "$PWD" --type visual --url http://127.0.0.1:3000
+```
+
+## Intégration Claude → Supervisor → Codex
+
+`global/settings.json` conserve le garde-fou `PreToolUse` et ajoute
+`SessionStart`, `UserPromptSubmit`, `SubagentStart`, `SubagentStop`, un
+`PostToolUse` filtré, les notifications de permission et `Stop`. Le forwarder :
+
+1. tronque et filtre le JSON du hook ;
+2. ne transporte ni réponse d'outil ni contenu complet de fichier/transcript ;
+3. rédige les secrets connus ;
+4. envoie en 1,5 seconde maximum vers `127.0.0.1` avec un token local ;
+5. échoue ouvert si le daemon est indisponible afin de ne pas bloquer Claude.
+
+Les chemins de transcript peuvent être conservés comme métadonnées d'attribution,
+mais ils sont exclus du contexte envoyé à Codex ; l'audit lit les livrables du
+projet et les événements structurés, pas les conversations brutes.
+
+Le daemon persiste l'événement dans SQLite puis coalesce les jalons. Un
+`PostToolUse` ne lance pas d'audit complet. Les fins de sous-agents déclenchent
+les audits research, architecture, code, reviewer/QA, design, déploiement ; un
+Stop final significatif déclenche l'audit final. Les jobs `pending`/`running`
+survivent à un redémarrage et disposent d'un budget de retry borné.
+
+Codex est lancé comme processus indépendant avec :
+
+```text
+codex [--search] -c allow_login_shell=false --sandbox read-only
+  --ask-for-approval never -C <project> exec --ephemeral --json
+  --output-schema <schema> --output-last-message <temporary-file> -
+```
+
+Le runner ajoute aussi `-c allow_login_shell=false` avant `exec` afin qu'un
+shell d'audit ne charge pas les profils utilisateur.
+
+Les arguments sont un tableau `spawn` sans shell, l'environnement est réduit,
+les sorties sont bornées, le timeout est configurable, et le JSON final est
+validé strictement. Les catégories security/authorization critiques imposent
+BLOCK, tout besoin humain impose HUMAN_REQUIRED, et les seuils UI empêchent un
+score faible de passer.
+
+## Audits UI/UX
+
+`design_due_diligence` intervient avant G3 sur `SPEC.md`, `RESEARCH.md`,
+`TECH.md`, `ARCHITECTURE.md` et `design/`. Il challenge personas, jobs, IA,
+navigation, hiérarchie, états, système visuel, accessibilité, confiance et
+distinctivité. Les références de catégorie sont des preuves, pas des modèles à
+copier. G3 reste le choix de l'utilisateur.
+
+`visual_ux_audit` intervient après QA sur le vrai frontend. Il requiert une URL
+explicitement autorisée et Playwright MCP, puis teste par défaut :
+
+- 390×844 (mobile) ;
+- 768×1024 (tablette) ;
+- 1440×900 (desktop) ;
+- 1920×1080 (grand desktop).
+
+Il inspecte les flows et états réels, le reflow/overflow, navigation, feedback,
+focus/clavier, sémantique, contraste, cibles tactiles, motion, console, densité,
+confiance et qualité perçue. `SUPERVISOR_BROWSER_ALLOWED_HOSTS` vaut uniquement
+`localhost,127.0.0.1,::1` par défaut ; ajouter explicitement un host de staging
+est nécessaire. URL absente, app arrêtée, auth de démo manquante ou MCP absent
+sont des erreurs d'infrastructure distinctes du score produit.
+
+Une refonte justifiée crée seulement :
+
+```text
+.claude/supervisor/proposals/<audit-id>/
+├── metadata.json
+└── PROPOSAL.md
+```
+
+Le frontend actif n'est jamais modifié ou fusionné automatiquement. Les
+artefacts indiquent `producer: claude`, `auditor: codex` et l'identité d'audit.
+
+## MCP et skills Codex
+
+Claude et Codex ont des configurations MCP séparées. Vérifier :
+
+```bash
+codex mcp list --json
+agentic-supervisor mcp-status
+./setup/codex-mcp-setup.sh --playwright --context7
+```
+
+- Playwright : requis uniquement pour les audits visuels ; profil mémoire
+  `--isolated`, headless, service workers bloqués, pas d'accès fichiers illimité.
+- Context7 : documentation actuelle, optionnelle. Le script utilise le package
+  stdio en mode basic pour éviter qu'un setup unattended ne démarre/accepte un
+  OAuth. Une configuration remote existante peut afficher `not_logged_in` et
+  exige alors une authentification humaine explicite.
+- Chrome DevTools : réseau/console/performance, optionnel via
+  `--chrome-devtools`, télémétrie et CrUX désactivés par le script.
+- Figma : optionnel, seulement après configuration/authentification humaine.
+- Mobbin : optionnel et potentiellement payant ; absence non bloquante.
+- GitHub : optionnel ; aucun PAT n'est copié depuis Claude.
+
+Les sept skills sous `supervisor/skills/` sont liés au scope utilisateur Codex :
+UI/UX due diligence, visual quality, accessibility, API/source due diligence,
+architecture challenge, security review et pre-deploy audit. Ils réutilisent les
+protocoles neutres de `shared/protocols/` ; ils ne changent aucune permission.
+
+## Telegram
+
+Telegram est sortant uniquement. Le bot notifie les permissions Claude,
+BLOCK/HUMAN_REQUIRED, indisponibilités critiques et, si configuré, PASS. Il
+n'exécute aucune commande et une approbation se fait toujours dans la session
+Claude.
+
+Action humaine : créer ou choisir un bot et un chat selon les procédures
+Telegram, sans transmettre le token dans ce dépôt. Puis éditer le fichier privé :
+
+```bash
+chmod 600 "$HOME/.config/agentic-kit/supervisor.env"
+editor "$HOME/.config/agentic-kit/supervisor.env"
+```
+
+```env
+TELEGRAM_BOT_TOKEN=<bot-token>
+TELEGRAM_CHAT_ID=<allowed-chat-id>
+```
+
+Enfin :
+
+```bash
+pm2 restart agentic-supervisor
+agentic-supervisor telegram-test
+```
+
+Le token apparaît nécessairement dans le chemin HTTPS de l'API Telegram mais
+n'est jamais journalisé ; erreurs, payloads et messages passent par la rédaction.
+Cookies, credentials, transcripts et résultats complets ne sont pas envoyés.
+
+## État et fichiers
+
+- Configuration privée : `~/.config/agentic-kit/supervisor.env` (0600).
+- Token de hook : `~/.config/agentic-kit/supervisor-hook-token` (0600).
+- DB/logs : `~/.local/state/agentic-kit/supervisor/` (0700).
+- État projet lisible par Claude : `.claude/supervisor/`.
+- État canonique machine : SQLite, journal WAL.
+
+Variables principales : `SUPERVISOR_LEVEL=off|light|standard|strict`, timeout,
+concurrence, retries, seuils UI, viewports, allowlist browser et notifications.
+Voir `config/supervisor.example.env`.
+
+## Sécurité et limites
+
+- Récepteur HTTP lié exclusivement au loopback et token comparé en temps
+  constant ; corps limité à 256 KiB.
+- Codex en lecture seule, éphémère, sans approbation et sans variables Telegram
+  ou provider héritées.
+- Le garde Claude conserve les deny/ask/allow existants, étend le contrôle de
+  portée à Write/Edit et bloque les lectures Bash évidentes de credentials.
+- Texte web/repo/hook traité comme non fiable dans le contrat système.
+- Aucune API Telegram entrante, aucun shell depuis un message, aucun mécanisme
+  d'escalade de privilège.
+
+Limites V1 : `node:sqlite` est encore signalé expérimental sous Node 22 ; le
+sandbox Codex est le mécanisme OS fourni par la CLI, pas un conteneur dédié ; le
+MCP browser tourne sur la VPS et doit rester sur profil jetable sans credentials
+de production. Un conteneur navigateur séparé constitue un durcissement V1.1.
+Les audits authentifiés nécessitent un compte de démo/session fourni de façon
+humaine et stocké hors Git.
+
+## Désactivation, désinstallation et rollback
+
+Désactivation réversible :
+
+```bash
+sed -i 's/^SUPERVISOR_LEVEL=.*/SUPERVISOR_LEVEL=off/' "$HOME/.config/agentic-kit/supervisor.env"
+pm2 restart agentic-supervisor
+```
+
+Désinstallation de l'intégration :
+
+```bash
+./supervisor/scripts/uninstall-service.sh
+```
+
+Le script retire uniquement le processus PM2, le lien CLI et les liens de skills
+qui pointent vers ce dépôt. Il conserve volontairement configuration, token,
+DB, logs et rapports. Pour un rollback Git, revenir au commit antérieur sur la
+branche du kit puis relancer `./setup/link-kit.sh`; ne jamais supprimer l'historique
+d'audit sans l'avoir examiné.
+
+## Extension future d'un second producteur
+
+V1 n'intègre ni Grok ni Kimi. Les événements/audits portent déjà `producer`,
+`candidate_id` et `audit_target`. Une future intégration ajoute un adaptateur de
+normalisation implémentant `EventAdapter`, l'enregistre à la composition du
+serveur, puis envoie sur `/v1/events/<producer>`. Elle ne modifie ni la queue, le
+runner Codex, la politique de gate ni la persistence. Toute
+comparaison/arbitrage resterait une nouvelle politique explicite et humaine,
+jamais une dépendance dans le cœur V1.

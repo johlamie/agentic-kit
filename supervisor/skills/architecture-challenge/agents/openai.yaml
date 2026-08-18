@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Challenge"
+  short_description: "Challenge architecture and tradeoffs"
+  default_prompt: "Use $architecture-challenge to independently test this architecture and its alternatives."

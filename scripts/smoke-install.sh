@@ -33,3 +33,5 @@ done
 
 cmp "$TEST_HOME/.claude/CLAUDE.md" "$ROOT/global/CLAUDE.md" >/dev/null
 echo "PASS  isolated installation smoke test"
+
+"$ROOT/supervisor/scripts/smoke-install.sh"

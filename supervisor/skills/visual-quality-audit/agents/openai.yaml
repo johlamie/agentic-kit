@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visual Quality Audit"
+  short_description: "Audit rendered UI across viewports"
+  default_prompt: "Use $visual-quality-audit to inspect the rendered product across representative viewports."

@@ -33,6 +33,42 @@ Everything between gates runs autonomously. Batch questions; never drip.
 
 Running a command is no longer a gate of its own: see "Commands and branches".
 
+## Independent Codex Supervisor
+
+The local `agentic-supervisor` daemon is an independent auditor, not another
+builder and not a Claude permission bypass. Claude proposes/builds; structured
+lifecycle hooks persist meaningful milestones; Codex audits asynchronously in
+read-only mode; the result is `PASS`, `CHALLENGE`, `BLOCK`, or
+`HUMAN_REQUIRED`. A Supervisor PASS supplies evidence only. It never approves
+money, credentials, Terms, production changes, public exposure, or G1-G4.
+
+Read `.claude/supervisor/LATEST.md` when a hook reports a challenge. Route the
+concise required actions to the responsible agent, retain attribution, and
+re-run the phase gate. Do not copy full transcripts or secrets into audit
+context. Do not reinterpret `PENDING`, `ERROR`, missing MCP, or unavailable
+Codex as PASS. Safe unrelated work may continue, but the affected phase cannot
+be marked complete.
+
+Codex may independently challenge research/data sources, architecture,
+security, code/reviewer/QA quality, design systems, rendered UI, responsive
+behavior, accessibility, pre-deploy readiness, and overall product quality. A
+technically functional but visually or ergonomically weak UI is not done. Any
+Codex redesign remains an isolated proposal under
+`.claude/supervisor/proposals/` until Designer/Builder and the user explicitly
+accept it; it must never silently replace the active frontend.
+
+At required boundaries, use:
+
+    agentic-supervisor wait --project "$PWD" --phase research
+    agentic-supervisor wait --project "$PWD" --phase architecture
+    agentic-supervisor wait --project "$PWD" --phase design
+    agentic-supervisor wait --project "$PWD" --phase code
+    agentic-supervisor wait --project "$PWD" --phase deploy
+    agentic-supervisor wait --project "$PWD" --phase final
+
+Exit codes are 0 PASS, 10 CHALLENGE, 20 BLOCK, 30 HUMAN_REQUIRED, 40 PENDING,
+and 50 Supervisor error. The existing G1-G4 waits always remain in force.
+
 ## Commands and branches
 
 **You may now run the commands that used to stop the pipeline** — deploys, nginx,
@@ -75,8 +111,10 @@ live, the hook will ask the user first. Never commit directly on main.
 
 ## Session ritual (MANDATORY)
 
-Start: read `.claude/memory/PROJECT_STATE.md`, `DECISIONS.md`, `LESSONS.md`;
-summarize state in ≤3 lines; continue from "Next steps".
+Start: read `.claude/memory/PROJECT_STATE.md`, `DECISIONS.md`, `LESSONS.md`,
+plus `.claude/supervisor/LATEST.md` when present; summarize state in ≤3 lines;
+continue from "Next steps". The Supervisor database/STATE.json remain separate
+machine state; never paste them wholesale into Claude memory.
 End / on "checkpoint": update PROJECT_STATE.md, append DECISIONS.md, run
 `retrospective`. A feature is done only after qa PASS end to end — never on
 builder's word.
@@ -99,6 +137,11 @@ library docs — builders SHOULD check before using an unfamiliar API) ·
 github (repos/PRs). If a needed MCP is missing, log it in CAPABILITY_GAPS.md
 and tell the user the exact add command.
 
+These are Claude MCPs. Codex Supervisor has a separate MCP configuration checked
+with `agentic-supervisor mcp-status`; never assume or copy Claude MCP credentials
+into Codex. Playwright is required for rendered Codex UI audits. Context7,
+Chrome DevTools, GitHub, Figma, and Mobbin are capability-dependent and optional.
+
 ## Non-negotiables
 
 - **Secrets**: never in code or commits. `.env` + `.env.example`; devops stores
@@ -109,7 +152,8 @@ and tell the user the exact add command.
   a link that opens on an empty screen is not a delivered MVP.
 - **Definition of done**: accessible URL (web) and/or Expo link+QR (mobile),
   test credentials, README + 1-page user guide, known-limitations list,
-  qa PASS on the deployed target, rollback command recorded.
+  qa PASS on the deployed target, required Supervisor phase PASS, rollback
+  command recorded. G4 remains human even after every technical PASS.
 - **Destructive ops**: the permission tiers decide, not your judgement — see
   "Commands and branches". What stays on you: never work around a denial, and
   never touch a project listed in `~/.claude/production-projects` on your own
