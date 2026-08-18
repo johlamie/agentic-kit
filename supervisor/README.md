@@ -207,10 +207,13 @@ protocoles neutres de `shared/protocols/` ; ils ne changent aucune permission.
 
 ## Telegram
 
-Telegram est sortant uniquement. Le bot notifie les permissions Claude,
-BLOCK/HUMAN_REQUIRED, indisponibilités critiques et, si configuré, PASS. Il
-n'exécute aucune commande et une approbation se fait toujours dans la session
-Claude.
+Telegram est sortant uniquement et sert d'escalade humaine, pas de journal
+d'activité. Le bot notifie les permissions ou réponses attendues par Claude,
+`HUMAN_REQUIRED` et les indisponibilités finales qui empêchent une gate de se
+terminer. `CHALLENGE` et `BLOCK` restent dans les rapports internes afin que
+Claude les corrige sans solliciter le propriétaire. Les `PASS` sont silencieux
+par défaut (`SUPERVISOR_NOTIFY_PASS=false`). Le bot n'exécute aucune commande et
+une approbation se fait toujours dans la session Claude.
 
 Action humaine : créer ou choisir un bot et un chat selon les procédures
 Telegram, sans transmettre le token dans ce dépôt. Puis éditer le fichier privé :

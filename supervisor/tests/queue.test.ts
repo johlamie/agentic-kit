@@ -11,7 +11,7 @@ import { Logger } from "../src/logger.js";
 import { AuditQueue } from "../src/queue.js";
 import { TelegramClient } from "../src/telegram/client.js";
 import type { AuditRecord, AuditResult, CodexRunner } from "../src/types.js";
-import { auditResult, makeFakeCodex, makeTempProject, testConfig } from "./helpers.js";
+import { auditResult, makeFakeCodex, makeTempProject, syntheticTelegramToken, testConfig } from "./helpers.js";
 
 class StaticRunner implements CodexRunner {
   public constructor(private readonly value: AuditResult | Error) {}
@@ -21,17 +21,60 @@ class StaticRunner implements CodexRunner {
   }
 }
 
-function queueFor(database: SupervisorDatabase, config: ReturnType<typeof testConfig>, runner: CodexRunner): AuditQueue {
+function queueFor(
+  database: SupervisorDatabase,
+  config: ReturnType<typeof testConfig>,
+  runner: CodexRunner,
+  telegram = new TelegramClient(config),
+): AuditQueue {
   return new AuditQueue(
     database,
     config,
     runner,
     new PromptBuilder(config),
     new ArtifactStore(config),
-    new TelegramClient(config),
+    telegram,
     new Logger("error"),
   );
 }
+
+test("keeps routine audit decisions internal and notifies only human escalation", async () => {
+  const project = makeTempProject("supervisor-human-only-telegram-");
+  const config = testConfig({
+    telegramBotToken: syntheticTelegramToken(),
+    telegramChatId: "1234",
+    notifyPass: false,
+  });
+  const sentBodies: string[] = [];
+  const mockFetch: typeof fetch = async (_input, init) => {
+    sentBodies.push(String(init?.body ?? ""));
+    return new Response(JSON.stringify({ ok: true, result: { message_id: sentBodies.length } }), { status: 200 });
+  };
+  const telegram = new TelegramClient(config, mockFetch);
+  const database = new SupervisorDatabase(config.databasePath);
+
+  for (const decision of ["PASS", "CHALLENGE", "BLOCK"] as const) {
+    database.enqueueAudit({ projectPath: project, auditType: "code", maxAttempts: 1 });
+    await queueFor(database, config, new StaticRunner(auditResult({ decision })), telegram).drainOnce();
+  }
+  assert.equal(sentBodies.length, 0);
+
+  database.enqueueAudit({ projectPath: project, auditType: "research", maxAttempts: 1 });
+  await queueFor(database, config, new StaticRunner(auditResult({
+    decision: "HUMAN_REQUIRED",
+    human_request: {
+      reason: "A human choice is required.",
+      requested_action: "Choose the approved data source.",
+      safe_to_continue_other_work: true,
+    },
+  })), telegram).drainOnce();
+  assert.equal(sentBodies.length, 1);
+  assert.match(sentBodies[0] ?? "", /HUMAN_REQUIRED/u);
+
+  database.close();
+  rmSync(project, { recursive: true, force: true });
+  rmSync(config.dataDir, { recursive: true, force: true });
+});
 
 test("processes an audit asynchronously and writes concise project artifacts", async () => {
   const project = makeTempProject();

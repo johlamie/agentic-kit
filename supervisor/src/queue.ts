@@ -79,7 +79,10 @@ export class AuditQueue {
       const completed = this.database.getAudit(audit.id) as AuditRecord;
       const artifacts = this.artifacts.writeAudit(completed, run.result, this.database.queueCounts());
       this.logger.info("audit.completed", { ...identifiers(completed), codex_run_id: codexRunId, decision: run.result.decision, report: artifacts.reportPath, proposal: artifacts.proposalPath });
-      if (run.result.decision === "HUMAN_REQUIRED" || run.result.decision === "BLOCK" || (run.result.decision === "PASS" && this.config.notifyPass)) {
+      // Telegram is a human-escalation channel, not an audit activity feed.
+      // Claude consumes CHALLENGE/BLOCK from the project artifacts and repairs
+      // autonomously; notify the owner only when a human decision is required.
+      if (run.result.decision === "HUMAN_REQUIRED" || (run.result.decision === "PASS" && this.config.notifyPass)) {
         await this.notifySafely(formatAuditNotification(completed, run.result));
       }
     } catch (error) {
