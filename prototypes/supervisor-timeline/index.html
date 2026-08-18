@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#050b18">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta
+      name="description"
+      content="Maquette autonome et sans données réelles du fil d’activité Kriton Supervisor."
+    >
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    >
+    <title>Kriton — Fil de supervision</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#activity-feed">Aller directement au fil d’activité</a>
+
+    <div class="ambient ambient--one" aria-hidden="true"></div>
+    <div class="ambient ambient--two" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="/factures_platform" aria-label="K Kriton Supervisor, accueil du projet">
+        <span class="brand__mark" aria-hidden="true"><span>K</span></span>
+        <span class="brand__copy">
+          <strong>Kriton</strong>
+          <span>Supervisor</span>
+        </span>
+      </a>
+
+      <nav class="breadcrumb" aria-label="Fil d’Ariane">
+        <ol>
+          <li>Projets</li>
+          <li aria-current="page" id="project-breadcrumb">factures_platform</li>
+        </ol>
+      </nav>
+
+      <div class="preview-state" aria-label="État de la maquette">
+        <span class="preview-state__dot" aria-hidden="true"></span>
+        <span>Preview autonome</span>
+      </div>
+    </header>
+
+    <main id="main-content" class="page-shell">
+      <section class="project-intro" aria-labelledby="project-title">
+        <div>
+          <p class="eyebrow">Centre de supervision indépendant</p>
+          <h1 id="project-title">Factures platform</h1>
+          <p class="project-intro__description">
+            Suis les contrôles, les corrections et les décisions du projet sans interrompre le travail de Claude.
+          </p>
+        </div>
+
+        <dl class="project-health" aria-label="Résumé de la supervision">
+          <div>
+            <dt>État</dt>
+            <dd><span class="live-dot" aria-hidden="true"></span> Supervision active</dd>
+          </div>
+          <div>
+            <dt>Dernier signal</dt>
+            <dd id="latest-signal">À l’instant</dd>
+          </div>
+          <div>
+            <dt>Intervention</dt>
+            <dd id="human-count">1 requise</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="activity-panel" aria-labelledby="feed-title">
+        <header class="activity-panel__header">
+          <div>
+            <div class="section-kicker">
+              <span class="section-kicker__pulse" aria-hidden="true"></span>
+              Événements en direct
+            </div>
+            <h2 id="feed-title">Fil de supervision</h2>
+            <p>Les événements les plus récents apparaissent en bas du fil.</p>
+          </div>
+
+          <div class="header-actions">
+            <button class="button button--ghost" id="jump-to-latest" type="button">
+              <span aria-hidden="true">↓</span>
+              Dernier événement
+            </button>
+            <button class="button button--primary" id="simulate-event" type="button">
+              <span aria-hidden="true">＋</span>
+              Simuler un événement
+            </button>
+          </div>
+        </header>
+
+        <div class="feed-toolbar" aria-label="Filtres du fil d’activité">
+          <div class="filter-group" role="group" aria-label="Filtrer par statut">
+            <button class="filter-chip is-active" type="button" data-filter="all" aria-pressed="true">
+              Tous <span id="count-all">0</span>
+            </button>
+            <button class="filter-chip" type="button" data-filter="attention" aria-pressed="false">
+              À corriger <span id="count-attention">0</span>
+            </button>
+            <button class="filter-chip" type="button" data-filter="pass" aria-pressed="false">
+              Validés <span id="count-pass">0</span>
+            </button>
+            <button class="filter-chip" type="button" data-filter="human" aria-pressed="false">
+              Intervention <span id="count-human">0</span>
+            </button>
+          </div>
+
+          <p class="demo-notice">
+            <span aria-hidden="true">◇</span>
+            Données de démonstration
+          </p>
+        </div>
+
+        <div
+          class="feed-viewport"
+          id="activity-feed"
+          tabindex="0"
+          aria-label="Fil chronologique des événements de supervision"
+        >
+          <div class="feed-edge feed-edge--top" aria-hidden="true"></div>
+          <ol class="timeline" id="timeline"></ol>
+          <div class="feed-edge feed-edge--bottom" aria-hidden="true"></div>
+        </div>
+
+        <footer class="activity-panel__footer">
+          <p><span class="lock-icon" aria-hidden="true">⌁</span> Prototype en lecture seule · aucune donnée projet réelle</p>
+          <p id="visible-count" aria-live="polite">0 événement affiché</p>
+        </footer>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
