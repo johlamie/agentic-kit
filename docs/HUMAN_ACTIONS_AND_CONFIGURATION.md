@@ -27,7 +27,7 @@ bloque aucun autre projet.
 | Priorité | Action | État attendu |
 |---|---|---|
 | P0 | Traiter l'incident GitGuardian comme faux positif après vérification de son occurrence | Aucun secret réel à révoquer |
-| P0 | Vérifier la nouvelle exécution GitHub Actions après le push du correctif | `offline-validation` et `supervisor-validation` verts |
+| Fait | Vérification GitHub Actions du correctif | Run `32121188608`, quatre jobs verts, aucune annotation |
 | P1 | Réauthentifier `gh` sur cette machine | `gh auth status` réussit |
 | Fait | Santé locale du daemon | `agentic-supervisor doctor` réussit |
 | P2 | Configurer Telegram si les alertes mobiles sont souhaitées | `agentic-supervisor telegram-test` réussit |
@@ -126,13 +126,17 @@ gh run view <run-id>
 gh run watch <run-id> --exit-status
 ```
 
-Résultat attendu :
+Le run de correction `32121188608` a été contrôlé via l'API publique :
 
 - `offline-validation` : PASS ;
 - `supervisor-validation` : PASS ;
 - `claude-native-install` : PASS ;
 - `kimi-offline-validation` : job historique séparé, sans import ni connexion
   avec le Supervisor.
+
+Les quatre checks ont terminé sans annotation. Les commandes ci-dessus restent
+la procédure à réutiliser pour chaque futur push après réauthentification de
+`gh`.
 
 GitHub Actions est déjà activé sur le dépôt puisque le run signalé s'est exécuté.
 Il n'est donc pas nécessaire d'élargir `GITHUB_TOKEN` : le workflow conserve
