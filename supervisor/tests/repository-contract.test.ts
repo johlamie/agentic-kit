@@ -49,6 +49,18 @@ test("all schemas, prompts, protocols, and skill references are complete", () =>
   }
 });
 
+test("operator documentation covers human setup and both project entry paths", () => {
+  const humanActions = readFileSync(resolve(repositoryRoot, "docs/HUMAN_ACTIONS_AND_CONFIGURATION.md"), "utf8");
+  const workflow = readFileSync(resolve(repositoryRoot, "docs/PROJECT_WORKFLOW_GUIDE.md"), "utf8");
+  for (const topic of ["GitGuardian", "GitHub Actions", "Telegram", "G1", "G2", "G3", "G4", "Désinstallation"]) {
+    assert.match(humanActions, new RegExp(topic, "u"));
+  }
+  assert.match(workflow, /Créer un nouveau projet/u);
+  assert.match(workflow, /Adopter un projet existant/u);
+  assert.match(workflow, /Reprendre un projet interrompu/u);
+  assert.match(workflow, /PASS \| CHALLENGE \| BLOCK \| HUMAN_REQUIRED/u);
+});
+
 test("executable Supervisor core has no Kimi or Grok integration", () => {
   const sourceRoot = resolve(PACKAGE_ROOT, "src");
   const stack = [sourceRoot];

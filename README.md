@@ -46,6 +46,11 @@ commande distante. Les propositions de refonte restent sous
 `.claude/supervisor/proposals/` et n'écrasent jamais le frontend Claude. Kimi
 n'est pas relié à ce service. Voir [le guide opérationnel](supervisor/README.md).
 
+Guides pratiques :
+
+- [configuration et actions humaines restantes](docs/HUMAN_ACTIONS_AND_CONFIGURATION.md) ;
+- [démarrer, créer, adopter ou reprendre un projet](docs/PROJECT_WORKFLOW_GUIDE.md).
+
 ## Definition of Done (non négociable)
 
 URL publique (web) et/ou lien Expo + QR (mobile) · compte de test · données de

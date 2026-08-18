@@ -15,6 +15,11 @@ Le Supervisor ne remplace ni les reviewers/QA Claude, ni les portes humaines
 G1–G4, ni le système de permissions. Il ne pousse, ne déploie, ne paie, ne crée
 pas de compte et n'accepte aucune condition juridique.
 
+Pour une mise en route guidée, consulter aussi :
+
+- [configuration et actions humaines](../docs/HUMAN_ACTIONS_AND_CONFIGURATION.md) ;
+- [workflow nouveau projet, adoption et reprise](../docs/PROJECT_WORKFLOW_GUIDE.md).
+
 ## Installation
 
 Prérequis : Node.js 22+, npm, SQLite disponible via `node:sqlite`, Codex CLI

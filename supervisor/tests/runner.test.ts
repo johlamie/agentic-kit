@@ -7,7 +7,7 @@ import { AuditOutputError } from "../src/codex/parser.js";
 import { CliCodexRunner, CodexProcessError } from "../src/codex/runner.js";
 import { SupervisorDatabase } from "../src/db.js";
 import type { AuditRecord, AuditType } from "../src/types.js";
-import { auditResult, makeFakeCodex, makeTempProject, testConfig } from "./helpers.js";
+import { auditResult, makeFakeCodex, makeTempProject, syntheticTelegramToken, testConfig } from "./helpers.js";
 
 function claimedAudit(database: SupervisorDatabase, project: string, auditType: AuditType): AuditRecord {
   const queued = database.enqueueAudit({ projectPath: project, auditType });
@@ -25,7 +25,7 @@ test("invokes Codex with read-only ephemeral arguments and a restricted environm
   const database = new SupervisorDatabase(":memory:");
   const audit = claimedAudit(database, project, "research");
   const priorSecret = process.env.TELEGRAM_BOT_TOKEN;
-  process.env.TELEGRAM_BOT_TOKEN = "123456789:telegram-secret-value-should-not-leak";
+  process.env.TELEGRAM_BOT_TOKEN = syntheticTelegramToken();
   try {
     const run = await new CliCodexRunner(config).run(audit, "audit this milestone");
     assert.equal(run.result.decision, "CHALLENGE");

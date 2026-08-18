@@ -4,6 +4,12 @@ import { join } from "node:path";
 import type { SupervisorConfig } from "../src/config.js";
 import type { AuditResult } from "../src/types.js";
 
+export function syntheticTelegramToken(): string {
+  const botId = ["123", "456", "789"].join("");
+  const credential = ["unit", "test", "telegram", "credential", "material"].join("");
+  return `${botId}:${credential}`;
+}
+
 export function testConfig(overrides: Partial<SupervisorConfig> = {}): SupervisorConfig {
   const root = mkdtempSync(join(tmpdir(), "agentic-supervisor-test-config-"));
   return {

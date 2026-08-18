@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { loadConfig } from "../src/config.js";
+import { syntheticTelegramToken } from "./helpers.js";
 
 test("loads a private env file while environment overrides remain authoritative", () => {
   const root = mkdtempSync(join(tmpdir(), "supervisor-config-"));
@@ -16,7 +17,7 @@ test("loads a private env file while environment overrides remain authoritative"
     `SUPERVISOR_HOOK_TOKEN_FILE=${tokenFile}`,
     "SUPERVISOR_LEVEL=light",
     "SUPERVISOR_BROWSER_ALLOWED_HOSTS=localhost,staging.example.test",
-    "TELEGRAM_BOT_TOKEN=123456789:abcdefghijklmnopqrstuvwxyzABCDEFG",
+    `TELEGRAM_BOT_TOKEN=${syntheticTelegramToken()}`,
     "TELEGRAM_CHAT_ID=42",
   ].join("\n"), { mode: 0o600 });
   const config = loadConfig({ SUPERVISOR_ENV_FILE: envFile, SUPERVISOR_PORT: "9001" });

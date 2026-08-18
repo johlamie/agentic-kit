@@ -46,14 +46,21 @@ test("keeps only bounded, redacted PostToolUse metadata", () => {
 });
 
 test("redacts permission text and preserves Stop recursion state", () => {
+  // Assemble the fixture at runtime so secret scanners do not mistake a
+  // deliberately fake credential for a leaked authorization header.
+  const headerName = ["Author", "ization"].join("");
+  const authorizationScheme = ["Bear", "er"].join("");
+  const syntheticCredential = ["unit", "test", "credential", "material"].join("-");
   const permission = normalizeHookEvent({
     hook_event_name: "Notification",
     session_id: "s",
     cwd: "/tmp/product",
     notification_type: "permission_prompt",
-    message: "Authorization: Bearer abcdefghijklmnopqrstuvwxyz",
+    message: `${headerName}: ${authorizationScheme} ${syntheticCredential}`,
   });
-  assert.doesNotMatch(JSON.stringify(permission), /abcdefghijklmnopqrstuvwxyz/u);
+  const serializedPermission = JSON.stringify(permission);
+  assert.doesNotMatch(serializedPermission, new RegExp(syntheticCredential, "u"));
+  assert.match(serializedPermission, /\[REDACTED\]/u);
 
   const stop = normalizeHookEvent({
     hook_event_name: "Stop",

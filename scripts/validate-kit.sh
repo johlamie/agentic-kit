@@ -177,6 +177,7 @@ required_supervisor_files=(
   supervisor/config/supervisor.example.env supervisor/schemas/hook-event.schema.json
   supervisor/schemas/audit-result.schema.json supervisor/ecosystem.config.cjs
   supervisor/bin/agentic-supervisor supervisor/README.md
+  docs/HUMAN_ACTIONS_AND_CONFIGURATION.md docs/PROJECT_WORKFLOW_GUIDE.md
   setup/supervisor-setup.sh setup/codex-mcp-setup.sh
 )
 for file in "${required_supervisor_files[@]}"; do

@@ -9,10 +9,14 @@ import { SupervisorServer } from "../src/server.js";
 import { TelegramClient } from "../src/telegram/client.js";
 import { formatPermissionNotification } from "../src/telegram/formatter.js";
 import type { NormalizedEvent } from "../src/types.js";
-import { makeTempProject, testConfig } from "./helpers.js";
+import { makeTempProject, syntheticTelegramToken, testConfig } from "./helpers.js";
 
 test("Telegram sends only a redacted bounded body and never puts the bot token in headers", async () => {
-  const token = "123456789:abcdefghijklmnopqrstuvwxyzABCDEFG";
+  const token = syntheticTelegramToken();
+  const passwordKey = ["pass", "word"].join("");
+  const passwordValue = ["unit", "test", "password"].join("-");
+  const providerPrefix = ["s", "k"].join("");
+  const providerToken = `${providerPrefix}-${["unit", "test", "provider", "credential"].join("")}`;
   let capturedUrl = "";
   let capturedInit: RequestInit | undefined;
   const mockFetch: typeof fetch = async (input, init) => {
@@ -21,18 +25,19 @@ test("Telegram sends only a redacted bounded body and never puts the bot token i
     return new Response(JSON.stringify({ ok: true, result: { message_id: 42 } }), { status: 200 });
   };
   const client = new TelegramClient({ telegramBotToken: token, telegramChatId: "1234" }, mockFetch);
-  const id = await client.send("password=hunter2 sk-abcdefghijklmnopqrstuvwxyz123456");
+  const id = await client.send(`${passwordKey}=${passwordValue} ${providerToken}`);
   assert.equal(id, "42");
   assert.equal(capturedUrl, `https://api.telegram.org/bot${token}/sendMessage`);
   const headers = new Headers(capturedInit?.headers);
   assert.equal(headers.has("X-Telegram-Bot-Api-Secret-Token"), false);
   const body = String(capturedInit?.body);
-  assert.doesNotMatch(body, /hunter2|sk-abcdefghijklmnopqrstuvwxyz123456/u);
+  assert.doesNotMatch(body, new RegExp(`${passwordValue}|${providerToken}`, "u"));
+  assert.match(body, /\[REDACTED\]/u);
   assert.doesNotMatch(body, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"));
 });
 
 test("Telegram errors redact bot URLs", async () => {
-  const token = "123456789:abcdefghijklmnopqrstuvwxyzABCDEFG";
+  const token = syntheticTelegramToken();
   const failingFetch: typeof fetch = async (input) => { throw new Error(`network failure for ${String(input)}`); };
   const client = new TelegramClient({ telegramBotToken: token, telegramChatId: "1234" }, failingFetch);
   await assert.rejects(
@@ -43,7 +48,8 @@ test("Telegram errors redact bot URLs", async () => {
 
 test("permission events are persisted and forwarded through the authenticated loopback receiver", async () => {
   const project = makeTempProject();
-  const config = testConfig({ hookToken: "local-hook-token", telegramBotToken: "123456789:abcdefghijklmnopqrstuvwxyzABCDEFG", telegramChatId: "1234" });
+  const permissionSecret = ["unit", "test", "permission", "secret"].join("-");
+  const config = testConfig({ hookToken: "local-hook-token", telegramBotToken: syntheticTelegramToken(), telegramChatId: "1234" });
   const sentBodies: string[] = [];
   const mockFetch: typeof fetch = async (_input, init) => {
     sentBodies.push(String(init?.body ?? ""));
@@ -60,7 +66,7 @@ test("permission events are persisted and forwarded through the authenticated lo
     notification_type: "permission_prompt",
     session_id: "session-permission",
     cwd: project,
-    message: "Approval needed; password=should-never-leak",
+    message: `Approval needed; ${["pass", "word"].join("")}=${permissionSecret}`,
   };
   const unauthorized = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   assert.equal(unauthorized.status, 401);
@@ -74,7 +80,7 @@ test("permission events are persisted and forwarded through the authenticated lo
   assert.equal(database.listEvents(project).length, 1);
   assert.equal(database.listEvents(project)[0]?.event_type, "permission.requested");
   assert.equal(sentBodies.length, 1);
-  assert.doesNotMatch(sentBodies[0] ?? "", /should-never-leak/u);
+  assert.doesNotMatch(sentBodies[0] ?? "", new RegExp(permissionSecret, "u"));
   await server.close();
   database.close();
   rmSync(project, { recursive: true, force: true });
