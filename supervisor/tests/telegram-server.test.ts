@@ -106,7 +106,7 @@ test("permission notification gives no remote command channel", () => {
     metadata: { message: "Deploy permission required" },
   };
   const message = formatPermissionNotification(event);
-  assert.match(message, /Open the Claude session to approve or reject/u);
+  assert.match(message, /Ouvre la session Claude pour répondre/u);
   assert.doesNotMatch(message, /\/approve|execute|shell/u);
 });
 
@@ -129,8 +129,8 @@ test("idle notification clearly requests a response instead of a permission deci
     metadata: { notification_type: "idle_prompt" },
   };
   const message = formatPermissionNotification(event);
-  assert.match(message, /Response required/u);
-  assert.doesNotMatch(message, /Permission required/u);
+  assert.match(message, /Réponse requise/u);
+  assert.doesNotMatch(message, /Autorisation requise/u);
 });
 
 test("Stop hook blocks on unresolved audit outcomes and honors recursion protection", async () => {

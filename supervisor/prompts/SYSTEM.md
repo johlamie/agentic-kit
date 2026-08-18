@@ -27,3 +27,10 @@ Populate every output-schema field. For non-design audits use `design_score:
 null`, `design_dimensions: []`, `redesign_recommended: false`, and
 `proposal_mode: "none"`. Use `human_request: null` unless human action is truly
 required, and `infrastructure_error: null` for a completed product audit.
+
+Write every human-facing prose field in French: `summary`, finding titles,
+descriptions and recommendations, design-dimension rationale/issues/actions,
+human-request reason/action, and infrastructure-error messages. Keep enum
+values (`PASS`, `CHALLENGE`, `BLOCK`, `HUMAN_REQUIRED`, severities, evidence
+classifications, and proposal modes), source-code identifiers, filenames,
+commands, configuration keys, URLs, and verbatim technical evidence unchanged.

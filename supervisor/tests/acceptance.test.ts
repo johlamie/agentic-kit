@@ -124,6 +124,9 @@ test("paid/login-only evidence becomes HUMAN_REQUIRED without account action", a
   assert.equal(database.openHumanRequestCount(project), 1);
   const notification = formatAuditNotification(completed, result);
   assert.match(notification, /MarketData Pro|paid subscription|no account/iu);
+  assert.match(notification, /ACTION HUMAINE REQUISE \(HUMAN_REQUIRED\)/u);
+  assert.match(notification, /Action humaine/u);
+  assert.match(notification, /Les autres travaux peuvent continuer : oui/u);
   database.close();
   rmSync(project, { recursive: true, force: true });
   rmSync(config.dataDir, { recursive: true, force: true });

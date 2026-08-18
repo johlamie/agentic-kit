@@ -53,6 +53,9 @@ test("all schemas, prompts, protocols, and skill references are complete", () =>
       assert.equal(existsSync(resolve(skillRoot, skill.name, reference[1] as string)), true);
     }
   }
+  const systemPrompt = readFileSync(resolve(PACKAGE_ROOT, "prompts/SYSTEM.md"), "utf8");
+  assert.match(systemPrompt, /human-facing prose field in French/u);
+  assert.match(systemPrompt, /Keep enum\s+values.*unchanged/su);
 });
 
 test("operator documentation covers human setup and both project entry paths", () => {
