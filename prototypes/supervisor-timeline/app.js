@@ -268,7 +268,9 @@ function updateCounts(visible) {
   document.querySelector("#count-attention").textContent = String(attention);
   document.querySelector("#count-pass").textContent = String(passed);
   document.querySelector("#count-human").textContent = String(human);
-  document.querySelector("#human-count").textContent = human === 1 ? "1 requise" : `${human} requises`;
+  for (const count of document.querySelectorAll("[data-human-count]")) {
+    count.textContent = human === 1 ? "1 requise" : `${human} requises`;
+  }
   document.querySelector("#visible-count").textContent = `${visible} événement${visible > 1 ? "s" : ""} affiché${visible > 1 ? "s" : ""}`;
 }
 
@@ -304,7 +306,9 @@ function simulateEvent() {
   }
 
   render({ scrollToBottom: true, enteringId: event.id });
-  document.querySelector("#latest-signal").textContent = "À l’instant";
+  for (const signal of document.querySelectorAll("[data-latest-signal]")) {
+    signal.textContent = "À l’instant";
+  }
   showToast(`${event.label} ajouté en bas du fil`);
 }
 

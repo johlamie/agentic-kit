@@ -40,6 +40,21 @@
         </ol>
       </nav>
 
+      <dl class="topbar-health" aria-label="Résumé de la supervision">
+        <div>
+          <dt>État</dt>
+          <dd><span class="live-dot" aria-hidden="true"></span> Supervision active</dd>
+        </div>
+        <div>
+          <dt>Dernier signal</dt>
+          <dd data-latest-signal>À l’instant</dd>
+        </div>
+        <div>
+          <dt>Intervention</dt>
+          <dd data-human-count>1 requise</dd>
+        </div>
+      </dl>
+
       <div class="preview-state" aria-label="État de la maquette">
         <span class="preview-state__dot" aria-hidden="true"></span>
         <span>Preview autonome</span>
@@ -63,11 +78,11 @@
           </div>
           <div>
             <dt>Dernier signal</dt>
-            <dd id="latest-signal">À l’instant</dd>
+            <dd data-latest-signal>À l’instant</dd>
           </div>
           <div>
             <dt>Intervention</dt>
-            <dd id="human-count">1 requise</dd>
+            <dd data-human-count>1 requise</dd>
           </div>
         </dl>
       </section>
