@@ -28,6 +28,7 @@ export class CliCodexRunner implements CodexRunner {
     const args = [
       ...(usesWeb(audit.audit_type) ? ["--search"] : []),
       "-c", "allow_login_shell=false",
+      "-c", 'shell_environment_policy.filters.GITHUB_PAT_TOKEN="exclude"',
       "--sandbox", "read-only",
       "--ask-for-approval", "never",
       "-C", audit.project_path,
@@ -47,6 +48,7 @@ export class CliCodexRunner implements CodexRunner {
         audit.project_path,
         this.config.auditTimeoutMs,
         this.config.maxProcessOutputBytes,
+        this.config.githubPatToken,
       );
       if (processResult.exitCode !== 0) {
         throw new CodexProcessError(
@@ -84,12 +86,13 @@ async function runBoundedProcess(
   cwd: string,
   timeoutMs: number,
   maxBytes: number,
+  githubPatToken: string | null,
 ): Promise<ProcessResult> {
   const child = spawn(command, args, {
     cwd,
     shell: false,
     stdio: ["pipe", "pipe", "pipe"],
-    env: restrictedEnvironment(),
+    env: restrictedEnvironment(githubPatToken),
   });
   return await new Promise<ProcessResult>((resolvePromise, reject) => {
     let stdout = "";
@@ -130,10 +133,11 @@ async function runBoundedProcess(
   });
 }
 
-function restrictedEnvironment(): NodeJS.ProcessEnv {
+function restrictedEnvironment(githubPatToken: string | null): NodeJS.ProcessEnv {
   const allowed = ["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "TERM", "TMPDIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "CODEX_HOME"];
   const result: NodeJS.ProcessEnv = {};
   for (const key of allowed) if (process.env[key] !== undefined) result[key] = process.env[key];
+  if (githubPatToken) result.GITHUB_PAT_TOKEN = githubPatToken;
   result.NO_COLOR = "1";
   return result;
 }

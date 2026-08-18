@@ -9,10 +9,11 @@ Dernière vérification de référence : **18 août 2026**, branche
 `feat/codex-supervisor`.
 
 État observé sur la machine de référence : Supervisor `RUNNING`, DB saine,
-authentifications Claude/Codex valides, hook authentifié, Playwright et Context7
-opérationnels, file d'exécution vide. Telegram, Chrome DevTools, GitHub MCP,
-Figma et Mobbin ne sont pas configurés ; ils restent optionnels. Seule
-l'authentification du CLI `gh` est expirée.
+authentifications Claude/Codex valides, hook authentifié, Playwright, Context7
+et Chrome DevTools enregistrés, file d'exécution vide. Telegram et l'OAuth
+Mobbin ont été confirmés par le propriétaire. Les deux endpoints GitHub MCP sont
+enregistrés en lecture seule, mais `GITHUB_PAT_TOKEN` reste à fournir. Figma
+reste optionnel et non configuré. L'authentification du CLI `gh` est expirée.
 
 L'historique contient volontairement deux preuves de runtime sous `/tmp` : un
 frontend volontairement mauvais correctement classé `BLOCK`, et une recherche
@@ -28,9 +29,10 @@ bloque aucun autre projet.
 |---|---|---|
 | P0 | Traiter l'incident GitGuardian comme faux positif après vérification de son occurrence | Aucun secret réel à révoquer |
 | Fait | Vérification GitHub Actions du correctif | Run `32121188608`, quatre jobs verts, aucune annotation |
+| P1 | Créer le PAT GitHub MCP séparé et l'ajouter au fichier privé | `agentic-supervisor mcp-status` voit la credential |
 | P1 | Réauthentifier `gh` sur cette machine | `gh auth status` réussit |
 | Fait | Santé locale du daemon | `agentic-supervisor doctor` réussit |
-| P2 | Configurer Telegram si les alertes mobiles sont souhaitées | `agentic-supervisor telegram-test` réussit |
+| Fait | Telegram configuré et testé par le propriétaire | Le bot Kriton reçoit les alertes |
 | Selon projet | Fournir les authentifications cloud, comptes de démo et décisions G1–G4 | Jamais stockés dans Git |
 
 ## 1. Incident GitGuardian
@@ -98,7 +100,7 @@ ancien `dist/` existait déjà.
 
 Le correctif rend le smoke test indépendant de cet artefact. Le job séparé
 `supervisor-validation` reste responsable du vrai `npm ci`, du typecheck, des
-45 tests et du build. Les actions GitHub sont également épinglées sur les commits
+51 tests et du build. Les actions GitHub sont également épinglées sur les commits
 officiels correspondant à `actions/checkout` v7.0.1 et `actions/setup-node`
 v7.0.0, ce qui retire l'avertissement Node.js 20 sans élargir les permissions.
 
@@ -277,14 +279,12 @@ Pour enregistrer Mobbin et GitHub sans token dans le dépôt :
 ```
 
 Avec les versions actuelles de Codex, `mcp add` peut démarrer immédiatement la
-découverte OAuth. Le script borne et interrompt cette attente, masque l'URL
-éphémère et n'accepte aucune autorisation. Le propriétaire du compte doit ensuite
-exécuter lui-même :
+découverte OAuth pour Mobbin. Le script borne et interrompt cette attente,
+masque l'URL éphémère et n'accepte aucune autorisation. Le propriétaire du
+compte doit ensuite exécuter lui-même :
 
 ```bash
 codex mcp login mobbin -c mcp_oauth_callback_port=8765
-codex mcp login github -c mcp_oauth_callback_port=8765
-codex mcp login github-actions -c mcp_oauth_callback_port=8765
 ```
 
 Sur une VPS sans navigateur, le callback OAuth écoute sur la VPS alors que le
@@ -295,31 +295,80 @@ dans un terminal local un tunnel vers le même port :
 ssh -N -L 8765:127.0.0.1:8765 ubuntu@YOUR_VPS_HOST
 ```
 
-Lancer ensuite la commande `codex mcp login ...` sur la VPS et ouvrir localement
-l'URL qu'elle affiche. Un transfert de port équivalent dans VS Code Remote peut
-remplacer le tunnel SSH. Les trois logins sont séquentiels et peuvent réutiliser
-le port `8765` ; ne pas lancer deux flux OAuth simultanément.
+Lancer ensuite la commande `codex mcp login mobbin ...` sur la VPS et ouvrir
+localement l'URL qu'elle affiche. Un transfert de port équivalent dans VS Code
+Remote peut remplacer le tunnel SSH.
 
-Mobbin utilise le serveur officiel `https://api.mobbin.com/mcp`. GitHub est
-scindé entre le jeu par défaut en lecture seule (`github`, dépôts, issues et PR)
-et le jeu Actions en lecture seule (`github-actions`, workflows et CI). Les URL
-`/readonly` filtrent les outils d'écriture côté serveur ; aucun PAT et aucune
-credential Claude ne sont copiés. Après OAuth, démarrer une session Codex
-interactive et demander la lecture d'un dépôt privé connu puis de ses derniers
-runs Actions. Cela déclenche, si nécessaire, la demande de scope GitHub que le
-propriétaire doit examiner et accepter. Redémarrer ensuite le Supervisor afin
-que ses futurs processus Codex relisent les credentials MCP :
+Mobbin utilise le serveur officiel `https://api.mobbin.com/mcp`.
+
+### GitHub : même mécanisme headless que Claude, jeton distinct
+
+Le serveur GitHub MCP distant ne prend pas en charge l'enregistrement dynamique
+du client OAuth. L'erreur `Dynamic client registration not supported` est donc
+attendue avec `codex mcp login github` et `github-actions` : ces commandes ne
+doivent pas être relancées. Le script enregistre à la place les deux endpoints
+officiels avec `--bearer-token-env-var GITHUB_PAT_TOKEN` :
+
+- `github` : dépôts, contenu, issues et pull requests via `/readonly` ;
+- `github-actions` : workflows et runs CI via `/x/actions/readonly`.
+
+Ce fallback est celui du
+[guide GitHub MCP pour Codex](https://github.com/github/github-mcp-server/blob/main/docs/installation-guides/install-codex.md) ;
+la limite OAuth est consignée dans la
+[documentation d'intégration hôte](https://github.com/github/github-mcp-server/blob/main/docs/host-integration.md).
+
+Créer humainement un nouveau fine-grained personal access token dans les
+paramètres GitHub en suivant la
+[documentation officielle des PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+Ne pas réutiliser le jeton Claude : cette séparation préserve
+l'indépendance et permet de révoquer le Supervisor sans casser Claude. Choisir
+uniquement les dépôts privés nécessaires, une expiration courte ou revue
+régulièrement, et commencer avec ces permissions de dépôt en lecture seule :
+
+- `Contents` ;
+- `Pull requests` ;
+- `Actions` ;
+- `Issues` seulement si leurs audits sont nécessaires ;
+- `Metadata`, accordée automatiquement par GitHub.
+
+Ajouter uniquement une permission de lecture supplémentaire si un outil MCP
+précis la réclame. Ne jamais accorder une permission d'écriture. Ne pas coller le
+jeton dans le chat, dans une commande, dans Git ou dans `~/.codex/config.toml`.
+L'écrire avec un éditeur dans le fichier privé déjà utilisé par le Supervisor :
 
 ```bash
+editor "$HOME/.config/agentic-kit/supervisor.env"
+chmod 600 "$HOME/.config/agentic-kit/supervisor.env"
+```
+
+```env
+GITHUB_PAT_TOKEN=<fine-grained-token>
+```
+
+Puis appliquer l'enregistrement et redémarrer le daemon :
+
+```bash
+./setup/codex-mcp-setup.sh --github-readonly
 pm2 restart agentic-supervisor
 codex mcp list --json
 agentic-supervisor mcp-status
 ```
 
-Un OAuth réussi autorise les futures sessions Codex ; la session actuellement
-ouverte peut nécessiter un redémarrage. Pour révoquer localement une connexion,
-utiliser `codex mcp logout <name>`, puis révoquer également l'autorisation depuis
-le fournisseur si elle ne doit plus être valide.
+`mcp-status` confirme la présence de la variable sans afficher sa valeur ; la
+validité distante est réellement éprouvée au premier appel MCP. Pour un test
+interactif qui n'importe pas les autres secrets du fichier Supervisor, lancer
+une nouvelle session avec uniquement ce jeton, demander la lecture d'un dépôt
+privé connu puis de son dernier run Actions, et quitter la session :
+
+```bash
+GITHUB_PAT_TOKEN="$(sed -n 's/^GITHUB_PAT_TOKEN=//p' "$HOME/.config/agentic-kit/supervisor.env")" codex
+```
+
+La commande ne contient pas la valeur du jeton dans l'historique et la variable
+n'est pas conservée dans le shell parent. Pour révoquer l'accès, supprimer la
+ligne privée, redémarrer le Supervisor et révoquer le PAT depuis GitHub. Les
+entrées MCP sans secret peuvent rester enregistrées ou être retirées avec
+`codex mcp remove github` et `codex mcp remove github-actions`.
 
 Un MCP manquant devient une capacité indisponible ou une erreur d'infrastructure,
 jamais un faux `PASS`. Playwright doit utiliser un profil isolé sans cookies ou
@@ -337,8 +386,8 @@ claude mcp list
 Actions éventuellement nécessaires selon le projet :
 
 - Mobbin : OAuth et plan éligible éventuel ;
-- GitHub : OAuth humain séparé pour Claude, ou PAT finement limité si Claude ne
-  prend pas en charge le même flux ; ne jamais réutiliser les credentials Codex ;
+- GitHub : PAT finement limité propre à Claude ; ne jamais réutiliser le jeton
+  du Supervisor ;
 - Supabase : `SUPABASE_ACCESS_TOKEN`, créé par le propriétaire ;
 - Firebase : `firebase login` interactif ;
 - Figma : OAuth/compte si une source Figma est effectivement utilisée.
@@ -385,6 +434,7 @@ Le fichier est volontairement non modifiable par les agents. Vérifier son état
 - [ ] Incident GitGuardian examiné et classé sans créer d'exception globale.
 - [ ] Aucun secret réel dans le commit, le diff, les logs ou les captures.
 - [ ] `gh auth status` réparé sur les machines qui doivent piloter GitHub.
+- [ ] `GITHUB_PAT_TOKEN` séparé, limité en lecture et testé sur les dépôts choisis.
 - [ ] Nouvelle exécution CI entièrement verte.
 - [ ] `agentic-supervisor doctor` vert.
 - [ ] `agentic-supervisor mcp-status` confirme Playwright si le produit a une UI.

@@ -116,7 +116,7 @@ export class AuditQueue {
     if (!this.config.browserAllowedHosts.includes(target.hostname.toLowerCase())) {
       throw new AuditInfrastructureError("TARGET_NOT_ALLOWED", `Visual audit host is not allowlisted: ${target.hostname}`);
     }
-    const capabilities = await inspectCodexMcp(this.config.codexBinary);
+    const capabilities = await inspectCodexMcp(this.config.codexBinary, 10_000, this.config.githubPatToken);
     const browser = capabilities.find((entry) => entry.capability === "browser");
     if (browser?.state !== "OK") throw new AuditInfrastructureError("PLAYWRIGHT_MISSING", "Codex Playwright MCP is not configured");
   }

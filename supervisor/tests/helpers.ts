@@ -10,6 +10,12 @@ export function syntheticTelegramToken(): string {
   return `${botId}:${credential}`;
 }
 
+export function syntheticGitHubToken(): string {
+  const prefix = ["github", "pat"].join("_");
+  const credential = ["unit", "test", "github", "credential", "material"].join("");
+  return `${prefix}_${credential}`;
+}
+
 export function testConfig(overrides: Partial<SupervisorConfig> = {}): SupervisorConfig {
   const root = mkdtempSync(join(tmpdir(), "agentic-supervisor-test-config-"));
   return {
@@ -35,6 +41,7 @@ export function testConfig(overrides: Partial<SupervisorConfig> = {}): Superviso
     uiViewports: ["390x844", "768x1024", "1440x900", "1920x1080"],
     browserAllowedHosts: ["localhost", "127.0.0.1", "::1"],
     notifyPass: false,
+    githubPatToken: null,
     telegramBotToken: null,
     telegramChatId: null,
     logLevel: "error",

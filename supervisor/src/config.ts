@@ -30,6 +30,7 @@ export interface SupervisorConfig {
   uiViewports: string[];
   browserAllowedHosts: string[];
   notifyPass: boolean;
+  githubPatToken: string | null;
   telegramBotToken: string | null;
   telegramChatId: string | null;
   logLevel: "debug" | "info" | "warn" | "error";
@@ -139,6 +140,7 @@ export function loadConfig(overrides: NodeJS.ProcessEnv = process.env): Supervis
     uiViewports,
     browserAllowedHosts,
     notifyPass: boolean(env.SUPERVISOR_NOTIFY_PASS, false),
+    githubPatToken: optional(env.GITHUB_PAT_TOKEN),
     telegramBotToken: optional(env.TELEGRAM_BOT_TOKEN),
     telegramChatId: optional(env.TELEGRAM_CHAT_ID),
     logLevel: logLevel as SupervisorConfig["logLevel"],

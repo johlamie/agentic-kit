@@ -18,13 +18,14 @@ With no option, only prints Codex MCP status.
   --context7         Current library documentation (optional)
   --chrome-devtools  Network/performance inspection (optional)
   --mobbin           Official Mobbin remote server (OAuth required after registration)
-  --github-readonly  Official GitHub repos/PRs and Actions servers, read-only (OAuth required)
+  --github-readonly  Official GitHub repos/PRs and Actions servers, read-only (PAT required)
   --all-safe         Register all three non-authenticated servers
 
-The installed Codex CLI may start OAuth discovery immediately after adding a
-remote server. This script interrupts that interactive wait and never accepts
-OAuth. The account owner must run the printed `codex mcp login` commands. GitHub
-tokens are never copied from Claude config and no bearer token is stored here.
+The installed Codex CLI may start OAuth discovery immediately after adding an
+OAuth remote server. This script interrupts that interactive wait and never
+accepts OAuth. GitHub uses a separately created, read-only fine-grained PAT via
+GITHUB_PAT_TOKEN because its remote server does not support dynamic client
+registration. Tokens are never copied from Claude config or stored here.
 EOF
 }
 
@@ -76,6 +77,31 @@ add_http_if_missing() {
   fi
   echo "registered: Codex MCP $name (authentication pending)"
 }
+add_http_with_bearer() {
+  local name="$1"
+  local url="$2"
+  local token_env="$3"
+  if jq -e --arg name "$name" --arg url "$url" --arg token_env "$token_env" \
+    '.[] | select(.name == $name and .transport.url == $url and .transport.bearer_token_env_var == $token_env)' \
+    <<<"$current" >/dev/null; then
+    echo "preserved: Codex MCP $name"
+    return
+  fi
+  if mcp_present "$name"; then
+    codex mcp remove "$name" >/dev/null
+    echo "updated: removed incompatible Codex MCP $name registration"
+    current="$(codex mcp list --json)"
+  fi
+  codex mcp add "$name" --url "$url" --bearer-token-env-var "$token_env" >/dev/null
+  current="$(codex mcp list --json)"
+  if ! jq -e --arg name "$name" --arg url "$url" --arg token_env "$token_env" \
+    '.[] | select(.name == $name and .transport.url == $url and .transport.bearer_token_env_var == $token_env)' \
+    <<<"$current" >/dev/null; then
+    echo "ERROR: failed to register Codex MCP $name with bearer-token environment" >&2
+    return 1
+  fi
+  echo "registered: Codex MCP $name (GITHUB_PAT_TOKEN required at runtime)"
+}
 
 if [[ "$INSTALL_PLAYWRIGHT" -eq 1 ]]; then
   browser_output="$HOME/.local/state/agentic-kit/supervisor/browser-evidence"
@@ -101,9 +127,11 @@ fi
 
 if [[ "$INSTALL_GITHUB_READONLY" -eq 1 ]]; then
   # Keep repository/PR access and CI access separate so each remote endpoint
-  # exposes only its documented read tools. OAuth is intentionally not started.
-  add_http_if_missing github https://api.githubcopilot.com/mcp/readonly
-  add_http_if_missing github-actions https://api.githubcopilot.com/mcp/x/actions/readonly
+  # exposes only its documented read tools. The remote GitHub server does not
+  # support dynamic OAuth client registration, so use a separate fine-grained
+  # PAT from the process environment without putting it in Codex configuration.
+  add_http_with_bearer github https://api.githubcopilot.com/mcp/readonly GITHUB_PAT_TOKEN
+  add_http_with_bearer github-actions https://api.githubcopilot.com/mcp/x/actions/readonly GITHUB_PAT_TOKEN
 fi
 
 echo
@@ -116,8 +144,8 @@ else
   echo "Mobbin: optional; register with --mobbin (eligible paid plan and human OAuth required)."
 fi
 if [[ "$INSTALL_GITHUB_READONLY" -eq 1 ]]; then
-  echo "GitHub OAuth (human actions): codex mcp login github -c mcp_oauth_callback_port=$OAUTH_CALLBACK_PORT"
-  echo "                               codex mcp login github-actions -c mcp_oauth_callback_port=$OAUTH_CALLBACK_PORT"
+  echo "GitHub PAT (human action): set GITHUB_PAT_TOKEN in the private Supervisor environment."
+  echo "GitHub OAuth login is not used: the remote server does not support dynamic client registration."
 else
-  echo "GitHub: optional; register read-only repos/PRs and CI with --github-readonly."
+  echo "GitHub: optional; register read-only repos/PRs and CI with --github-readonly, then set GITHUB_PAT_TOKEN."
 fi

@@ -38,3 +38,25 @@ test("distinguishes authenticated GitHub repositories from GitHub Actions", () =
   assert.deepEqual(result(entries, "github"), { capability: "github", state: "OK", detail: "github" });
   assert.deepEqual(result(entries, "github_ci"), { capability: "github_ci", state: "OPTIONAL", detail: "not configured" });
 });
+
+test("requires the configured GitHub bearer environment at runtime", () => {
+  const entries: McpEntry[] = [
+    {
+      name: "github",
+      enabled: true,
+      auth_status: "unknown",
+      transport: { type: "streamable_http", bearer_token_env_var: "GITHUB_PAT_TOKEN" },
+    },
+  ];
+
+  assert.deepEqual(result(entries, "github"), {
+    capability: "github",
+    state: "OPTIONAL",
+    detail: "configured; GITHUB_PAT_TOKEN is not available",
+  });
+  assert.deepEqual(classifyCodexMcpEntries(entries, new Set(["GITHUB_PAT_TOKEN"])).find((entry) => entry.capability === "github"), {
+    capability: "github",
+    state: "OK",
+    detail: "github (bearer credential present; remote validity not probed)",
+  });
+});

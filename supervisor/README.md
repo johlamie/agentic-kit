@@ -189,11 +189,15 @@ agentic-supervisor mcp-status
 - Mobbin : optionnel, serveur officiel via `--mobbin`, plan éligible et OAuth
   humain ; absence non bloquante.
 - GitHub : optionnel via `--github-readonly`. Deux endpoints officiels séparés
-  exposent les dépôts/PR et les Actions/CI en lecture seule ; aucun PAT n'est
-  copié depuis Claude et OAuth reste une action humaine (`codex mcp login
-  github -c mcp_oauth_callback_port=8765`, puis la même commande pour
-  `github-actions`). Sur une VPS headless, transférer ce port par SSH vers la
-  machine qui ouvre le navigateur, comme documenté dans
+  exposent les dépôts/PR et les Actions/CI en lecture seule. Le serveur distant
+  GitHub ne prend pas en charge l'enregistrement OAuth dynamique utilisé par
+  `codex mcp login` ; l'intégration reprend donc le mécanisme PAT headless de
+  Claude avec un PAT finement limité **distinct**, fourni uniquement par
+  `GITHUB_PAT_TOKEN`. Le Supervisor transmet ce jeton au processus hôte Codex
+  pour le client MCP, puis l'exclut explicitement de l'environnement des
+  commandes shell générées par le modèle. Aucun jeton n'est écrit dans le dépôt
+  ou dans `~/.codex/config.toml`. La création et la saisie du PAT restent des
+  actions humaines, détaillées dans
   `docs/HUMAN_ACTIONS_AND_CONFIGURATION.md`.
 
 Les sept skills sous `supervisor/skills/` sont liés au scope utilisateur Codex :

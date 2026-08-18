@@ -45,7 +45,7 @@ export async function runCli(argv: string[]): Promise<number> {
       case "telegram-test": return await telegramTest(config);
       case "codex-test": return await codexTest(config);
       case "browser-test":
-      case "mcp-status": return await printCapabilities(config.codexBinary);
+      case "mcp-status": return await printCapabilities(config);
       case "skills": return listSkills();
       case "design-score": return withDatabase(config.databasePath, (database) => designScore(database, requiredOption(args, "--project")));
       case "--version":
@@ -67,7 +67,7 @@ async function status(config: ReturnType<typeof loadConfig>): Promise<number> {
     const health = await api(config, "/health") as Record<string, unknown>;
     let codex = "ERROR";
     try { codex = `OK (${(await capture(config.codexBinary, ["--version"], 3_000)).trim()})`; } catch {}
-    const capabilities = await inspectCodexMcp(config.codexBinary, 3_000);
+    const capabilities = await inspectCodexMcp(config.codexBinary, 3_000, config.githubPatToken);
     const browser = capabilities.find((item) => item.capability === "browser")
       ?? capabilities.find((item) => item.capability === "codex_mcp");
     process.stdout.write(`Supervisor: RUNNING\nVersion: ${health.version}\nDatabase: ${String(health.database).toUpperCase()}\n`);
@@ -133,7 +133,7 @@ async function doctor(config: ReturnType<typeof loadConfig>): Promise<number> {
     if (envMode !== 0o600) failures += 1;
   }
   process.stdout.write(`[${config.telegramBotToken && config.telegramChatId ? "OK" : "WARN"}] Telegram: ${config.telegramBotToken && config.telegramChatId ? "configured" : "not configured"}\n`);
-  const capabilities = await inspectCodexMcp(config.codexBinary);
+  const capabilities = await inspectCodexMcp(config.codexBinary, 10_000, config.githubPatToken);
   for (const item of capabilities) process.stdout.write(`[${item.state === "OPTIONAL" ? "WARN" : item.state}] Codex MCP ${item.capability}: ${item.detail}\n`);
   const hook = resolve(PACKAGE_ROOT, "../global/hooks/supervisor-hook.sh");
   process.stdout.write(`[${existsSync(hook) ? "OK" : "FAIL"}] Claude hooks: ${existsSync(hook) ? "forwarder present" : "forwarder missing"}\n`);
@@ -249,8 +249,8 @@ async function codexTest(config: ReturnType<typeof loadConfig>): Promise<number>
   return 0;
 }
 
-async function printCapabilities(codexBinary: string): Promise<number> {
-  const capabilities = await inspectCodexMcp(codexBinary);
+async function printCapabilities(config: ReturnType<typeof loadConfig>): Promise<number> {
+  const capabilities = await inspectCodexMcp(config.codexBinary, 10_000, config.githubPatToken);
   for (const item of capabilities) process.stdout.write(`${item.state}\t${item.capability}\t${item.detail}\n`);
   return capabilities.some((item) => item.capability === "browser" && item.state !== "OK") ? 1 : 0;
 }

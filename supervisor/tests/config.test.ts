@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { loadConfig } from "../src/config.js";
-import { syntheticTelegramToken } from "./helpers.js";
+import { syntheticGitHubToken, syntheticTelegramToken } from "./helpers.js";
 
 test("loads a private env file while environment overrides remain authoritative", () => {
   const root = mkdtempSync(join(tmpdir(), "supervisor-config-"));
@@ -17,6 +17,7 @@ test("loads a private env file while environment overrides remain authoritative"
     `SUPERVISOR_HOOK_TOKEN_FILE=${tokenFile}`,
     "SUPERVISOR_LEVEL=light",
     "SUPERVISOR_BROWSER_ALLOWED_HOSTS=localhost,staging.example.test",
+    `GITHUB_PAT_TOKEN=${syntheticGitHubToken()}`,
     `TELEGRAM_BOT_TOKEN=${syntheticTelegramToken()}`,
     "TELEGRAM_CHAT_ID=42",
   ].join("\n"), { mode: 0o600 });
@@ -25,6 +26,7 @@ test("loads a private env file while environment overrides remain authoritative"
   assert.equal(config.level, "light");
   assert.equal(config.hookToken, "local-shared-token");
   assert.deepEqual(config.browserAllowedHosts, ["localhost", "staging.example.test"]);
+  assert.equal(config.githubPatToken, syntheticGitHubToken());
   assert.equal(config.telegramChatId, "42");
   rmSync(root, { recursive: true, force: true });
 });

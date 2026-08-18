@@ -7,7 +7,7 @@ import { AuditOutputError } from "../src/codex/parser.js";
 import { CliCodexRunner, CodexProcessError } from "../src/codex/runner.js";
 import { SupervisorDatabase } from "../src/db.js";
 import type { AuditRecord, AuditType } from "../src/types.js";
-import { auditResult, makeFakeCodex, makeTempProject, syntheticTelegramToken, testConfig } from "./helpers.js";
+import { auditResult, makeFakeCodex, makeTempProject, syntheticGitHubToken, syntheticTelegramToken, testConfig } from "./helpers.js";
 
 function claimedAudit(database: SupervisorDatabase, project: string, auditType: AuditType): AuditRecord {
   const queued = database.enqueueAudit({ projectPath: project, auditType });
@@ -21,7 +21,8 @@ test("invokes Codex with read-only ephemeral arguments and a restricted environm
   const project = makeTempProject();
   const capturePath = join(root, "capture.json");
   const binary = makeFakeCodex(root, { result: auditResult({ decision: "CHALLENGE" }), capturePath });
-  const config = testConfig({ codexBinary: binary });
+  const githubToken = syntheticGitHubToken();
+  const config = testConfig({ codexBinary: binary, githubPatToken: githubToken });
   const database = new SupervisorDatabase(":memory:");
   const audit = claimedAudit(database, project, "research");
   const priorSecret = process.env.TELEGRAM_BOT_TOKEN;
@@ -34,6 +35,7 @@ test("invokes Codex with read-only ephemeral arguments and a restricted environm
     assert.equal(capture.prompt, "audit this milestone");
     assert.ok(capture.args.includes("--search"));
     assert.deepEqual(capture.args.slice(capture.args.indexOf("-c"), capture.args.indexOf("-c") + 2), ["-c", "allow_login_shell=false"]);
+    assert.ok(capture.args.includes('shell_environment_policy.filters.GITHUB_PAT_TOKEN="exclude"'));
     assert.ok(capture.args.includes("--ephemeral"));
     assert.deepEqual(capture.args.slice(capture.args.indexOf("--sandbox"), capture.args.indexOf("--sandbox") + 2), ["--sandbox", "read-only"]);
     assert.deepEqual(capture.args.slice(capture.args.indexOf("--ask-for-approval"), capture.args.indexOf("--ask-for-approval") + 2), ["--ask-for-approval", "never"]);
@@ -41,9 +43,32 @@ test("invokes Codex with read-only ephemeral arguments and a restricted environm
     assert.ok(capture.args.indexOf("--sandbox") < capture.args.indexOf("exec"));
     assert.equal(capture.args[capture.args.indexOf("-C") + 1], project);
     assert.equal(capture.env.TELEGRAM_BOT_TOKEN, undefined);
+    assert.equal(capture.env.GITHUB_PAT_TOKEN, githubToken);
   } finally {
     if (priorSecret === undefined) delete process.env.TELEGRAM_BOT_TOKEN;
     else process.env.TELEGRAM_BOT_TOKEN = priorSecret;
+    database.close();
+    rmSync(root, { recursive: true, force: true });
+    rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test("does not inherit an ambient GitHub token when Supervisor configuration omits it", async () => {
+  const root = mkdtempSync(join(tmpdir(), "supervisor-runner-no-provider-token-"));
+  const project = makeTempProject();
+  const capturePath = join(root, "capture.json");
+  const binary = makeFakeCodex(root, { capturePath });
+  const database = new SupervisorDatabase(":memory:");
+  const audit = claimedAudit(database, project, "code");
+  const priorToken = process.env.GITHUB_PAT_TOKEN;
+  process.env.GITHUB_PAT_TOKEN = syntheticGitHubToken();
+  try {
+    await new CliCodexRunner(testConfig({ codexBinary: binary, githubPatToken: null })).run(audit, "audit");
+    const capture = JSON.parse(readFileSync(capturePath, "utf8")) as { env: Record<string, string> };
+    assert.equal(capture.env.GITHUB_PAT_TOKEN, undefined);
+  } finally {
+    if (priorToken === undefined) delete process.env.GITHUB_PAT_TOKEN;
+    else process.env.GITHUB_PAT_TOKEN = priorToken;
     database.close();
     rmSync(root, { recursive: true, force: true });
     rmSync(project, { recursive: true, force: true });
