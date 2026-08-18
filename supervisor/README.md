@@ -191,7 +191,10 @@ agentic-supervisor mcp-status
 - GitHub : optionnel via `--github-readonly`. Deux endpoints officiels séparés
   exposent les dépôts/PR et les Actions/CI en lecture seule ; aucun PAT n'est
   copié depuis Claude et OAuth reste une action humaine (`codex mcp login
-  github`, puis `codex mcp login github-actions`).
+  github -c mcp_oauth_callback_port=8765`, puis la même commande pour
+  `github-actions`). Sur une VPS headless, transférer ce port par SSH vers la
+  machine qui ouvre le navigateur, comme documenté dans
+  `docs/HUMAN_ACTIONS_AND_CONFIGURATION.md`.
 
 Les sept skills sous `supervisor/skills/` sont liés au scope utilisateur Codex :
 UI/UX due diligence, visual quality, accessibility, API/source due diligence,

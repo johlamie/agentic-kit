@@ -7,6 +7,7 @@ INSTALL_CONTEXT7=0
 INSTALL_DEVTOOLS=0
 INSTALL_MOBBIN=0
 INSTALL_GITHUB_READONLY=0
+OAUTH_CALLBACK_PORT=8765
 
 usage() {
   cat <<'EOF'
@@ -110,13 +111,13 @@ codex mcp list
 echo
 echo "Figma: optional, requires a separately authorized Codex-compatible server."
 if [[ "$INSTALL_MOBBIN" -eq 1 ]]; then
-  echo "Mobbin OAuth (human action): codex mcp login mobbin"
+  echo "Mobbin OAuth (human action): codex mcp login mobbin -c mcp_oauth_callback_port=$OAUTH_CALLBACK_PORT"
 else
   echo "Mobbin: optional; register with --mobbin (eligible paid plan and human OAuth required)."
 fi
 if [[ "$INSTALL_GITHUB_READONLY" -eq 1 ]]; then
-  echo "GitHub OAuth (human actions): codex mcp login github"
-  echo "                               codex mcp login github-actions"
+  echo "GitHub OAuth (human actions): codex mcp login github -c mcp_oauth_callback_port=$OAUTH_CALLBACK_PORT"
+  echo "                               codex mcp login github-actions -c mcp_oauth_callback_port=$OAUTH_CALLBACK_PORT"
 else
   echo "GitHub: optional; register read-only repos/PRs and CI with --github-readonly."
 fi

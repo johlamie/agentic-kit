@@ -282,10 +282,23 @@ découverte OAuth. Le script borne et interrompt cette attente, masque l'URL
 exécuter lui-même :
 
 ```bash
-codex mcp login mobbin
-codex mcp login github
-codex mcp login github-actions
+codex mcp login mobbin -c mcp_oauth_callback_port=8765
+codex mcp login github -c mcp_oauth_callback_port=8765
+codex mcp login github-actions -c mcp_oauth_callback_port=8765
 ```
+
+Sur une VPS sans navigateur, le callback OAuth écoute sur la VPS alors que le
+navigateur est sur la machine locale. Avant chaque commande de login, conserver
+dans un terminal local un tunnel vers le même port :
+
+```bash
+ssh -N -L 8765:127.0.0.1:8765 ubuntu@YOUR_VPS_HOST
+```
+
+Lancer ensuite la commande `codex mcp login ...` sur la VPS et ouvrir localement
+l'URL qu'elle affiche. Un transfert de port équivalent dans VS Code Remote peut
+remplacer le tunnel SSH. Les trois logins sont séquentiels et peuvent réutiliser
+le port `8765` ; ne pas lancer deux flux OAuth simultanément.
 
 Mobbin utilise le serveur officiel `https://api.mobbin.com/mcp`. GitHub est
 scindé entre le jeu par défaut en lecture seule (`github`, dépôts, issues et PR)
