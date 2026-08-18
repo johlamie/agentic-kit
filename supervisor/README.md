@@ -186,8 +186,12 @@ agentic-supervisor mcp-status
 - Chrome DevTools : réseau/console/performance, optionnel via
   `--chrome-devtools`, télémétrie et CrUX désactivés par le script.
 - Figma : optionnel, seulement après configuration/authentification humaine.
-- Mobbin : optionnel et potentiellement payant ; absence non bloquante.
-- GitHub : optionnel ; aucun PAT n'est copié depuis Claude.
+- Mobbin : optionnel, serveur officiel via `--mobbin`, plan éligible et OAuth
+  humain ; absence non bloquante.
+- GitHub : optionnel via `--github-readonly`. Deux endpoints officiels séparés
+  exposent les dépôts/PR et les Actions/CI en lecture seule ; aucun PAT n'est
+  copié depuis Claude et OAuth reste une action humaine (`codex mcp login
+  github`, puis `codex mcp login github-actions`).
 
 Les sept skills sous `supervisor/skills/` sont liés au scope utilisateur Codex :
 UI/UX due diligence, visual quality, accessibility, API/source due diligence,

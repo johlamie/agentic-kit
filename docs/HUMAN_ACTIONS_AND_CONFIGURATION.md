@@ -258,8 +258,8 @@ fichiers de configuration dans des logs.
 | Context7 MCP | Recommandé pour la documentation technique actuelle | `./setup/codex-mcp-setup.sh --context7` |
 | Chrome DevTools MCP | Optionnel pour réseau/performance | `./setup/codex-mcp-setup.sh --chrome-devtools` |
 | Figma | Optionnel, authentification humaine séparée | Ne configurer que pour un projet qui en dépend |
-| Mobbin | Optionnel, peut être payant | Ne créer ni abonnement ni compte automatiquement |
-| GitHub MCP | Optionnel | Ne jamais copier une credential Claude vers Codex |
+| Mobbin | Optionnel, plan Pro/Team/Enterprise et OAuth humain | `./setup/codex-mcp-setup.sh --mobbin` |
+| GitHub MCP | Optionnel, dépôts/PR et Actions en lecture seule | `./setup/codex-mcp-setup.sh --github-readonly` |
 
 Vérification :
 
@@ -269,6 +269,44 @@ codex mcp list
 agentic-supervisor mcp-status
 agentic-supervisor browser-test
 ```
+
+Pour enregistrer Mobbin et GitHub sans token dans le dépôt :
+
+```bash
+./setup/codex-mcp-setup.sh --mobbin --github-readonly
+```
+
+Avec les versions actuelles de Codex, `mcp add` peut démarrer immédiatement la
+découverte OAuth. Le script borne et interrompt cette attente, masque l'URL
+éphémère et n'accepte aucune autorisation. Le propriétaire du compte doit ensuite
+exécuter lui-même :
+
+```bash
+codex mcp login mobbin
+codex mcp login github
+codex mcp login github-actions
+```
+
+Mobbin utilise le serveur officiel `https://api.mobbin.com/mcp`. GitHub est
+scindé entre le jeu par défaut en lecture seule (`github`, dépôts, issues et PR)
+et le jeu Actions en lecture seule (`github-actions`, workflows et CI). Les URL
+`/readonly` filtrent les outils d'écriture côté serveur ; aucun PAT et aucune
+credential Claude ne sont copiés. Après OAuth, démarrer une session Codex
+interactive et demander la lecture d'un dépôt privé connu puis de ses derniers
+runs Actions. Cela déclenche, si nécessaire, la demande de scope GitHub que le
+propriétaire doit examiner et accepter. Redémarrer ensuite le Supervisor afin
+que ses futurs processus Codex relisent les credentials MCP :
+
+```bash
+pm2 restart agentic-supervisor
+codex mcp list --json
+agentic-supervisor mcp-status
+```
+
+Un OAuth réussi autorise les futures sessions Codex ; la session actuellement
+ouverte peut nécessiter un redémarrage. Pour révoquer localement une connexion,
+utiliser `codex mcp logout <name>`, puis révoquer également l'autorisation depuis
+le fournisseur si elle ne doit plus être valide.
 
 Un MCP manquant devient une capacité indisponible ou une erreur d'infrastructure,
 jamais un faux `PASS`. Playwright doit utiliser un profil isolé sans cookies ou
@@ -285,8 +323,9 @@ claude mcp list
 
 Actions éventuellement nécessaires selon le projet :
 
-- Mobbin : OAuth et abonnement éventuel ;
-- GitHub : PAT finement limité, créé et fourni par le propriétaire ;
+- Mobbin : OAuth et plan éligible éventuel ;
+- GitHub : OAuth humain séparé pour Claude, ou PAT finement limité si Claude ne
+  prend pas en charge le même flux ; ne jamais réutiliser les credentials Codex ;
 - Supabase : `SUPABASE_ACCESS_TOKEN`, créé par le propriétaire ;
 - Firebase : `firebase login` interactif ;
 - Figma : OAuth/compte si une source Figma est effectivement utilisée.

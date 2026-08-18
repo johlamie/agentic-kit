@@ -1,24 +1,29 @@
 import { spawn } from "node:child_process";
 import type { CapabilityStatus } from "./types.js";
 
-interface McpEntry { name?: unknown; enabled?: unknown; transport?: unknown; auth_status?: unknown; disabled_reason?: unknown; }
+export interface McpEntry { name?: unknown; enabled?: unknown; transport?: unknown; auth_status?: unknown; disabled_reason?: unknown; }
 
 export async function inspectCodexMcp(codexBinary = "codex", timeoutMs = 10_000): Promise<CapabilityStatus[]> {
   try {
     const output = await capture(codexBinary, ["mcp", "list", "--json"], timeoutMs);
     const entries = JSON.parse(output) as McpEntry[];
-    const configured = new Map(entries.filter((entry) => typeof entry.name === "string").map((entry) => [String(entry.name).toLowerCase(), entry]));
-    return [
-      capability("browser", ["playwright"], configured, true),
-      capability("network_inspection", ["chrome-devtools", "chrome_devtools"], configured, false),
-      capability("code_docs", ["context7"], configured, false),
-      capability("github", ["github"], configured, false),
-      capability("design_source", ["figma"], configured, false),
-      capability("design_research", ["mobbin"], configured, false),
-    ];
+    return classifyCodexMcpEntries(entries);
   } catch (error) {
     return [{ capability: "codex_mcp", state: "ERROR", detail: error instanceof Error ? error.message : String(error) }];
   }
+}
+
+export function classifyCodexMcpEntries(entries: McpEntry[]): CapabilityStatus[] {
+  const configured = new Map(entries.filter((entry) => typeof entry.name === "string").map((entry) => [String(entry.name).toLowerCase(), entry]));
+  return [
+    capability("browser", ["playwright"], configured, true),
+    capability("network_inspection", ["chrome-devtools", "chrome_devtools"], configured, false),
+    capability("code_docs", ["context7"], configured, false),
+    capability("github", ["github", "github-repos"], configured, false),
+    capability("github_ci", ["github-actions", "github_actions"], configured, false),
+    capability("design_source", ["figma"], configured, false),
+    capability("design_research", ["mobbin"], configured, false),
+  ];
 }
 
 function capability(name: string, aliases: string[], configured: Map<string, McpEntry>, required: boolean): CapabilityStatus {
@@ -27,7 +32,16 @@ function capability(name: string, aliases: string[], configured: Map<string, Mcp
   const entry = configured.get(matched) as McpEntry;
   if (entry.enabled === false) return { capability: name, state: required ? "ERROR" : "OPTIONAL", detail: `disabled${entry.disabled_reason ? `: ${String(entry.disabled_reason)}` : ""}` };
   if (entry.auth_status === "not_logged_in") return { capability: name, state: required ? "ERROR" : "OPTIONAL", detail: "configured but not authenticated" };
+  if (entry.auth_status === "unknown" && isRemoteTransport(entry.transport)) {
+    return { capability: name, state: required ? "ERROR" : "OPTIONAL", detail: "configured; remote authentication could not be verified" };
+  }
   return { capability: name, state: "OK", detail: matched };
+}
+
+function isRemoteTransport(transport: unknown): boolean {
+  if (!transport || typeof transport !== "object") return false;
+  const type = (transport as { type?: unknown }).type;
+  return type === "streamable_http" || type === "http" || type === "sse";
 }
 
 export async function capture(command: string, args: string[], timeoutMs = 10_000): Promise<string> {
