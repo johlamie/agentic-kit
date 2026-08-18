@@ -110,6 +110,29 @@ test("permission notification gives no remote command channel", () => {
   assert.doesNotMatch(message, /\/approve|execute|shell/u);
 });
 
+test("idle notification clearly requests a response instead of a permission decision", () => {
+  const event: NormalizedEvent = {
+    id: "idle-1",
+    timestamp: new Date().toISOString(),
+    producer: "claude",
+    project_id: "project",
+    project_path: "/tmp/project",
+    claude_session_id: "session",
+    event_type: "permission.requested",
+    agent_type: null,
+    agent_id: null,
+    candidate_id: null,
+    audit_target: null,
+    transcript_path: null,
+    agent_transcript_path: null,
+    last_message: null,
+    metadata: { notification_type: "idle_prompt" },
+  };
+  const message = formatPermissionNotification(event);
+  assert.match(message, /Response required/u);
+  assert.doesNotMatch(message, /Permission required/u);
+});
+
 test("Stop hook blocks on unresolved audit outcomes and honors recursion protection", async () => {
   const previous = {
     envFile: process.env.SUPERVISOR_ENV_FILE,

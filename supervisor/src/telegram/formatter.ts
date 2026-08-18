@@ -17,8 +17,18 @@ ${result.summary}${human}`, 3_500);
 }
 
 export function formatPermissionNotification(event: NormalizedEvent): string {
-  const message = typeof event.metadata.message === "string" ? event.metadata.message : "Claude requires a permission decision.";
-  return redactText(`🔐 Agentic Kit — Permission required
+  const notificationType = typeof event.metadata.notification_type === "string"
+    ? event.metadata.notification_type
+    : "permission_prompt";
+  const labels: Record<string, { title: string; fallback: string }> = {
+    permission_prompt: { title: "Permission required", fallback: "Claude requires a permission decision." },
+    idle_prompt: { title: "Response required", fallback: "Claude is waiting for your response." },
+    elicitation_dialog: { title: "MCP input required", fallback: "An MCP integration is waiting for your input." },
+    agent_needs_input: { title: "Agent input required", fallback: "A Claude agent is waiting for your input." },
+  };
+  const label = labels[notificationType] ?? { title: "Attention required", fallback: "Claude requires your attention." };
+  const message = typeof event.metadata.message === "string" ? event.metadata.message : label.fallback;
+  return redactText(`🔐 Agentic Kit — ${label.title}
 
 Project: ${basename(event.project_path)}
 Agent: ${event.agent_type ?? "orchestrator"}

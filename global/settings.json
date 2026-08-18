@@ -256,6 +256,36 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "elicitation_dialog",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "agent_needs_input",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/supervisor-hook.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [

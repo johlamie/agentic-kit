@@ -27,6 +27,12 @@ test("preserves Claude G1-G4 and the original permission tiers", () => {
   assert.ok(settings.permissions.allow.includes("Bash(git push:*)"));
   const guard = settings.hooks.PreToolUse?.find((entry) => entry.hooks.some((hook) => hook.command.endsWith("agent-guard.sh")));
   assert.match(guard?.matcher ?? "", /Bash.*Edit.*Write/u);
+  const notificationMatchers = new Set((settings.hooks.Notification ?? []).map((entry) => entry.matcher));
+  for (const matcher of ["permission_prompt", "idle_prompt", "elicitation_dialog", "agent_needs_input"]) {
+    assert.equal(notificationMatchers.has(matcher), true, `missing Notification matcher: ${matcher}`);
+  }
+  const supervisorLauncher = readFileSync(resolve(repositoryRoot, "global/hooks/supervisor-hook.sh"), "utf8");
+  assert.match(supervisorLauncher, /readlink -f "\$\{BASH_SOURCE\[0\]\}"/u);
 });
 
 test("all schemas, prompts, protocols, and skill references are complete", () => {
