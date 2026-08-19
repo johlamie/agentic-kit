@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { extname, resolve } from "node:path";
 import type { SupervisorConfig } from "../config.js";
 import { SupervisorDatabase } from "../db.js";
+import { sanitizeUrl } from "../security/redact.js";
 import type { AuditRecord, AuditType, NormalizedEvent } from "../types.js";
 
 const UI_EXTENSIONS = new Set([".css", ".html", ".jsx", ".tsx", ".vue", ".svelte", ".swift"]);
@@ -45,14 +46,20 @@ export class AuditDispatcher {
 
   public enqueueManual(projectPath: string, auditType: AuditType, context: Record<string, unknown>): AuditRecord {
     const timestamp = new Date(Date.now() + this.config.auditDebounceMs).toISOString();
+    const targetUrl = sanitizeUrl(context.url);
+    const safeContext = { ...context };
+    if ("url" in safeContext) {
+      if (targetUrl) safeContext.url = targetUrl;
+      else delete safeContext.url;
+    }
     return this.database.enqueueAudit({
       projectPath,
       auditType,
-      context: { ...context, manual: true },
+      context: { ...safeContext, manual: true },
       coalesceKey: `manual:${resolve(projectPath)}:${auditType}`,
       notBefore: timestamp,
       maxAttempts: this.config.maxRetries + 1,
-      auditTarget: typeof context.url === "string" ? context.url : null,
+      auditTarget: targetUrl,
     });
   }
 
@@ -134,5 +141,5 @@ function isMeaningfulFinalStop(event: NormalizedEvent): boolean {
 
 function extractLocalUrl(message: string | null): string | null {
   const match = message?.match(/https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d{1,5})?(?:\/[^\s]*)?/iu);
-  return match?.[0] ?? null;
+  return sanitizeUrl(match?.[0]);
 }

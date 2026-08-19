@@ -24,6 +24,11 @@ Hooks enqueue audits asynchronously. At a required boundary, use
 `agentic-supervisor wait --project "$PWD" --phase <phase>` and interpret its
 documented exit code; do not assume that merely scheduling an audit cleared it.
 
+For a real human dependency, invoke `AskUserQuestion` with the actual reason and
+choices. Kriton Supervisor alone sends Telegram notifications from structured
+permission, question, plan, MCP elicitation, and HUMAN_REQUIRED events. Never
+ask for a Telegram bot token/chat ID and never call Telegram directly.
+
 ## Phase 0 — Project shell
 Create/confirm the project directory, `git init`, copy memory templates from
 `~/.claude/templates/memory/` to `.claude/memory/`, `.gitignore` (with `.env`,

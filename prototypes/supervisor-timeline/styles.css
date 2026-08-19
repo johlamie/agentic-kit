@@ -218,6 +218,11 @@ button {
   box-shadow: 0 0 0 4px rgba(78, 216, 170, 0.1), 0 0 16px rgba(78, 216, 170, 0.55);
 }
 
+.live-dot--stopped {
+  background: var(--ink-faint);
+  box-shadow: 0 0 0 4px rgba(97, 112, 137, 0.11);
+}
+
 .page-shell {
   width: min(80vw, 1460px);
   margin: 0 auto;
@@ -603,6 +608,11 @@ button {
   --event-soft: rgba(255, 111, 130, 0.1);
 }
 
+.event--error {
+  --event-color: var(--block);
+  --event-soft: rgba(255, 111, 130, 0.1);
+}
+
 .event--human {
   --event-color: var(--human);
   --event-soft: rgba(184, 155, 255, 0.11);
@@ -736,6 +746,7 @@ button {
   color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.6;
+  white-space: pre-line;
 }
 
 .activity-panel__footer {
@@ -1205,6 +1216,10 @@ button {
   .activity-panel__footer {
     padding-inline: clamp(36px, 4vw, 72px);
   }
+}
+
+[data-supervisor-runtime="true"] [data-demo-only="true"] {
+  display: none;
 }
 
 @media (min-width: 821px) and (max-width: 1120px) {

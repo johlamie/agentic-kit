@@ -1,4 +1,5 @@
 const PROJECT_FALLBACK = "factures_platform";
+const runtimeMode = document.documentElement.dataset.supervisorRuntime === "true";
 
 const initialEvents = [
   {
@@ -119,9 +120,10 @@ const simulatedEvents = [
 ];
 
 const state = {
-  events: [...initialEvents],
+  events: runtimeMode ? [] : [...initialEvents],
   filter: "all",
   simulationIndex: 0,
+  openHumanCount: runtimeMode ? 0 : 1,
 };
 
 const timeline = document.querySelector("#timeline");
@@ -131,6 +133,8 @@ const jumpButton = document.querySelector("#jump-to-latest");
 const toast = document.querySelector("#toast");
 const filterButtons = [...document.querySelectorAll("[data-filter]")];
 let followLatest = true;
+let eventStream;
+let runtimePollTimer;
 
 function isFeedAtBottom() {
   return Math.abs(feed.scrollHeight - feed.clientHeight - feed.scrollTop) <= 8;
@@ -161,7 +165,7 @@ function humanizeProject(slug) {
 
 function matchesFilter(event) {
   if (state.filter === "all") return true;
-  if (state.filter === "attention") return event.type === "block" || event.type === "challenge";
+  if (state.filter === "attention") return event.type === "block" || event.type === "challenge" || event.type === "error";
   if (state.filter === "pass") return event.type === "pass";
   if (state.filter === "human") return event.type === "human";
   return true;
@@ -174,7 +178,7 @@ function eventNode(event, index, entering = false) {
 
   const time = document.createElement("time");
   time.className = "event__time";
-  time.dateTime = `2026-08-18T${event.time}:00Z`;
+  time.dateTime = event.timestamp ?? `2026-08-18T${event.time}:00Z`;
   time.textContent = event.time;
 
   const marker = document.createElement("span");
@@ -261,7 +265,7 @@ function render(options = {}) {
 }
 
 function updateCounts(visible) {
-  const attention = state.events.filter((event) => event.type === "block" || event.type === "challenge").length;
+  const attention = state.events.filter((event) => event.type === "block" || event.type === "challenge" || event.type === "error").length;
   const passed = state.events.filter((event) => event.type === "pass").length;
   const human = state.events.filter((event) => event.type === "human").length;
   document.querySelector("#count-all").textContent = String(state.events.length);
@@ -269,7 +273,7 @@ function updateCounts(visible) {
   document.querySelector("#count-pass").textContent = String(passed);
   document.querySelector("#count-human").textContent = String(human);
   for (const count of document.querySelectorAll("[data-human-count]")) {
-    count.textContent = human === 1 ? "1 requise" : `${human} requises`;
+    count.textContent = state.openHumanCount === 1 ? "1 requise" : `${state.openHumanCount} requises`;
   }
   document.querySelector("#visible-count").textContent = `${visible} événement${visible > 1 ? "s" : ""} affiché${visible > 1 ? "s" : ""}`;
 }
@@ -324,7 +328,7 @@ for (const button of filterButtons) {
   });
 }
 
-simulateButton.addEventListener("click", simulateEvent);
+simulateButton?.addEventListener("click", simulateEvent);
 jumpButton.addEventListener("click", () => {
   scrollFeedToBottom("smooth");
   showToast("Dernier événement affiché");
@@ -360,4 +364,127 @@ document.querySelector("#project-breadcrumb").textContent = projectSlug;
 document.querySelector(".brand").setAttribute("href", `/${projectSlug}`);
 document.title = `${humanizeProject(projectSlug)} · Kriton Supervisor`;
 
-render({ scrollToBottom: true });
+function formattedTime(timestamp) {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "--:--";
+  return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
+}
+
+function relativeSignal(timestamp) {
+  const elapsed = Date.now() - new Date(timestamp).getTime();
+  if (!Number.isFinite(elapsed) || elapsed < 60_000) return "À l’instant";
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 60) return `Il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return `Il y a ${hours} h`;
+}
+
+function runtimeEvent(item) {
+  const allowedTypes = new Set(["info", "pass", "challenge", "block", "human", "error"]);
+  return {
+    id: typeof item.id === "string" ? item.id.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 120) : `evt-${Date.now()}`,
+    type: allowedTypes.has(item.type) ? item.type : "info",
+    label: typeof item.label === "string" ? item.label : "INFO",
+    category: typeof item.category === "string" ? item.category : "Supervisor",
+    timestamp: typeof item.timestamp === "string" ? item.timestamp : new Date().toISOString(),
+    time: formattedTime(item.timestamp),
+    title: typeof item.title === "string" ? item.title : "Événement de supervision",
+    summary: typeof item.summary === "string" ? item.summary : "Le Supervisor a reçu un nouvel événement.",
+    details: typeof item.details === "string" ? item.details : "Aucun détail supplémentaire.",
+  };
+}
+
+function setRuntimeStatus(label, active) {
+  for (const target of document.querySelectorAll(".topbar-health div:first-child dd, .mobile-health div:first-child dd")) {
+    target.replaceChildren();
+    const dot = document.createElement("span");
+    dot.className = `live-dot${active ? "" : " live-dot--stopped"}`;
+    dot.setAttribute("aria-hidden", "true");
+    target.append(dot, ` ${label}`);
+  }
+}
+
+function renderRuntimeMessage(title, copy, kind = "empty") {
+  state.events = [];
+  timeline.replaceChildren();
+  const item = document.createElement("li");
+  item.className = kind === "closed" ? "empty-state empty-state--closed" : "empty-state";
+  const content = document.createElement("div");
+  const heading = document.createElement("strong");
+  heading.textContent = title;
+  const paragraph = document.createElement("p");
+  paragraph.textContent = copy;
+  content.append(heading, paragraph);
+  item.append(content);
+  timeline.append(item);
+  updateCounts(0);
+}
+
+function closeRuntimeView() {
+  eventStream?.close();
+  eventStream = undefined;
+  window.clearInterval(runtimePollTimer);
+  runtimePollTimer = undefined;
+  state.openHumanCount = 0;
+  setRuntimeStatus("Arrêtée", false);
+  renderRuntimeMessage(
+    "Supervision terminée",
+    "La dernière session Claude de ce projet est fermée. Cette vue n’utilise plus aucune connexion active.",
+    "closed",
+  );
+}
+
+async function loadRuntimeSnapshot({ initial = false } = {}) {
+  try {
+    const response = await fetch(`/_supervisor/api/projects/${encodeURIComponent(projectSlug)}/activity`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (response.status === 404 || response.status === 410) {
+      closeRuntimeView();
+      return false;
+    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const snapshot = await response.json();
+    state.events = Array.isArray(snapshot.items) ? snapshot.items.map(runtimeEvent) : [];
+    state.openHumanCount = Number.isSafeInteger(snapshot.interventionCount) ? snapshot.interventionCount : 0;
+    const name = typeof snapshot.project?.name === "string" ? snapshot.project.name : projectSlug;
+    document.querySelector("#project-breadcrumb").textContent = name;
+    document.title = `${humanizeProject(name)} · Kriton Supervisor`;
+    setRuntimeStatus(snapshot.activeSessionCount > 1 ? `${snapshot.activeSessionCount} sessions actives` : "Supervision active", true);
+    for (const signal of document.querySelectorAll("[data-latest-signal]")) {
+      signal.textContent = relativeSignal(snapshot.latestSignalAt);
+    }
+    render({ scrollToBottom: initial || followLatest });
+    return true;
+  } catch {
+    setRuntimeStatus("Connexion interrompue", false);
+    if (state.events.length === 0) {
+      renderRuntimeMessage("Connexion au Supervisor impossible", "La vue réessaie automatiquement sans bloquer le travail de Claude.");
+    }
+    return true;
+  }
+}
+
+function connectRuntimeStream() {
+  if (!("EventSource" in window)) {
+    runtimePollTimer = window.setInterval(() => { void loadRuntimeSnapshot(); }, 5_000);
+    return;
+  }
+  eventStream = new EventSource(`/_supervisor/api/projects/${encodeURIComponent(projectSlug)}/stream`);
+  eventStream.addEventListener("refresh", () => { void loadRuntimeSnapshot(); });
+  eventStream.addEventListener("closed", closeRuntimeView);
+  eventStream.addEventListener("error", () => {
+    if (eventStream?.readyState === EventSource.CLOSED) setRuntimeStatus("Connexion interrompue", false);
+  });
+}
+
+if (runtimeMode) {
+  simulateButton?.remove();
+  renderRuntimeMessage("Chargement du fil…", "Le Supervisor prépare les événements persistés de ce projet.");
+  void loadRuntimeSnapshot({ initial: true }).then((active) => {
+    if (active) connectRuntimeStream();
+  });
+} else {
+  render({ scrollToBottom: true });
+}

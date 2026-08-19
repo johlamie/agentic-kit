@@ -5,15 +5,16 @@ propriétaire : authentifications, secrets, comptes, choix payants, portes G1–
 et réglages d'organisations externes. Les commandes de diagnostic sont sans
 effet de bord, sauf mention explicite.
 
-Dernière vérification de référence : **18 août 2026**, branche
+Dernière vérification de référence : **19 août 2026**, branche
 `feat/codex-supervisor`.
 
 État observé sur la machine de référence : Supervisor `RUNNING`, DB saine,
 authentifications Claude/Codex valides, hook authentifié, Playwright, Context7
-et Chrome DevTools enregistrés, file d'exécution vide. Telegram et l'OAuth
-Mobbin ont été confirmés par le propriétaire. Les deux endpoints GitHub MCP sont
-enregistrés en lecture seule, mais `GITHUB_PAT_TOKEN` reste à fournir. Figma
-reste optionnel et non configuré. L'authentification du CLI `gh` est expirée.
+et Chrome DevTools enregistrés. Telegram, Mobbin, les deux endpoints GitHub MCP
+en lecture seule et le CLI `gh` ont été configurés puis confirmés par le
+propriétaire. Figma/design source reste optionnel et non configuré. Les changements
+locaux de cette version ont passé la validation complète ; pour toute évolution,
+vérifier séparément le run CI associé au commit effectivement poussé.
 
 L'historique contient volontairement deux preuves de runtime sous `/tmp` : un
 frontend volontairement mauvais correctement classé `BLOCK`, et une recherche
@@ -29,10 +30,11 @@ bloque aucun autre projet.
 |---|---|---|
 | P0 | Traiter l'incident GitGuardian comme faux positif après vérification de son occurrence | Aucun secret réel à révoquer |
 | Fait | Vérification GitHub Actions du correctif | Run `32121188608`, quatre jobs verts, aucune annotation |
-| P1 | Créer le PAT GitHub MCP séparé et l'ajouter au fichier privé | `agentic-supervisor mcp-status` voit la credential |
-| P1 | Réauthentifier `gh` sur cette machine | `gh auth status` réussit |
+| Fait | PAT GitHub MCP séparé ajouté au fichier privé | `github` et `github_ci` sont `OK` |
+| Fait | CLI `gh` réauthentifié par le propriétaire | `gh auth status` réussit |
 | Fait | Santé locale du daemon | `agentic-supervisor doctor` réussit |
 | Fait | Telegram configuré et testé par le propriétaire | Le bot Kriton reçoit les alertes |
+| P0 après mise à jour | Relancer les sessions Claude déjà ouvertes | Les nouveaux hooks structurés remplacent les alertes génériques |
 | Selon projet | Fournir les authentifications cloud, comptes de démo et décisions G1–G4 | Jamais stockés dans Git |
 
 ## 1. Incident GitGuardian
@@ -185,6 +187,29 @@ pm2 restart agentic-supervisor
 agentic-supervisor doctor
 ```
 
+### Suivre la vue d'activité depuis le Mac
+
+Le daemon unique sert une route virtuelle par projet actif. Il ne lance aucun
+processus ou serveur supplémentaire par projet. Sur la VPS, depuis le projet :
+
+```bash
+agentic-supervisor projects
+agentic-supervisor ui --project "$PWD"
+```
+
+Sur le Mac, garder ouvert :
+
+```bash
+ssh -N -L 8787:127.0.0.1:8787 vps1
+```
+
+Puis ouvrir l'URL locale retournée. Ne pas créer de vhost nginx et ne pas ouvrir
+le port au firewall : la vue contient des éléments d'audit et reste volontairement
+accessible par loopback + tunnel SSH seulement. Elle est désactivée dès le
+dernier `SessionEnd`. Si Claude ou le terminal disparaît sans cet événement, le
+bail de sécurité expire automatiquement selon
+`SUPERVISOR_ACTIVITY_SESSION_STALE_MS`.
+
 `pm2 save` est exécuté par l'installeur. Sur une nouvelle VPS, la restauration
 automatique après reboot nécessite aussi la configuration système PM2. Lancer
 `pm2 startup`, relire la commande `sudo` qu'il affiche, puis l'exécuter soi-même
@@ -249,6 +274,24 @@ Le canal est sortant uniquement. Le bot ne reçoit aucune commande d'approbation
 et ne peut pas autoriser une opération Claude. Utiliser un chat privé dédié,
 révoquer le token depuis Telegram en cas de doute et ne jamais afficher les
 fichiers de configuration dans des logs.
+
+Kriton Supervisor est l'unique émetteur des notifications de workflow. Claude
+ne doit jamais demander `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` ou appeler
+l'API Telegram. Les hooks immédiats transmettent au Supervisor :
+
+- l'opération et sa description pour `PermissionRequest` ;
+- la question et les choix pour `AskUserQuestion` ;
+- la validation attendue pour `ExitPlanMode` ;
+- le serveur, le mode, le message et l'URL sûre pour `Elicitation` ;
+- la raison et l'action attendue pour un audit `HUMAN_REQUIRED`.
+
+Les notifications génériques `idle_prompt` ne sont plus enregistrées comme une
+demande humaine et ne déclenchent plus Telegram. Les sessions Claude déjà
+ouvertes avant l'installation gardent leur ancienne table de hooks : les fermer
+proprement et les relancer une fois. Aucun token supplémentaire n'est requis.
+Si Telegram est momentanément indisponible, la demande reste consultable avec
+`agentic-supervisor requests --project "$PWD"` même si aucun ID de livraison n'a
+pu être enregistré.
 
 ## 6. MCP et capacités optionnelles
 
@@ -437,6 +480,8 @@ Le fichier est volontairement non modifiable par les agents. Vérifier son état
 - [ ] `GITHUB_PAT_TOKEN` séparé, limité en lecture et testé sur les dépôts choisis.
 - [ ] Nouvelle exécution CI entièrement verte.
 - [ ] `agentic-supervisor doctor` vert.
+- [ ] `agentic-supervisor status` affiche `Activity UI: READY`.
+- [ ] Les sessions Claude ouvertes avant le changement ont été relancées.
 - [ ] `agentic-supervisor mcp-status` confirme Playwright si le produit a une UI.
 - [ ] Telegram testé, ou explicitement laissé non configuré.
 - [ ] G1–G4, coûts, comptes et actions production laissés au propriétaire.

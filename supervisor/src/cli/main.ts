@@ -36,6 +36,8 @@ export async function runCli(argv: string[]): Promise<number> {
       case "events": return withDatabase(config.databasePath, (database) => listEvents(database, option(args, "--project")));
       case "audits": return withDatabase(config.databasePath, (database) => listAudits(database, option(args, "--project")));
       case "requests": return withDatabase(config.databasePath, (database) => listRequests(database, option(args, "--project")));
+      case "projects": return withDatabase(config.databasePath, (database) => listProjects(database, config.activitySessionStaleMs));
+      case "ui": return withDatabase(config.databasePath, (database) => activityUrl(database, config, requiredOption(args, "--project")));
       case "gate": return withDatabase(config.databasePath, (database) => gate(database, requiredOption(args, "--project"), requiredOption(args, "--phase")));
       case "wait": return await waitGate(config.databasePath, requiredOption(args, "--project"), requiredOption(args, "--phase"), integerOption(args, "--timeout", 900));
       case "retry": return withDatabase(config.databasePath, (database) => retry(database, requiredPositional(args, 0, "audit id")));
@@ -73,6 +75,7 @@ async function status(config: ReturnType<typeof loadConfig>): Promise<number> {
     process.stdout.write(`Supervisor: RUNNING\nVersion: ${health.version}\nDatabase: ${String(health.database).toUpperCase()}\n`);
     process.stdout.write(`Codex: ${codex}\nPlaywright MCP: ${browser?.state ?? "ERROR"} (${browser?.detail ?? "unknown"})\n`);
     process.stdout.write(`Telegram: ${String(health.telegram).toUpperCase()}\nHook auth: ${String(health.hook_auth).toUpperCase()}\n`);
+    process.stdout.write(`Activity UI: ${String(health.activity_ui).toUpperCase()} active_projects=${health.active_projects ?? "?"} streams=${health.activity_streams ?? "?"}\n`);
     const queue = health.queue as Record<string, unknown> | undefined;
     process.stdout.write(`Queue: pending=${queue?.pending ?? "?"} running=${queue?.running ?? "?"} completed=${queue?.completed ?? "?"} failed=${queue?.failed ?? "?"}\n`);
     if (existsSync(config.databasePath)) {
@@ -121,6 +124,11 @@ async function doctor(config: ReturnType<typeof loadConfig>): Promise<number> {
     const health = await api(config, "/health") as { status?: unknown };
     return String(health.status ?? "unknown");
   }, true);
+  await check("Activity UI", async () => {
+    const health = await api(config, "/health") as { activity_ui?: unknown; active_projects?: unknown; activity_streams?: unknown };
+    if (health.activity_ui !== "ready") throw new Error(`state=${String(health.activity_ui ?? "unknown")}`);
+    return `ready, active_projects=${String(health.active_projects ?? "?")}, streams=${String(health.activity_streams ?? "?")}`;
+  }, config.activityUi);
   process.stdout.write(`[${config.hookToken ? "OK" : "WARN"}] Hook token: ${config.hookToken ? "configured" : "missing (loopback endpoint has no request authentication)"}\n`);
   if (config.hookToken && existsSync(config.hookTokenFile)) {
     const tokenMode = statSync(config.hookTokenFile).mode & 0o777;
@@ -139,14 +147,30 @@ async function doctor(config: ReturnType<typeof loadConfig>): Promise<number> {
   process.stdout.write(`[${existsSync(hook) ? "OK" : "FAIL"}] Claude hooks: ${existsSync(hook) ? "forwarder present" : "forwarder missing"}\n`);
   if (!existsSync(hook)) failures += 1;
   const settingsPath = resolve(homedir(), ".claude/settings.json");
-  const requiredEvents = ["SessionStart", "UserPromptSubmit", "SubagentStart", "SubagentStop", "PostToolUse", "Notification", "Stop"];
+  const requiredEvents = [
+    "SessionStart", "UserPromptSubmit", "SubagentStart", "SubagentStop", "PostToolUse",
+    "PostToolUseFailure", "PermissionRequest", "PermissionDenied", "Elicitation",
+    "ElicitationResult", "Stop", "SessionEnd",
+  ];
   try {
-    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as { hooks?: Record<string, Array<{ hooks?: Array<{ command?: string }> }>> };
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as {
+      hooks?: Record<string, Array<{ matcher?: string; hooks?: Array<{ command?: string }> }>>;
+    };
     const missing = requiredEvents.filter((event) => !(settings.hooks?.[event] ?? []).some((entry) =>
       (entry.hooks ?? []).some((registered) => registered.command === "~/.claude/hooks/supervisor-hook.sh"),
     ));
     process.stdout.write(`[${missing.length ? "FAIL" : "OK"}] Claude hook lifecycle: ${missing.length ? `missing ${missing.join(", ")}` : "registered"}\n`);
     if (missing.length) failures += 1;
+    const structuredHumanInput = (settings.hooks?.PreToolUse ?? []).some((entry) =>
+      entry.matcher === "AskUserQuestion|ExitPlanMode"
+      && (entry.hooks ?? []).some((hookEntry) => hookEntry.command === "~/.claude/hooks/supervisor-hook.sh"),
+    );
+    const genericNotifications = (settings.hooks?.Notification ?? []).some((entry) =>
+      (entry.hooks ?? []).some((hookEntry) => hookEntry.command === "~/.claude/hooks/supervisor-hook.sh"),
+    );
+    const attentionHealthy = structuredHumanInput && !genericNotifications;
+    process.stdout.write(`[${attentionHealthy ? "OK" : "FAIL"}] Human attention hooks: ${attentionHealthy ? "structured and immediate" : "generic or incomplete"}\n`);
+    if (!attentionHealthy) failures += 1;
   } catch (error) {
     process.stdout.write(`[FAIL] Claude hook lifecycle: ${safeError(error)}\n`);
     failures += 1;
@@ -175,6 +199,33 @@ function listRequests(database: SupervisorDatabase, project?: string, limit = 50
   for (const request of database.listHumanRequests(project, limit)) {
     process.stdout.write(`${String(request.created_at)}\t${String(request.status)}\t${String(request.id)}\t${String(request.requested_action)}\n`);
   }
+  return 0;
+}
+
+function listProjects(database: SupervisorDatabase, staleMs: number): number {
+  const projects = database.listActiveProjects(staleMs);
+  if (!projects.length) {
+    process.stdout.write("No active supervised project.\n");
+    return 0;
+  }
+  for (const project of projects) {
+    process.stdout.write(`${project.slug}\t${project.activeSessionCount}\t${project.lastSeenAt}\t${project.path}\n`);
+  }
+  return 0;
+}
+
+function activityUrl(database: SupervisorDatabase, config: ReturnType<typeof loadConfig>, projectPath: string): number {
+  if (!config.activityUi) {
+    process.stdout.write("Activity UI is disabled (SUPERVISOR_ACTIVITY_UI=false).\n");
+    return 40;
+  }
+  const project = database.activeProjectByPath(projectPath, config.activitySessionStaleMs);
+  if (!project) {
+    process.stdout.write("INACTIVE\tNo live Claude session is supervising this project.\n");
+    return 40;
+  }
+  const host = config.host === "::1" ? "[::1]" : config.host;
+  process.stdout.write(`http://${host}:${config.port}/${project.slug}\n`);
   return 0;
 }
 
@@ -237,7 +288,7 @@ async function requestAudit(config: ReturnType<typeof loadConfig>, args: string[
 async function telegramTest(config: ReturnType<typeof loadConfig>): Promise<number> {
   const client = new TelegramClient(config);
   if (!client.configured) { process.stdout.write("Telegram: NOT_CONFIGURED\n"); return 1; }
-  const id = await client.send("🩺 Agentic Kit — Codex Supervisor Telegram test\n\nConfiguration and redaction path are operational.");
+  const id = await client.send("🩺 Kriton Supervisor — Test Telegram\n\nLa configuration et le chemin d’expurgation sont opérationnels.");
   process.stdout.write(`Telegram: SENT${id ? ` (${id})` : ""}\n`);
   return 0;
 }
@@ -336,6 +387,8 @@ Commands:
   events [--project <path>]
   audits [--project <path>]
   requests [--project <path>]
+  projects
+  ui --project <path>
   gate --project <path> --phase <research|architecture|design|code|deploy|final>
   wait --project <path> --phase <phase> [--timeout <seconds>]
   audit --project <path> --type <research|architecture|code|qa|deploy|final|design|visual|security> [--url <url>]

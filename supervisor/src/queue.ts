@@ -1,4 +1,5 @@
 import type { SupervisorConfig } from "./config.js";
+import { ActivityBus } from "./activity.js";
 import { SupervisorDatabase } from "./db.js";
 import { Logger } from "./logger.js";
 import { ArtifactStore } from "./artifacts.js";
@@ -24,6 +25,7 @@ export class AuditQueue {
     private readonly artifacts: ArtifactStore,
     private readonly telegram: TelegramClient,
     private readonly logger: Logger,
+    private readonly activity: ActivityBus = new ActivityBus(),
   ) {}
 
   public start(): { recovered: number; failed: number } {
@@ -62,6 +64,7 @@ export class AuditQueue {
 
   private async process(audit: AuditRecord): Promise<void> {
     this.logger.info("audit.started", identifiers(audit));
+    this.activity.publish(audit.project_path);
     const startedAt = Date.now();
     try {
       await this.assertInfrastructure(audit);
@@ -75,7 +78,7 @@ export class AuditQueue {
         stdout: run.stdout,
         stderr: run.stderr,
       });
-      this.database.completeAudit(audit.id, run.result, run.threadId);
+      const humanRequestId = this.database.completeAudit(audit.id, run.result, run.threadId);
       const completed = this.database.getAudit(audit.id) as AuditRecord;
       const artifacts = this.artifacts.writeAudit(completed, run.result, this.database.queueCounts());
       this.logger.info("audit.completed", { ...identifiers(completed), codex_run_id: codexRunId, decision: run.result.decision, report: artifacts.reportPath, proposal: artifacts.proposalPath });
@@ -83,8 +86,12 @@ export class AuditQueue {
       // Claude consumes CHALLENGE/BLOCK from the project artifacts and repairs
       // autonomously; notify the owner only when a human decision is required.
       if (run.result.decision === "HUMAN_REQUIRED" || (run.result.decision === "PASS" && this.config.notifyPass)) {
-        await this.notifySafely(formatAuditNotification(completed, run.result));
+        const telegramMessageId = await this.notifySafely(formatAuditNotification(completed, run.result));
+        if (humanRequestId && telegramMessageId) {
+          this.database.setHumanRequestTelegramMessage(humanRequestId, telegramMessageId);
+        }
       }
+      this.activity.publish(audit.project_path);
     } catch (error) {
       const message = safeError(error);
       const processError = error instanceof CodexProcessError ? error : null;
@@ -102,6 +109,7 @@ export class AuditQueue {
       if (failed.status === "failed" || processError?.code === "CODEX_UNAVAILABLE") {
         await this.notifySafely(formatFailureNotification(audit.project_path, audit.audit_type, message));
       }
+      this.activity.publish(audit.project_path);
     }
   }
 
@@ -124,11 +132,12 @@ export class AuditQueue {
     if (browser?.state !== "OK") throw new AuditInfrastructureError("PLAYWRIGHT_MISSING", "Codex Playwright MCP is not configured");
   }
 
-  private async notifySafely(message: string): Promise<void> {
+  private async notifySafely(message: string): Promise<string | null> {
     try {
-      await this.telegram.send(message);
+      return await this.telegram.send(message);
     } catch (error) {
       this.logger.warn("telegram.failed", { error: safeError(error) });
+      return null;
     }
   }
 }

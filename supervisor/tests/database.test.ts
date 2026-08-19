@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { SupervisorDatabase } from "../src/db.js";
 import type { AuditDecision, NormalizedEvent } from "../src/types.js";
@@ -27,6 +28,25 @@ function event(projectPath: string, id = "event-1"): NormalizedEvent {
   };
 }
 
+function lifecycleEvent(
+  projectPath: string,
+  eventType: NormalizedEvent["event_type"],
+  id: string,
+  sessionId = "claude-session-1",
+  timestamp = new Date().toISOString(),
+): NormalizedEvent {
+  return {
+    ...event(projectPath, id),
+    timestamp,
+    claude_session_id: sessionId,
+    event_type: eventType,
+    agent_type: null,
+    agent_id: null,
+    candidate_id: null,
+    metadata: eventType === "session.ended" ? { reason: "prompt_input_exit" } : {},
+  };
+}
+
 test("persists events and audits across database restart", () => {
   const state = mkdtempSync(join(tmpdir(), "supervisor-db-restart-"));
   const project = makeTempProject();
@@ -49,6 +69,119 @@ test("persists events and audits across database restart", () => {
   database.close();
   rmSync(state, { recursive: true, force: true });
   rmSync(project, { recursive: true, force: true });
+});
+
+test("migrates a version-1 database in place without reviving old stopping sessions", () => {
+  const state = mkdtempSync(join(tmpdir(), "supervisor-db-migration-"));
+  const path = join(state, "supervisor.sqlite3");
+  const legacy = new DatabaseSync(path);
+  legacy.exec(`
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+    CREATE TABLE projects (
+      id TEXT PRIMARY KEY, path TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+      created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE TABLE sessions (
+      id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      claude_session_id TEXT NOT NULL, started_at TEXT NOT NULL, ended_at TEXT,
+      status TEXT NOT NULL, UNIQUE(project_id, claude_session_id)
+    );
+    CREATE TABLE human_requests (
+      id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      audit_id TEXT, type TEXT NOT NULL, message TEXT NOT NULL, requested_action TEXT NOT NULL,
+      safe_to_continue INTEGER NOT NULL, status TEXT NOT NULL, telegram_message_id TEXT,
+      created_at TEXT NOT NULL, resolved_at TEXT
+    );
+    INSERT INTO schema_migrations VALUES(1, '2026-08-18T00:00:00.000Z');
+    INSERT INTO projects VALUES('legacy-project', '/tmp/legacy-project', 'legacy-project', '2026-08-18T00:00:00.000Z', '2026-08-18T00:00:00.000Z');
+    INSERT INTO sessions VALUES('legacy-session', 'legacy-project', 'legacy-claude', '2026-08-18T00:00:00.000Z', '2026-08-18T01:00:00.000Z', 'stopping');
+  `);
+  legacy.close();
+
+  const database = new SupervisorDatabase(path);
+  assert.equal(database.ping(), true);
+  assert.equal(database.activeProjectByPath("/tmp/legacy-project", 86_400_000), null);
+  database.close();
+
+  const verified = new DatabaseSync(path, { readOnly: true });
+  const migration = verified.prepare("SELECT version FROM schema_migrations WHERE version = 2").get() as { version?: unknown } | undefined;
+  const session = verified.prepare("SELECT status, end_reason FROM sessions WHERE id = 'legacy-session'").get() as { status?: unknown; end_reason?: unknown } | undefined;
+  const project = verified.prepare("SELECT route_slug FROM projects WHERE id = 'legacy-project'").get() as { route_slug?: unknown } | undefined;
+  assert.equal(migration?.version, 2);
+  assert.equal(session?.status, "ended");
+  assert.equal(session?.end_reason, null);
+  assert.equal(project?.route_slug, "legacy-project");
+  verified.close();
+  rmSync(state, { recursive: true, force: true });
+});
+
+test("activates one virtual project route per SessionStart and removes it after the final SessionEnd", () => {
+  const state = mkdtempSync(join(tmpdir(), "supervisor-activity-lifecycle-"));
+  const project = makeTempProject("supervisor-activity-project-");
+  const path = join(state, "supervisor.sqlite3");
+  let database = new SupervisorDatabase(path);
+
+  database.insertEvent(lifecycleEvent(project, "agent.completed", "observed-only"));
+  assert.equal(database.activeProjectByPath(project, 60_000), null);
+
+  database.insertEvent(lifecycleEvent(project, "session.started", "start-1", "session-a"));
+  const active = database.activeProjectByPath(project, 60_000);
+  assert.ok(active);
+  assert.equal(active.activeSessionCount, 1);
+  assert.match(active.slug, /^[a-z0-9_-]+$/u);
+
+  database.insertEvent(lifecycleEvent(project, "session.started", "start-2", "session-b"));
+  assert.equal(database.activeProjectByPath(project, 60_000)?.activeSessionCount, 2);
+  database.insertEvent(lifecycleEvent(project, "claude.stopping", "turn-stop", "session-a"));
+  assert.equal(database.activeProjectByPath(project, 60_000)?.activeSessionCount, 2, "Stop ends a turn, not a session");
+
+  database.insertEvent(lifecycleEvent(project, "session.ended", "end-1", "session-a"));
+  assert.equal(database.activeProjectByPath(project, 60_000)?.activeSessionCount, 1);
+  database.close();
+
+  database = new SupervisorDatabase(path);
+  assert.equal(database.activeProjectByPath(project, 60_000)?.activeSessionCount, 1, "activity survives a daemon restart");
+  database.insertEvent(lifecycleEvent(project, "session.ended", "end-2", "session-b"));
+  assert.equal(database.activeProjectByPath(project, 60_000), null);
+
+  database.close();
+  rmSync(state, { recursive: true, force: true });
+  rmSync(project, { recursive: true, force: true });
+});
+
+test("uses stable collision-safe project slugs and expires abandoned sessions", () => {
+  const database = new SupervisorDatabase(":memory:");
+  const rootA = mkdtempSync(join(tmpdir(), "supervisor-slug-a-"));
+  const rootB = mkdtempSync(join(tmpdir(), "supervisor-slug-b-"));
+  const first = join(rootA, "shared-name");
+  const second = join(rootB, "shared-name");
+  const reserved = join(rootA, "health");
+  mkdirSync(first);
+  mkdirSync(second);
+  mkdirSync(reserved);
+  database.insertEvent(lifecycleEvent(first, "session.started", "start-first"));
+  database.insertEvent(lifecycleEvent(second, "session.started", "start-second", "session-2"));
+  database.insertEvent(lifecycleEvent(reserved, "session.started", "start-reserved", "session-3"));
+
+  const firstProject = database.activeProjectByPath(first, 60_000);
+  const secondProject = database.activeProjectByPath(second, 60_000);
+  const reservedProject = database.activeProjectByPath(reserved, 60_000);
+  assert.ok(firstProject);
+  assert.ok(secondProject);
+  assert.ok(reservedProject);
+  assert.notEqual(firstProject.slug, secondProject.slug);
+  assert.notEqual(reservedProject.slug, "health");
+  assert.equal(database.activeProjectBySlug(firstProject.slug, 60_000)?.path, first);
+
+  const stale = join(rootB, "stale");
+  mkdirSync(stale);
+  database.insertEvent(lifecycleEvent(stale, "session.started", "start-stale", "session-stale", "2020-01-01T00:00:00.000Z"));
+  assert.equal(database.activeProjectByPath(stale, 60_000), null);
+
+  database.close();
+  rmSync(rootA, { recursive: true, force: true });
+  rmSync(rootB, { recursive: true, force: true });
 });
 
 test("deduplicates event audits and coalesces related evidence", () => {

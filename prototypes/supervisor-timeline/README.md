@@ -1,9 +1,9 @@
 # Supervisor timeline prototype
 
-Isolated, read-only UI proposal for validating a project activity feed before
-any integration with the Supervisor HTTP API or SQLite state.
+Shared presentation source for the isolated public prototype and the local,
+read-only Supervisor activity view.
 
-The prototype:
+In static mode, the prototype:
 
 - reads the project slug from `/<project-name>`;
 - uses synthetic events only;
@@ -14,6 +14,12 @@ The prototype:
 `Simuler un événement` exists only to review dynamic timeline behavior. Remove
 that control when real Supervisor event ingestion is connected; live events
 must replace it rather than coexist with it in the operational interface.
+
+The Supervisor loads the same HTML/CSS/JS with
+`data-supervisor-runtime="true"`. Runtime mode removes the simulation control,
+loads redacted SQLite snapshots, then listens to the daemon's local SSE stream.
+It remains one shared server: there is no app instance per project. The public
+preview always stays in static mode and never receives real Supervisor data.
 
 ## Local preview
 

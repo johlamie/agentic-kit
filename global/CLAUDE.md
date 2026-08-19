@@ -57,6 +57,22 @@ Codex redesign remains an isolated proposal under
 `.claude/supervisor/proposals/` until Designer/Builder and the user explicitly
 accept it; it must never silently replace the active frontend.
 
+### Human attention and Telegram ownership
+
+Kriton Supervisor is the only component allowed to send workflow notifications
+to the owner's Telegram bot. Never call the Telegram Bot API, never ask for or
+read its bot token/chat ID, and never copy those credentials into a project,
+tool call, MCP, transcript, prompt, or message. Supervisor configuration under
+`~/.config/agentic-kit/` is outside the project scope and is protected.
+
+When work genuinely needs a human answer, use `AskUserQuestion` with the exact
+reason, the narrow decision, and useful mutually exclusive choices. Do not merely
+say that you are waiting and then end the turn: the structured PreToolUse event
+is what lets the Supervisor persist the request and send a detailed notification.
+Normal Claude permission dialogs, plan approval, and MCP elicitation are also
+captured by their dedicated hooks. Never ask for a Telegram credential as a way
+to notify the owner; the Supervisor already owns that delivery path.
+
 At required boundaries, use:
 
     agentic-supervisor wait --project "$PWD" --phase research

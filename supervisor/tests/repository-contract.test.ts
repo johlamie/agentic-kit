@@ -22,15 +22,21 @@ test("preserves Claude G1-G4 and the original permission tiers", () => {
   };
   assert.equal(settings.permissions.defaultMode, "auto");
   assert.ok(settings.permissions.deny.includes("Read(~/.ssh/**)"));
+  assert.ok(settings.permissions.deny.includes("Read(~/.config/agentic-kit/supervisor.env)"));
+  assert.ok(settings.permissions.deny.includes("Read(~/.config/agentic-kit/supervisor-hook-token)"));
   assert.ok(settings.permissions.deny.includes("Bash(sudo rm:*)"));
   assert.ok(settings.permissions.ask.includes("Bash(npx prisma migrate deploy:*)"));
   assert.ok(settings.permissions.allow.includes("Bash(git push:*)"));
   const guard = settings.hooks.PreToolUse?.find((entry) => entry.hooks.some((hook) => hook.command.endsWith("agent-guard.sh")));
   assert.match(guard?.matcher ?? "", /Bash.*Edit.*Write/u);
-  const notificationMatchers = new Set((settings.hooks.Notification ?? []).map((entry) => entry.matcher));
-  for (const matcher of ["permission_prompt", "idle_prompt", "elicitation_dialog", "agent_needs_input"]) {
-    assert.equal(notificationMatchers.has(matcher), true, `missing Notification matcher: ${matcher}`);
+  assert.equal(settings.hooks.Notification, undefined, "generic delayed notifications must not drive Telegram");
+  for (const event of ["PermissionRequest", "PermissionDenied", "Elicitation", "ElicitationResult", "SessionEnd"]) {
+    assert.ok(settings.hooks[event]?.some((entry) => entry.hooks.some((hook) => hook.command.endsWith("supervisor-hook.sh"))), `missing ${event} Supervisor hook`);
   }
+  const humanInputHook = settings.hooks.PreToolUse?.find((entry) => entry.hooks.some((hook) => hook.command.endsWith("supervisor-hook.sh")));
+  assert.equal(humanInputHook?.matcher, "AskUserQuestion|ExitPlanMode");
+  assert.match(contract, /Supervisor is the only component allowed to send workflow notifications/iu);
+  assert.match(contract, /Never call the Telegram Bot API/iu);
   const supervisorLauncher = readFileSync(resolve(repositoryRoot, "global/hooks/supervisor-hook.sh"), "utf8");
   assert.match(supervisorLauncher, /readlink -f "\$\{BASH_SOURCE\[0\]\}"/u);
 });

@@ -166,7 +166,7 @@ references_sensitive_path() {
   # Literal $HOME is command text at this point; expansion would be a bug.
   # shellcheck disable=SC2016
   printf '%s' "$cleaned" | grep -Eq '(^|[/[:space:]"'"'"'=<])\.env($|[./[:space:]"'"'"'>])' \
-    || printf '%s' "$cleaned" | grep -Eq '(~|\$HOME|/home/[^/[:space:]]+)/\.(ssh|aws|config/gcloud|codex/(auth\.json|config\.toml))(/|$|[[:space:]"'"'"'>])'
+    || printf '%s' "$cleaned" | grep -Eq '(~|\$HOME|/home/[^/[:space:]]+)/\.(ssh|aws|config/gcloud|config/agentic-kit/(supervisor\.env|supervisor-hook-token)|codex/(auth\.json|config\.toml))(/|$|[[:space:]"'"'"'>])'
 }
 
 can_disclose_files() {
@@ -183,7 +183,7 @@ evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
   base="${target##*/}"
 
   case "$target" in
-    "$HOME/.claude"|"$HOME/.claude/"*|"$HOME/.ssh"|"$HOME/.ssh/"*|"$HOME/.aws"|"$HOME/.aws/"*|"$HOME/.config/gcloud"|"$HOME/.config/gcloud/"*|"$HOME/.codex/auth.json"|"$HOME/.codex/config.toml")
+    "$HOME/.claude"|"$HOME/.claude/"*|"$HOME/.ssh"|"$HOME/.ssh/"*|"$HOME/.aws"|"$HOME/.aws/"*|"$HOME/.config/gcloud"|"$HOME/.config/gcloud/"*|"$HOME/.config/agentic-kit/supervisor.env"|"$HOME/.config/agentic-kit/supervisor-hook-token"|"$HOME/.codex/auth.json"|"$HOME/.codex/config.toml")
       emit deny "Refused: $tool_name cannot modify protected agent rules or credential locations." ;;
   esac
 
@@ -339,6 +339,8 @@ self_test() {
   check "Bash cannot read .env" deny "" "cat .env" "$P/demo"
   check "Bash can read env template" none "" "cat .env.example" "$P/demo"
   check "Bash cannot read SSH keys" deny "" "head -1 ~/.ssh/id_ed25519" "$P/demo"
+  check "Bash cannot read Supervisor env" deny "" "cat ~/.config/agentic-kit/supervisor.env" "$P/demo"
+  check_file "Supervisor token write denied" deny Write builder "$HOME/.config/agentic-kit/supervisor-hook-token" "$P/demo"
   rm -f "$tmp"
 
   if [ "$fails" -gt 0 ]; then

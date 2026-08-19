@@ -8,7 +8,9 @@ import type {
   AuditRecord,
   AuditResult,
   AuditType,
+  ActivityProject,
   GateResult,
+  HumanAttention,
   NormalizedEvent,
   QueueCounts,
   Severity,
@@ -125,6 +127,20 @@ CREATE TABLE IF NOT EXISTS codex_runs (
 );
 `;
 
+const MIGRATION_002 = `
+ALTER TABLE projects ADD COLUMN route_slug TEXT;
+ALTER TABLE sessions ADD COLUMN last_seen_at TEXT;
+ALTER TABLE sessions ADD COLUMN end_reason TEXT;
+ALTER TABLE human_requests ADD COLUMN session_id TEXT REFERENCES sessions(id) ON DELETE SET NULL;
+ALTER TABLE human_requests ADD COLUMN trigger_event_id TEXT REFERENCES events(id) ON DELETE SET NULL;
+UPDATE sessions SET last_seen_at = COALESCE(ended_at, started_at);
+UPDATE sessions SET status = 'ended', ended_at = COALESCE(ended_at, last_seen_at)
+  WHERE status = 'stopping';
+CREATE INDEX sessions_project_status_idx ON sessions(project_id, status, last_seen_at DESC);
+CREATE UNIQUE INDEX human_requests_trigger_unique ON human_requests(trigger_event_id)
+  WHERE trigger_event_id IS NOT NULL;
+`;
+
 function now(): string { return new Date().toISOString(); }
 
 function projectId(projectPath: string): string {
@@ -132,6 +148,18 @@ function projectId(projectPath: string): string {
   const hash = createHash("sha256").update(projectPath).digest("hex").slice(0, 12);
   return `${name}-${hash}`;
 }
+
+function projectSlug(name: string): string {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/gu, "-")
+    .replace(/^-+|-+$/gu, "")
+    .slice(0, 64) || "project";
+}
+
+const RESERVED_PROJECT_SLUGS = new Set(["health", "v1", "_supervisor"]);
 
 function asString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
@@ -167,6 +195,18 @@ function rowToAudit(row: Row): AuditRecord {
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
     last_error: asString(row.last_error),
+  };
+}
+
+function rowToActivityProject(row: Row): ActivityProject {
+  return {
+    id: String(row.id),
+    path: String(row.path),
+    name: String(row.name),
+    slug: String(row.route_slug),
+    activeSessionCount: asNumber(row.active_session_count),
+    startedAt: String(row.started_at),
+    lastSeenAt: String(row.last_seen_at),
   };
 }
 
@@ -209,6 +249,13 @@ export class SupervisorDatabase {
       if (!existing) {
         this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(1, ?)").run(now());
       }
+      const second = this.database.prepare("SELECT version FROM schema_migrations WHERE version = 2").get();
+      if (!second) {
+        this.database.exec(MIGRATION_002);
+        this.assignMissingProjectSlugs();
+        this.database.exec("CREATE UNIQUE INDEX projects_route_slug_unique ON projects(route_slug) WHERE route_slug IS NOT NULL;");
+        this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(2, ?)").run(now());
+      }
       this.database.exec("COMMIT;");
     } catch (error) {
       this.database.exec("ROLLBACK;");
@@ -216,15 +263,44 @@ export class SupervisorDatabase {
     }
   }
 
+  private assignMissingProjectSlugs(): void {
+    const rows = this.database.prepare("SELECT id, path, name FROM projects WHERE route_slug IS NULL ORDER BY created_at, rowid").all() as Row[];
+    for (const row of rows) {
+      const candidate = this.availableProjectSlug(String(row.name), String(row.path), String(row.id));
+      this.database.prepare("UPDATE projects SET route_slug = ? WHERE id = ?").run(candidate, String(row.id));
+    }
+  }
+
+  private availableProjectSlug(name: string, projectPath: string, excludedProjectId: string | null = null): string {
+    const base = projectSlug(name);
+    const hash = createHash("sha256").update(projectPath).digest("hex").slice(0, 8);
+    let suffix = 0;
+    let candidate = RESERVED_PROJECT_SLUGS.has(base) ? `${base.slice(0, 55)}-${hash}` : base;
+    while (this.database.prepare(`
+      SELECT 1 FROM projects WHERE route_slug = ? AND (? IS NULL OR id <> ?)
+    `).get(candidate, excludedProjectId, excludedProjectId)) {
+      suffix += 1;
+      const tail = suffix === 1 ? hash : `${hash}-${suffix}`;
+      candidate = `${base.slice(0, Math.max(1, 63 - tail.length))}-${tail}`;
+    }
+    return candidate;
+  }
+
   public ensureProject(projectPathInput: string): string {
     const projectPath = resolve(projectPathInput);
     const id = projectId(projectPath);
     const timestamp = now();
+    const existing = this.database.prepare("SELECT id FROM projects WHERE path = ?").get(projectPath) as Row | undefined;
+    if (existing) {
+      this.database.prepare("UPDATE projects SET name = ?, updated_at = ? WHERE path = ?")
+        .run(basename(projectPath), timestamp, projectPath);
+      return String(existing.id);
+    }
+    const routeSlug = this.availableProjectSlug(basename(projectPath), projectPath);
     this.database.prepare(`
-      INSERT INTO projects(id, path, name, created_at, updated_at)
-      VALUES(?, ?, ?, ?, ?)
-      ON CONFLICT(path) DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at
-    `).run(id, projectPath, basename(projectPath), timestamp, timestamp);
+      INSERT INTO projects(id, path, name, route_slug, created_at, updated_at)
+      VALUES(?, ?, ?, ?, ?, ?)
+    `).run(id, projectPath, basename(projectPath), routeSlug, timestamp, timestamp);
     return id;
   }
 
@@ -235,9 +311,9 @@ export class SupervisorDatabase {
     if (existing) return String(existing.id);
     const id = randomUUID();
     this.database.prepare(`
-      INSERT INTO sessions(id, project_id, claude_session_id, started_at, status)
-      VALUES(?, ?, ?, ?, 'active')
-    `).run(id, projectIdValue, claudeSessionId, startedAt);
+      INSERT INTO sessions(id, project_id, claude_session_id, started_at, last_seen_at, status)
+      VALUES(?, ?, ?, ?, ?, 'observed')
+    `).run(id, projectIdValue, claudeSessionId, startedAt, startedAt);
     return id;
   }
 
@@ -261,10 +337,75 @@ export class SupervisorDatabase {
       JSON.stringify(event),
       event.timestamp,
     );
-    if (event.event_type === "claude.stopping") {
-      this.database.prepare("UPDATE sessions SET ended_at = ?, status = 'stopping' WHERE id = ?").run(event.timestamp, sessionId);
+    if (event.event_type === "session.started") {
+      this.database.prepare(`
+        UPDATE sessions SET started_at = CASE WHEN status = 'active' THEN started_at ELSE ? END,
+          last_seen_at = ?, ended_at = NULL, end_reason = NULL, status = 'active'
+        WHERE id = ?
+      `).run(event.timestamp, event.timestamp, sessionId);
+    } else if (event.event_type === "session.ended") {
+      const reason = typeof event.metadata.reason === "string" ? event.metadata.reason : "other";
+      this.database.prepare(`
+        UPDATE sessions SET last_seen_at = ?, ended_at = ?, end_reason = ?, status = 'ended'
+        WHERE id = ?
+      `).run(event.timestamp, event.timestamp, reason, sessionId);
+      this.closeSessionHumanRequests(sessionId, event.timestamp);
+    } else {
+      this.database.prepare("UPDATE sessions SET last_seen_at = ? WHERE id = ?").run(event.timestamp, sessionId);
+      if (event.event_type === "human.resolved") {
+        this.resolveEventHumanRequests(sessionId, ["question", "elicitation"], event.timestamp);
+      } else if (event.event_type === "prompt.submitted") {
+        this.resolveEventHumanRequests(sessionId, ["permission", "question", "elicitation"], event.timestamp);
+      } else if (event.event_type === "tool.completed" || event.event_type === "permission.denied") {
+        this.resolveEventHumanRequests(sessionId, ["permission"], event.timestamp);
+      }
     }
     return { projectId: id, sessionId };
+  }
+
+  public createEventHumanRequest(event: NormalizedEvent, sessionId: string, attention: HumanAttention): { id: string; created: boolean } {
+    const existing = this.database.prepare("SELECT id FROM human_requests WHERE trigger_event_id = ?").get(event.id) as Row | undefined;
+    if (existing) return { id: String(existing.id), created: false };
+    const id = randomUUID();
+    this.database.prepare(`
+      INSERT INTO human_requests(
+        id, project_id, session_id, trigger_event_id, type, message, requested_action,
+        safe_to_continue, status, created_at
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)
+    `).run(
+      id,
+      this.ensureProject(event.project_path),
+      sessionId,
+      event.id,
+      attention.type,
+      attention.reason,
+      attention.requestedAction,
+      attention.safeToContinue ? 1 : 0,
+      event.timestamp,
+    );
+    return { id, created: true };
+  }
+
+  public setHumanRequestTelegramMessage(id: string, telegramMessageId: string): void {
+    this.database.prepare("UPDATE human_requests SET telegram_message_id = ? WHERE id = ?")
+      .run(telegramMessageId, id);
+  }
+
+  private resolveEventHumanRequests(sessionId: string, types: string[], resolvedAt: string): void {
+    if (!types.length) return;
+    const placeholders = types.map(() => "?").join(",");
+    this.database.prepare(`
+      UPDATE human_requests SET status = 'resolved', resolved_at = ?
+      WHERE session_id = ? AND status = 'open' AND audit_id IS NULL
+        AND type IN (${placeholders})
+    `).run(resolvedAt, sessionId, ...types as SQLInputValue[]);
+  }
+
+  private closeSessionHumanRequests(sessionId: string, resolvedAt: string): void {
+    this.database.prepare(`
+      UPDATE human_requests SET status = 'closed', resolved_at = ?
+      WHERE session_id = ? AND status = 'open' AND audit_id IS NULL
+    `).run(resolvedAt, sessionId);
   }
 
   public markEventProcessed(eventId: string): void {
@@ -368,9 +509,10 @@ export class SupervisorDatabase {
     }
   }
 
-  public completeAudit(auditId: string, result: AuditResult, threadId: string | null): void {
+  public completeAudit(auditId: string, result: AuditResult, threadId: string | null): string | null {
     const timestamp = now();
     const severity = highestSeverity(result.findings);
+    let humanRequestId: string | null = null;
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       this.database.prepare(`
@@ -383,19 +525,21 @@ export class SupervisorDatabase {
       if (!audit) throw new Error("Audit disappeared during completion");
       for (const finding of result.findings) this.insertFinding(auditId, finding, timestamp);
       if (result.human_request) {
+        humanRequestId = randomUUID();
         this.database.prepare(`
           INSERT INTO human_requests(
-            id, project_id, audit_id, type, message, requested_action,
+            id, project_id, session_id, audit_id, type, message, requested_action,
             safe_to_continue, status, created_at
-          ) VALUES(?, ?, ?, 'audit', ?, ?, ?, 'open', ?)
+          ) VALUES(?, ?, ?, ?, 'audit', ?, ?, ?, 'open', ?)
         `).run(
-          randomUUID(), audit.project_id, auditId, result.human_request.reason,
+          humanRequestId, audit.project_id, audit.session_id, auditId, result.human_request.reason,
           result.human_request.requested_action,
           result.human_request.safe_to_continue_other_work ? 1 : 0,
           timestamp,
         );
       }
       this.database.exec("COMMIT;");
+      return humanRequestId;
     } catch (error) {
       this.database.exec("ROLLBACK;");
       throw error;
@@ -475,9 +619,77 @@ export class SupervisorDatabase {
     return (rows as Row[]).map((row) => JSON.parse(String(row.payload_json)) as NormalizedEvent);
   }
 
+  public activeProjectBySlug(slug: string, staleMs: number): ActivityProject | null {
+    const row = this.database.prepare(`
+      SELECT p.id, p.path, p.name, p.route_slug,
+        COUNT(s.id) AS active_session_count,
+        MIN(s.started_at) AS started_at,
+        MAX(s.last_seen_at) AS last_seen_at
+      FROM projects p
+      JOIN sessions s ON s.project_id = p.id
+      WHERE p.route_slug = ? AND s.status = 'active' AND s.last_seen_at >= ?
+        AND EXISTS (
+          SELECT 1 FROM events e
+          WHERE e.session_id = s.id AND e.event_type = 'session.started'
+        )
+      GROUP BY p.id, p.path, p.name, p.route_slug
+    `).get(slug, new Date(Date.now() - staleMs).toISOString()) as Row | undefined;
+    return row ? rowToActivityProject(row) : null;
+  }
+
+  public activeProjectByPath(projectPath: string, staleMs: number): ActivityProject | null {
+    const row = this.database.prepare(`
+      SELECT p.id, p.path, p.name, p.route_slug,
+        COUNT(s.id) AS active_session_count,
+        MIN(s.started_at) AS started_at,
+        MAX(s.last_seen_at) AS last_seen_at
+      FROM projects p
+      JOIN sessions s ON s.project_id = p.id
+      WHERE p.path = ? AND s.status = 'active' AND s.last_seen_at >= ?
+        AND EXISTS (
+          SELECT 1 FROM events e
+          WHERE e.session_id = s.id AND e.event_type = 'session.started'
+        )
+      GROUP BY p.id, p.path, p.name, p.route_slug
+    `).get(resolve(projectPath), new Date(Date.now() - staleMs).toISOString()) as Row | undefined;
+    return row ? rowToActivityProject(row) : null;
+  }
+
+  public listActiveProjects(staleMs: number, limit = 5_000): ActivityProject[] {
+    const rows = this.database.prepare(`
+      SELECT p.id, p.path, p.name, p.route_slug,
+        COUNT(s.id) AS active_session_count,
+        MIN(s.started_at) AS started_at,
+        MAX(s.last_seen_at) AS last_seen_at
+      FROM projects p
+      JOIN sessions s ON s.project_id = p.id
+      WHERE s.status = 'active' AND s.last_seen_at >= ?
+        AND EXISTS (
+          SELECT 1 FROM events e
+          WHERE e.session_id = s.id AND e.event_type = 'session.started'
+        )
+      GROUP BY p.id, p.path, p.name, p.route_slug
+      ORDER BY last_seen_at DESC
+      LIMIT ?
+    `).all(new Date(Date.now() - staleMs).toISOString(), Math.max(1, Math.min(limit, 5_000))) as Row[];
+    return rows.map(rowToActivityProject);
+  }
+
   public queueCounts(): QueueCounts {
     const result: QueueCounts = { pending: 0, running: 0, completed: 0, failed: 0 };
     const rows = this.database.prepare("SELECT status, COUNT(*) AS count FROM audits GROUP BY status").all() as Row[];
+    for (const row of rows) {
+      const status = String(row.status) as keyof QueueCounts;
+      if (status in result) result[status] = asNumber(row.count);
+    }
+    return result;
+  }
+
+  public projectQueueCounts(projectPath: string): QueueCounts {
+    const result: QueueCounts = { pending: 0, running: 0, completed: 0, failed: 0 };
+    const rows = this.database.prepare(`
+      SELECT status, COUNT(*) AS count FROM audits WHERE project_path = ? GROUP BY status
+    `).all(resolve(projectPath)) as Row[];
     for (const row of rows) {
       const status = String(row.status) as keyof QueueCounts;
       if (status in result) result[status] = asNumber(row.count);
@@ -516,14 +728,16 @@ export class SupervisorDatabase {
     const bounded = Math.max(1, Math.min(limit, 500));
     const rows = projectPath
       ? this.database.prepare(`
-          SELECT h.id, h.audit_id, h.type, h.message, h.requested_action,
-            h.safe_to_continue, h.status, h.created_at, h.resolved_at
+          SELECT h.id, h.audit_id, h.session_id, h.trigger_event_id, h.type,
+            h.message, h.requested_action, h.safe_to_continue, h.status,
+            h.telegram_message_id, h.created_at, h.resolved_at
           FROM human_requests h JOIN projects p ON p.id = h.project_id
           WHERE p.path = ? ORDER BY h.created_at DESC, h.rowid DESC LIMIT ?
         `).all(resolve(projectPath), bounded)
       : this.database.prepare(`
-          SELECT id, audit_id, type, message, requested_action, safe_to_continue,
-            status, created_at, resolved_at
+          SELECT id, audit_id, session_id, trigger_event_id, type, message,
+            requested_action, safe_to_continue, status, telegram_message_id,
+            created_at, resolved_at
           FROM human_requests ORDER BY created_at DESC, rowid DESC LIMIT ?
         `).all(bounded);
     return (rows as Row[]).map((row) => ({ ...row, safe_to_continue: asNumber(row.safe_to_continue) === 1 }));

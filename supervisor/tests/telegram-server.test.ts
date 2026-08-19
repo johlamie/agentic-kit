@@ -4,10 +4,11 @@ import test from "node:test";
 import { AuditDispatcher } from "../src/audits/dispatcher.js";
 import { SupervisorDatabase } from "../src/db.js";
 import { forwardHook } from "../src/hooks/forwarder.js";
+import { humanAttentionFromEvent } from "../src/human/attention.js";
 import { Logger } from "../src/logger.js";
 import { SupervisorServer } from "../src/server.js";
 import { TelegramClient } from "../src/telegram/client.js";
-import { formatPermissionNotification } from "../src/telegram/formatter.js";
+import { formatHumanAttentionNotification } from "../src/telegram/formatter.js";
 import type { NormalizedEvent } from "../src/types.js";
 import { makeTempProject, syntheticTelegramToken, testConfig } from "./helpers.js";
 
@@ -46,7 +47,7 @@ test("Telegram errors redact bot URLs", async () => {
   );
 });
 
-test("permission events are persisted and forwarded through the authenticated loopback receiver", async () => {
+test("detailed permission events are persisted and sent by the Supervisor while generic notifications stay silent", async () => {
   const project = makeTempProject();
   const permissionSecret = ["unit", "test", "permission", "secret"].join("-");
   const config = testConfig({ hookToken: "local-hook-token", telegramBotToken: syntheticTelegramToken(), telegramChatId: "1234" });
@@ -62,11 +63,14 @@ test("permission events are persisted and forwarded through the authenticated lo
   const address = server.address();
   const endpoint = `http://127.0.0.1:${address.port}/v1/hooks`;
   const payload = {
-    hook_event_name: "Notification",
-    notification_type: "permission_prompt",
+    hook_event_name: "PermissionRequest",
     session_id: "session-permission",
     cwd: project,
-    message: `Approval needed; ${["pass", "word"].join("")}=${permissionSecret}`,
+    tool_name: "Bash",
+    tool_input: {
+      command: `npx prisma generate --auth-token ${permissionSecret}`,
+      description: `Installer le client Prisma; ${["pass", "word"].join("")}=${permissionSecret}`,
+    },
   };
   const unauthorized = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   assert.equal(unauthorized.status, 401);
@@ -76,18 +80,40 @@ test("permission events are persisted and forwarded through the authenticated lo
     body: JSON.stringify(payload),
   });
   assert.equal(response.status, 202);
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  await waitFor(() => sentBodies.length === 1);
   assert.equal(database.listEvents(project).length, 1);
   assert.equal(database.listEvents(project)[0]?.event_type, "permission.requested");
   assert.equal(sentBodies.length, 1);
   assert.doesNotMatch(sentBodies[0] ?? "", new RegExp(permissionSecret, "u"));
+  const telegramText = String((JSON.parse(sentBodies[0] ?? "{}") as { text?: unknown }).text ?? "");
+  assert.match(telegramText, /Kriton Supervisor/u);
+  assert.match(telegramText, /PermissionRequest|Autorisation requise/u);
+  assert.match(telegramText, /npx prisma generate/u);
+  assert.match(telegramText, /Action attendue/u);
+  assert.equal(database.listHumanRequests(project)[0]?.telegram_message_id, "7");
+
+  const idleResponse = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Agentic-Supervisor-Token": "local-hook-token" },
+    body: JSON.stringify({
+      hook_event_name: "Notification",
+      notification_type: "idle_prompt",
+      session_id: "session-permission",
+      cwd: project,
+      message: "Claude is waiting for your input",
+    }),
+  });
+  assert.equal(idleResponse.status, 202);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(sentBodies.length, 1);
+  assert.equal(database.listEvents(project)[0]?.event_type, "notification.received");
   await server.close();
   database.close();
   rmSync(project, { recursive: true, force: true });
   rmSync(config.dataDir, { recursive: true, force: true });
 });
 
-test("permission notification gives no remote command channel", () => {
+test("human-attention notification carries structured detail and no remote command channel", () => {
   const event: NormalizedEvent = {
     id: "permission-1",
     timestamp: new Date().toISOString(),
@@ -103,22 +129,32 @@ test("permission notification gives no remote command channel", () => {
     transcript_path: null,
     agent_transcript_path: null,
     last_message: null,
-    metadata: { message: "Deploy permission required" },
+    metadata: {
+      hook_event_name: "PermissionRequest",
+      tool_name: "Bash",
+      description: "Installer Prisma pour générer le client local.",
+      command_summary: "npx prisma generate",
+    },
   };
-  const message = formatPermissionNotification(event);
-  assert.match(message, /Ouvre la session Claude pour répondre/u);
+  const attention = humanAttentionFromEvent(event);
+  assert.ok(attention);
+  const message = formatHumanAttentionNotification(event, attention);
+  assert.match(message, /Kriton Supervisor/u);
+  assert.match(message, /Installer Prisma/u);
+  assert.match(message, /npx prisma generate/u);
+  assert.match(message, /Ouvre la session Claude/u);
   assert.doesNotMatch(message, /\/approve|execute|shell/u);
 });
 
-test("idle notification clearly requests a response instead of a permission decision", () => {
+test("AskUserQuestion notification includes the actual question and choices", () => {
   const event: NormalizedEvent = {
-    id: "idle-1",
+    id: "question-1",
     timestamp: new Date().toISOString(),
     producer: "claude",
     project_id: "project",
     project_path: "/tmp/project",
     claude_session_id: "session",
-    event_type: "permission.requested",
+    event_type: "human.input.requested",
     agent_type: null,
     agent_id: null,
     candidate_id: null,
@@ -126,12 +162,141 @@ test("idle notification clearly requests a response instead of a permission deci
     transcript_path: null,
     agent_transcript_path: null,
     last_message: null,
-    metadata: { notification_type: "idle_prompt" },
+    metadata: {
+      hook_event_name: "PreToolUse",
+      tool_name: "AskUserQuestion",
+      questions: [{
+        question: "Quelle direction visuelle veux-tu retenir ?",
+        options: [{ label: "Direction A" }, { label: "Direction B" }],
+      }],
+    },
   };
-  const message = formatPermissionNotification(event);
-  assert.match(message, /Réponse requise/u);
-  assert.doesNotMatch(message, /Autorisation requise/u);
+  const attention = humanAttentionFromEvent(event);
+  assert.ok(attention);
+  const message = formatHumanAttentionNotification(event, attention);
+  assert.match(message, /Quelle direction visuelle/u);
+  assert.match(message, /Direction A · Direction B/u);
+  assert.match(message, /Action attendue/u);
 });
+
+test("AskUserQuestion and MCP elicitation reach Telegram through Supervisor-owned structured events", async () => {
+  const project = makeTempProject("supervisor-human-events-");
+  const config = testConfig({ hookToken: "human-hook-token", telegramBotToken: syntheticTelegramToken(), telegramChatId: "1234" });
+  const texts: string[] = [];
+  const mockFetch: typeof fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body ?? "{}")) as { text?: unknown };
+    texts.push(String(body.text ?? ""));
+    return new Response(JSON.stringify({ ok: true, result: { message_id: texts.length } }), { status: 200 });
+  };
+  const database = new SupervisorDatabase(config.databasePath);
+  const server = new SupervisorServer(
+    config,
+    database,
+    new AuditDispatcher(database, config),
+    new TelegramClient(config, mockFetch),
+    new Logger("error"),
+  );
+  await server.listen();
+  const endpoint = `http://127.0.0.1:${server.address().port}/v1/hooks`;
+  const headers = { "Content-Type": "application/json", "X-Agentic-Supervisor-Token": "human-hook-token" };
+
+  const question = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      hook_event_name: "PreToolUse",
+      session_id: "human-session",
+      cwd: project,
+      tool_name: "AskUserQuestion",
+      tool_input: {
+        questions: [{
+          header: "Arbitrage",
+          question: "Faut-il conserver la direction A ou choisir B ?",
+          options: [{ label: "Direction A" }, { label: "Direction B" }],
+          multiSelect: false,
+        }],
+      },
+    }),
+  });
+  assert.equal(question.status, 202);
+
+  const elicitation = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      hook_event_name: "Elicitation",
+      session_id: "human-session",
+      cwd: project,
+      mcp_server_name: "github",
+      message: "Une authentification GitHub doit être terminée dans le navigateur.",
+      mode: "url",
+      url: "https://github.com/login/device?code=unit-test-device-code&state=unit-test-state",
+    }),
+  });
+  assert.equal(elicitation.status, 202);
+  await waitFor(() => texts.length === 2);
+  assert.match(texts.join("\n"), /Kriton Supervisor/u);
+  assert.match(texts.join("\n"), /Faut-il conserver la direction A/u);
+  assert.match(texts.join("\n"), /Direction A · Direction B/u);
+  assert.match(texts.join("\n"), /Intégration : github/u);
+  assert.match(texts.join("\n"), /authentification GitHub/u);
+  assert.match(texts.join("\n"), /https:\/\/github\.com\/login\/device/u);
+  assert.doesNotMatch(texts.join("\n"), /unit-test-device-code|unit-test-state/u);
+  assert.doesNotMatch(texts.join("\n"), /TELEGRAM_BOT_TOKEN|chat ID|bot token/iu);
+  assert.equal(database.listHumanRequests(project).filter((request) => request.status === "open").length, 2);
+
+  await server.close();
+  database.close();
+  rmSync(project, { recursive: true, force: true });
+  rmSync(config.dataDir, { recursive: true, force: true });
+});
+
+test("graceful shutdown waits for an in-flight Supervisor notification", async () => {
+  const project = makeTempProject("supervisor-notification-shutdown-");
+  const config = testConfig({ hookToken: "shutdown-hook-token", telegramBotToken: syntheticTelegramToken(), telegramChatId: "1234" });
+  let delivered = false;
+  const mockFetch: typeof fetch = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    delivered = true;
+    return new Response(JSON.stringify({ ok: true, result: { message_id: 19 } }), { status: 200 });
+  };
+  const database = new SupervisorDatabase(config.databasePath);
+  const server = new SupervisorServer(
+    config,
+    database,
+    new AuditDispatcher(database, config),
+    new TelegramClient(config, mockFetch),
+    new Logger("error"),
+  );
+  await server.listen();
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/v1/hooks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Agentic-Supervisor-Token": "shutdown-hook-token" },
+    body: JSON.stringify({
+      hook_event_name: "PermissionRequest",
+      session_id: "shutdown-session",
+      cwd: project,
+      tool_name: "Bash",
+      tool_input: { command: "npm install", description: "Installer les dépendances locales." },
+    }),
+  });
+  assert.equal(response.status, 202);
+  await server.close();
+  assert.equal(delivered, true);
+  assert.equal(database.listHumanRequests(project)[0]?.telegram_message_id, "19");
+
+  database.close();
+  rmSync(project, { recursive: true, force: true });
+  rmSync(config.dataDir, { recursive: true, force: true });
+});
+
+async function waitFor(predicate: () => boolean, timeoutMs = 500): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() >= deadline) throw new Error("Timed out waiting for asynchronous notification");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
 
 test("Stop hook blocks on unresolved audit outcomes and honors recursion protection", async () => {
   const previous = {

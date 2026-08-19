@@ -1,22 +1,29 @@
 import { timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
+import { ActivityBus, buildActivitySnapshot } from "./activity.js";
 import type { SupervisorConfig } from "./config.js";
 import { SUPERVISOR_VERSION } from "./config.js";
 import { AuditDispatcher } from "./audits/dispatcher.js";
 import { SupervisorDatabase } from "./db.js";
 import { ClaudeHookAdapter, type EventAdapter } from "./hooks/adapter.js";
+import { humanAttentionFromEvent } from "./human/attention.js";
 import { Logger } from "./logger.js";
-import { safeError } from "./security/redact.js";
+import { redactText, safeError, sanitizeUrl } from "./security/redact.js";
 import { TelegramClient } from "./telegram/client.js";
-import { formatPermissionNotification } from "./telegram/formatter.js";
+import { formatHumanAttentionNotification } from "./telegram/formatter.js";
 import { AUDIT_TYPES, type AuditType } from "./types.js";
+import { ActivityUiAssets, type ActivityAsset } from "./ui/assets.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
 
 export class SupervisorServer {
   private readonly server: Server;
   private readonly adapters: Map<string, EventAdapter>;
+  private readonly uiAssets: ActivityUiAssets | null;
+  private readonly activityStreams = new Set<ServerResponse>();
+  private readonly pendingNotifications = new Set<Promise<void>>();
+  private heartbeatTimer: NodeJS.Timeout | null = null;
 
   public constructor(
     private readonly config: SupervisorConfig,
@@ -25,12 +32,19 @@ export class SupervisorServer {
     private readonly telegram: TelegramClient,
     private readonly logger: Logger,
     adapters: EventAdapter[] = [new ClaudeHookAdapter()],
+    private readonly activity: ActivityBus = new ActivityBus(),
   ) {
     this.adapters = new Map(adapters.map((adapter) => [adapter.producer, adapter]));
     this.server = createServer((request, response) => { void this.route(request, response); });
     this.server.requestTimeout = 5_000;
     this.server.headersTimeout = 5_000;
     this.server.keepAliveTimeout = 1_000;
+    let assets: ActivityUiAssets | null = null;
+    if (config.activityUi) {
+      try { assets = new ActivityUiAssets(); }
+      catch (error) { this.logger.warn("activity.ui.unavailable", { error: safeError(error) }); }
+    }
+    this.uiAssets = assets;
   }
 
   public async listen(): Promise<void> {
@@ -44,10 +58,21 @@ export class SupervisorServer {
   }
 
   public async close(): Promise<void> {
-    if (!this.server.listening) return;
-    await new Promise<void>((resolvePromise, reject) => {
-      this.server.close((error) => error ? reject(error) : resolvePromise());
-    });
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
+    for (const stream of this.activityStreams) {
+      if (!stream.destroyed) {
+        writeSse(stream, "closed", { reason: "supervisor_stopped" });
+        stream.end();
+      }
+    }
+    this.activityStreams.clear();
+    if (this.server.listening) {
+      await new Promise<void>((resolvePromise, reject) => {
+        this.server.close((error) => error ? reject(error) : resolvePromise());
+      });
+    }
+    await Promise.allSettled([...this.pendingNotifications]);
   }
 
   public address(): { host: string; port: number } {
@@ -61,6 +86,9 @@ export class SupervisorServer {
       if (!isLoopback(request.socket.remoteAddress)) return json(response, 403, { error: "loopback_only" });
       const url = new URL(request.url ?? "/", `http://${this.config.host}:${this.config.port}`);
       if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
+        const activeProjects = this.config.activityUi
+          ? this.database.listActiveProjects(this.config.activitySessionStaleMs).length
+          : 0;
         return json(response, 200, {
           status: "ok",
           version: SUPERVISOR_VERSION,
@@ -68,8 +96,12 @@ export class SupervisorServer {
           queue: this.database.queueCounts(),
           telegram: this.telegram.configured ? "configured" : "not_configured",
           hook_auth: this.config.hookToken ? "enabled" : "disabled",
+          activity_ui: !this.config.activityUi ? "disabled" : this.uiAssets ? "ready" : "error",
+          active_projects: activeProjects,
+          activity_streams: this.activityStreams.size,
         });
       }
+      if (await this.activityRoute(request, response, url)) return;
       if (!this.authorized(request)) return json(response, 401, { error: "unauthorized" });
       const eventAdapter = this.eventAdapter(url.pathname);
       if (request.method === "POST" && eventAdapter) {
@@ -77,12 +109,21 @@ export class SupervisorServer {
         const event = eventAdapter.normalize(payload);
         if (event.producer !== eventAdapter.producer) throw new Error("Event adapter producer mismatch");
         const ids = this.database.insertEvent(event);
-        const audits = this.dispatcher.dispatch(event, ids.sessionId);
-        if (event.event_type === "permission.requested") {
-          void this.telegram.send(formatPermissionNotification(event)).catch((error) => {
-            this.logger.warn("telegram.permission.failed", { error: safeError(error) });
-          });
+        const attention = humanAttentionFromEvent(event);
+        if (attention) {
+          const humanRequest = this.database.createEventHumanRequest(event, ids.sessionId, attention);
+          if (humanRequest.created) {
+            const notification = this.telegram.send(formatHumanAttentionNotification(event, attention)).then((messageId) => {
+              if (messageId) this.database.setHumanRequestTelegramMessage(humanRequest.id, messageId);
+            }).catch((error) => {
+              this.logger.warn("telegram.human_attention.failed", { error: safeError(error) });
+            });
+            this.pendingNotifications.add(notification);
+            void notification.finally(() => { this.pendingNotifications.delete(notification); });
+          }
         }
+        const audits = this.dispatcher.dispatch(event, ids.sessionId);
+        this.activity.publish(event.project_path);
         return json(response, 202, {
           accepted: true,
           event_id: event.id,
@@ -95,9 +136,14 @@ export class SupervisorServer {
         if (typeof body.project !== "string" || !body.project.trim()) return json(response, 400, { error: "project_required" });
         if (typeof body.type !== "string" || !AUDIT_TYPES.includes(body.type as AuditType)) return json(response, 400, { error: "invalid_audit_type" });
         const context: Record<string, unknown> = {};
-        if (typeof body.url === "string") context.url = body.url;
-        if (typeof body.reason === "string") context.reason = body.reason;
+        if (typeof body.url === "string") {
+          const targetUrl = sanitizeUrl(body.url);
+          if (!targetUrl) return json(response, 400, { error: "invalid_audit_url" });
+          context.url = targetUrl;
+        }
+        if (typeof body.reason === "string") context.reason = redactText(body.reason, 2_000);
         const audit = this.dispatcher.enqueueManual(resolve(body.project), body.type as AuditType, context);
+        this.activity.publish(audit.project_path);
         return json(response, 202, { audit_id: audit.id, status: audit.status });
       }
       if (request.method === "GET" && url.pathname === "/v1/gate") {
@@ -111,6 +157,106 @@ export class SupervisorServer {
       this.logger.warn("http.request.failed", { error: safeError(error) });
       return json(response, error instanceof BodyError ? error.status : 500, { error: safeError(error) });
     }
+  }
+
+  private async activityRoute(request: IncomingMessage, response: ServerResponse, url: URL): Promise<boolean> {
+    if (!this.config.activityUi || !this.uiAssets) return false;
+    if (request.method !== "GET" && request.method !== "HEAD") return false;
+    if (!isDirectUiRequest(request, this.address().port)) {
+      json(response, 403, { error: "activity_ui_local_only" });
+      return true;
+    }
+
+    const assetMatch = url.pathname.match(/^\/_supervisor\/assets\/([a-z0-9.-]{1,80})$/u);
+    if (assetMatch?.[1]) {
+      const asset = this.uiAssets.asset(assetMatch[1]);
+      if (!asset) json(response, 404, { error: "not_found" });
+      else sendAsset(request, response, asset);
+      return true;
+    }
+
+    const activityMatch = url.pathname.match(/^\/_supervisor\/api\/projects\/([a-z0-9_-]{1,64})\/activity$/u);
+    if (activityMatch?.[1]) {
+      const snapshot = buildActivitySnapshot(this.database, activityMatch[1], this.config.activitySessionStaleMs);
+      json(response, snapshot ? 200 : 410, snapshot ?? { error: "supervision_inactive" });
+      return true;
+    }
+
+    const streamMatch = url.pathname.match(/^\/_supervisor\/api\/projects\/([a-z0-9_-]{1,64})\/stream$/u);
+    if (streamMatch?.[1]) {
+      if (request.method === "HEAD") {
+        response.writeHead(405, { Allow: "GET", "Cache-Control": "no-store" });
+        response.end();
+        return true;
+      }
+      this.openActivityStream(request, response, streamMatch[1]);
+      return true;
+    }
+
+    const pageMatch = url.pathname.match(/^\/([a-z0-9_-]{1,64})\/?$/u);
+    if (pageMatch?.[1]) {
+      const project = this.database.activeProjectBySlug(pageMatch[1], this.config.activitySessionStaleMs);
+      if (!project) json(response, 404, { error: "supervision_inactive" });
+      else sendAsset(request, response, this.uiAssets.indexHtml());
+      return true;
+    }
+    return false;
+  }
+
+  private openActivityStream(request: IncomingMessage, response: ServerResponse, slug: string): void {
+    const project = this.database.activeProjectBySlug(slug, this.config.activitySessionStaleMs);
+    if (!project) return json(response, 410, { error: "supervision_inactive" });
+    if (this.activityStreams.size >= this.config.activityMaxStreams) {
+      return json(response, 503, { error: "activity_stream_limit" });
+    }
+    response.writeHead(200, {
+      ...activitySecurityHeaders(),
+      "Content-Type": "text/event-stream; charset=utf-8",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+    this.activityStreams.add(response);
+    this.ensureHeartbeat();
+    let closed = false;
+    let unsubscribe = (): void => {};
+    const close = (): void => {
+      if (closed) return;
+      closed = true;
+      unsubscribe();
+      this.activityStreams.delete(response);
+      this.stopHeartbeatWhenIdle();
+    };
+    const refresh = (): void => {
+      if (closed || response.destroyed) return close();
+      const active = this.database.activeProjectBySlug(slug, this.config.activitySessionStaleMs);
+      if (!active) {
+        writeSse(response, "closed", { reason: "session_ended" });
+        close();
+        response.end();
+        return;
+      }
+      writeSse(response, "refresh", { at: new Date().toISOString() });
+    };
+    unsubscribe = this.activity.subscribe(project.path, refresh);
+    request.once("close", close);
+    response.once("close", close);
+    writeSse(response, "refresh", { at: new Date().toISOString() });
+  }
+
+  private ensureHeartbeat(): void {
+    if (this.heartbeatTimer || this.activityStreams.size === 0) return;
+    this.heartbeatTimer = setInterval(() => {
+      for (const stream of this.activityStreams) {
+        if (!stream.destroyed) stream.write(": keepalive\n\n");
+      }
+    }, 15_000);
+    this.heartbeatTimer.unref();
+  }
+
+  private stopHeartbeatWhenIdle(): void {
+    if (this.activityStreams.size > 0 || !this.heartbeatTimer) return;
+    clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
   }
 
   private authorized(request: IncomingMessage): boolean {
@@ -160,6 +306,47 @@ function json(response: ServerResponse, status: number, payload: unknown): void 
     "X-Content-Type-Options": "nosniff",
   });
   response.end(body);
+}
+
+function activitySecurityHeaders(): Record<string, string> {
+  return {
+    "Cache-Control": "no-store",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-Robots-Tag": "noindex, nofollow, noarchive",
+  };
+}
+
+function sendAsset(request: IncomingMessage, response: ServerResponse, asset: ActivityAsset): void {
+  response.writeHead(200, {
+    ...activitySecurityHeaders(),
+    "Content-Type": asset.contentType,
+    "Content-Length": asset.body.length,
+  });
+  response.end(request.method === "HEAD" ? undefined : asset.body);
+}
+
+function writeSse(response: ServerResponse, event: string, payload: unknown): void {
+  if (response.destroyed || response.writableEnded) return;
+  response.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
+}
+
+function isDirectUiRequest(request: IncomingMessage, configuredPort: number): boolean {
+  if (request.headers.forwarded || request.headers["x-forwarded-for"] || request.headers["x-real-ip"]) return false;
+  const fetchSite = request.headers["sec-fetch-site"];
+  if (typeof fetchSite === "string" && !["none", "same-origin", "same-site"].includes(fetchSite)) return false;
+  const host = request.headers.host;
+  if (!host) return false;
+  try {
+    const parsed = new URL(`http://${host}`);
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/gu, "");
+    const port = parsed.port ? Number.parseInt(parsed.port, 10) : 80;
+    return ["localhost", "127.0.0.1", "::1"].includes(hostname) && port === configuredPort;
+  } catch {
+    return false;
+  }
 }
 
 function isLoopback(address: string | undefined): boolean {

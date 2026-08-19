@@ -17,11 +17,16 @@ export type AuditType = (typeof AUDIT_TYPES)[number];
 
 export const EVENT_TYPES = [
   "session.started",
+  "session.ended",
   "prompt.submitted",
   "agent.started",
   "agent.completed",
   "tool.completed",
   "permission.requested",
+  "permission.denied",
+  "human.input.requested",
+  "elicitation.requested",
+  "notification.received",
   "claude.stopping",
   "phase.completed",
   "audit.requested",
@@ -34,6 +39,7 @@ export type AuditJobStatus = "pending" | "running" | "completed" | "failed";
 export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type EvidenceClassification = "VERIFIED" | "PROBABLE" | "UNVERIFIED" | "INCORRECT" | "BLOCKED";
 export type ProposalMode = "none" | "targeted_changes" | "design_system_revision" | "screen_redesign" | "full_direction_alternative";
+export type ActivityItemType = "info" | "pass" | "challenge" | "block" | "human" | "error";
 
 export interface DesignDimension {
   name: string;
@@ -113,7 +119,62 @@ export interface RawClaudeHookPayload {
   message?: unknown;
   title?: unknown;
   notification_type?: unknown;
+  reason?: unknown;
+  permission_suggestions?: unknown;
+  mcp_server_name?: unknown;
+  mode?: unknown;
+  url?: unknown;
+  elicitation_id?: unknown;
+  requested_schema?: unknown;
+  action?: unknown;
   [key: string]: unknown;
+}
+
+export interface ActivityProject {
+  id: string;
+  path: string;
+  name: string;
+  slug: string;
+  activeSessionCount: number;
+  startedAt: string;
+  lastSeenAt: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  type: ActivityItemType;
+  label: string;
+  category: string;
+  timestamp: string;
+  title: string;
+  summary: string;
+  details: string;
+  auditId: string | null;
+}
+
+export interface ActivitySnapshot {
+  version: 1;
+  generatedAt: string;
+  project: {
+    name: string;
+    slug: string;
+  };
+  status: "active";
+  activeSessionCount: number;
+  startedAt: string;
+  latestSignalAt: string;
+  interventionCount: number;
+  queue: QueueCounts;
+  items: ActivityItem[];
+}
+
+export interface HumanAttention {
+  type: "permission" | "question" | "elicitation";
+  title: string;
+  reason: string;
+  requestedAction: string;
+  safeToContinue: boolean;
+  details: string[];
 }
 
 export interface AuditRecord {

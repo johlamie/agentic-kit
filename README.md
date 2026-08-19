@@ -46,6 +46,13 @@ commande distante. Les propositions de refonte restent sous
 `.claude/supervisor/proposals/` et n'écrasent jamais le frontend Claude. Kimi
 n'est pas relié à ce service. Voir [le guide opérationnel](supervisor/README.md).
 
+Pendant une session Claude réelle, le même daemon sert aussi un fil d'activité
+local `/<nom-projet>`. La route disparaît au dernier `SessionEnd`; aucun serveur
+ni processus n'est créé par projet. Depuis un Mac, elle se consulte par tunnel
+SSH sur le port 8787. `agentic-supervisor ui --project "$PWD"` retourne l'URL
+exacte. Les alertes Telegram détaillées sont émises uniquement par Kriton
+Supervisor à partir des hooks structurés, jamais directement par Claude.
+
 Guides pratiques :
 
 - [configuration et actions humaines restantes](docs/HUMAN_ACTIONS_AND_CONFIGURATION.md) ;

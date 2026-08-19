@@ -63,6 +63,11 @@ Résultat minimal attendu : Claude et Codex authentifiés, daemon joignable, DB
 saine, hook token configuré. Playwright doit être `OK` pour auditer une interface
 réellement rendue.
 
+Après une mise à jour des hooks, fermer puis relancer une fois toute session
+Claude déjà ouverte. Claude charge `settings.json` au démarrage de la session ;
+le daemon peut être rechargé indépendamment avec `pm2 restart
+agentic-supervisor`.
+
 Le kit global est lié dans `~/.claude/`. Il devient donc disponible dans chaque
 projet ouvert avec `claude`, sans copier les agents ou les skills dans le dépôt
 applicatif.
@@ -186,7 +191,23 @@ agentic-supervisor events --project "$PWD"
 agentic-supervisor audits --project "$PWD"
 agentic-supervisor tail --project "$PWD"
 agentic-supervisor gate --project "$PWD" --phase code
+agentic-supervisor ui --project "$PWD"
 ```
+
+La dernière commande retourne l'URL locale du fil d'activité seulement pendant
+qu'une vraie session Claude supervise ce projet. Depuis un Mac connecté à la VPS
+avec l'alias `vps1` :
+
+```bash
+ssh -N -L 8787:127.0.0.1:8787 vps1
+```
+
+Ouvrir ensuite l'URL retournée, par exemple
+`http://127.0.0.1:8787/diploma-qr`. Il n'existe qu'un daemon partagé : même avec
+de nombreux projets, aucune application web n'est lancée par projet. Sans onglet
+ouvert, aucune connexion temps réel n'est conservée. `SessionEnd` désactive la
+route dès la dernière session fermée ; `Stop` ne le fait pas, car il termine une
+réponse et non la session.
 
 #### Phase 7.5 — intégration locale
 
@@ -355,6 +376,21 @@ agentic-supervisor resolve <human-request-id>
 
 Puis demander un audit frais ; résoudre la demande ne fabrique pas un `PASS`.
 
+### Quand une intervention humaine est réellement attendue
+
+Les messages Telegram sont envoyés uniquement par Kriton Supervisor. Claude ne
+doit ni demander ni lire le token du bot. Une permission utilise
+`PermissionRequest`, une question explicite utilise
+`AskUserQuestion`, une validation de plan utilise `ExitPlanMode`, et une saisie
+MCP utilise `Elicitation`. L'alerte contient la question ou l'opération réelle,
+ses choix ou détails et l'action attendue. Une simple notification d'inactivité
+ne déclenche plus Telegram.
+
+Si une ancienne session continue d'émettre le texte générique « Claude is
+waiting for your input », terminer cette session et lancer une nouvelle commande
+`claude` pour charger les hooks structurés. Il n'est pas nécessaire de fournir
+un token Telegram à Claude.
+
 ## 7. Audit UI/UX manuel
 
 Le chemin normal est automatique après le PASS reviewer/QA d'une tranche UI.
@@ -392,6 +428,19 @@ pm2 restart agentic-supervisor
 agentic-supervisor doctor
 pm2 logs agentic-supervisor --lines 100
 ```
+
+### Vue d'activité inaccessible
+
+```bash
+agentic-supervisor status
+agentic-supervisor projects
+agentic-supervisor ui --project "$PWD"
+```
+
+`INACTIVE` signifie qu'aucun `SessionStart` récent n'est encore ouvert pour ce
+chemin. Relancer Claude dans le bon dossier, sans démarrer une seconde instance
+du Supervisor. Si la vue fonctionne sur la VPS mais pas sur le Mac, vérifier le
+tunnel SSH. Ne pas exposer le port 8787 dans nginx ou le firewall.
 
 ### Audits volontairement désactivés
 

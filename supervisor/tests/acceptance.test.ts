@@ -125,7 +125,7 @@ test("paid/login-only evidence becomes HUMAN_REQUIRED without account action", a
   const notification = formatAuditNotification(completed, result);
   assert.match(notification, /MarketData Pro|paid subscription|no account/iu);
   assert.match(notification, /ACTION HUMAINE REQUISE \(HUMAN_REQUIRED\)/u);
-  assert.match(notification, /Action humaine/u);
+  assert.match(notification, /Action attendue/u);
   assert.match(notification, /Les autres travaux peuvent continuer : oui/u);
   database.close();
   rmSync(project, { recursive: true, force: true });
@@ -226,6 +226,8 @@ test("prompt-injection text stays untrusted and forbidden secret paths are recog
   assert.match(prompt, /Never access.*SSH/isu);
   assert.equal(containsForbiddenSecretPath("cat ~/.ssh/id_rsa"), true);
   assert.equal(containsForbiddenSecretPath("cat /home/alice/.codex/auth.json"), true);
+  assert.equal(containsForbiddenSecretPath("cat ~/.config/agentic-kit/supervisor.env"), true);
+  assert.equal(containsForbiddenSecretPath("cat /home/alice/.config/agentic-kit/supervisor-hook-token"), true);
   assert.equal(containsForbiddenSecretPath("cat src/app.ts"), false);
   database.close();
   rmSync(project, { recursive: true, force: true });

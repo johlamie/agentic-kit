@@ -20,6 +20,21 @@ export function redactText(input: string, maxLength = MAX_SAFE_STRING): string {
   return value.length > maxLength ? `${value.slice(0, maxLength)}…[TRUNCATED]` : value;
 }
 
+export function sanitizeUrl(input: unknown, maxLength = 1_000): string | null {
+  if (typeof input !== "string" || !input.trim()) return null;
+  try {
+    const parsed = new URL(redactText(input.trim(), 2_000));
+    if (!new Set(["http:", "https:", "ws:", "wss:"]).has(parsed.protocol)) return null;
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    return redactText(parsed.toString(), maxLength);
+  } catch {
+    return null;
+  }
+}
+
 export function redactUnknown(value: unknown, depth = 0): unknown {
   if (depth > 8) return "[MAX_DEPTH]";
   if (typeof value === "string") return redactText(value);
@@ -44,5 +59,5 @@ export function safeError(error: unknown): string {
 }
 
 export function containsForbiddenSecretPath(value: string): boolean {
-  return /(?:^|[\s"'])(?:~\/|\/home\/[^/]+\/)(?:\.ssh|\.aws|\.config\/gcloud|\.codex\/(?:auth\.json|config\.toml))(?:\/|[\s"']|$)|(?:^|\/)\.env(?:\.[^/\s]+)?(?:[\s"']|$)/u.test(value);
+  return /(?:^|[\s"'])(?:~\/|\/home\/[^/]+\/)(?:\.ssh|\.aws|\.config\/gcloud|\.config\/agentic-kit\/(?:supervisor\.env|supervisor-hook-token)|\.codex\/(?:auth\.json|config\.toml))(?:\/|[\s"']|$)|(?:^|\/)\.env(?:\.[^/\s]+)?(?:[\s"']|$)/u.test(value);
 }

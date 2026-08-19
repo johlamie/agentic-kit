@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { SupervisorLevel } from "./types.js";
 
-export const SUPERVISOR_VERSION = "1.0.0";
+export const SUPERVISOR_VERSION = "1.1.0";
 export const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export interface SupervisorConfig {
@@ -29,6 +29,9 @@ export interface SupervisorConfig {
   uiProposalMode: "isolated";
   uiViewports: string[];
   browserAllowedHosts: string[];
+  activityUi: boolean;
+  activitySessionStaleMs: number;
+  activityMaxStreams: number;
   notifyPass: boolean;
   githubPatToken: string | null;
   telegramBotToken: string | null;
@@ -139,6 +142,9 @@ export function loadConfig(overrides: NodeJS.ProcessEnv = process.env): Supervis
     uiProposalMode: "isolated",
     uiViewports,
     browserAllowedHosts,
+    activityUi: boolean(env.SUPERVISOR_ACTIVITY_UI, true),
+    activitySessionStaleMs: integer(env.SUPERVISOR_ACTIVITY_SESSION_STALE_MS, 86_400_000, 60_000, 2_592_000_000),
+    activityMaxStreams: integer(env.SUPERVISOR_ACTIVITY_MAX_STREAMS, 256, 1, 5_000),
     notifyPass: boolean(env.SUPERVISOR_NOTIFY_PASS, false),
     githubPatToken: optional(env.GITHUB_PAT_TOKEN),
     telegramBotToken: optional(env.TELEGRAM_BOT_TOKEN),

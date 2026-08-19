@@ -8,7 +8,8 @@ Codex en lecture seule hors du chemin critique, puis rend l'une des décisions
 ```text
 Claude Code hooks ──HTTP loopback──> Supervisor ──queue SQLite──> Codex CLI
        ▲                                │                            │
-       └──── rapport/gate local ────────┴──── Telegram (escalade) <──┘
+       └──── rapport/gate local ────────┼──── Telegram (escalade) <──┘
+                                        └──── UI locale /<projet>
 ```
 
 Le Supervisor ne remplace ni les reviewers/QA Claude, ni les portes humaines
@@ -63,6 +64,8 @@ agentic-supervisor doctor
 agentic-supervisor events --project "$PWD"
 agentic-supervisor audits --project "$PWD"
 agentic-supervisor requests --project "$PWD"
+agentic-supervisor projects
+agentic-supervisor ui --project "$PWD"
 agentic-supervisor gate --project "$PWD" --phase code
 agentic-supervisor wait --project "$PWD" --phase code --timeout 900
 agentic-supervisor tail --project "$PWD"
@@ -96,9 +99,13 @@ agentic-supervisor audit --project "$PWD" --type visual --url http://127.0.0.1:3
 
 ## Intégration Claude → Supervisor → Codex
 
-`global/settings.json` conserve le garde-fou `PreToolUse` et ajoute
-`SessionStart`, `UserPromptSubmit`, `SubagentStart`, `SubagentStop`, un
-`PostToolUse` filtré, les notifications de permission et `Stop`. Le forwarder :
+`global/settings.json` conserve le garde-fou `PreToolUse` et enregistre
+`SessionStart`, `SessionEnd`, `UserPromptSubmit`, `SubagentStart`,
+`SubagentStop`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`,
+`PermissionDenied`, `Elicitation`, `ElicitationResult` et `Stop`. Un second
+`PreToolUse`, limité à `AskUserQuestion|ExitPlanMode`, capture immédiatement les
+décisions explicitement adressées au propriétaire. Les notifications génériques
+et retardées `Notification` ne pilotent plus Telegram. Le forwarder :
 
 1. tronque et filtre le JSON du hook ;
 2. ne transporte ni réponse d'outil ni contenu complet de fichier/transcript ;
@@ -115,6 +122,46 @@ Le daemon persiste l'événement dans SQLite puis coalesce les jalons. Un
 les audits research, architecture, code, reviewer/QA, design, déploiement ; un
 Stop final significatif déclenche l'audit final. Les jobs `pending`/`running`
 survivent à un redémarrage et disposent d'un budget de retry borné.
+
+Claude charge les hooks au démarrage d'une session. Après une mise à jour de
+`global/settings.json`, terminer puis relancer les sessions Claude déjà ouvertes
+une fois ; le daemon Supervisor, lui, peut être rechargé indépendamment.
+
+## Vue d'activité par projet
+
+La vue validée est servie par le daemon existant, pas par une application ou un
+processus créé pour chaque projet. Un événement `SessionStart` active une route
+virtuelle stable `/<slug-projet>`. `Stop` ne la ferme pas, car cet événement
+signifie seulement « Claude a fini cette réponse ». `SessionEnd` ferme la session
+réelle ; la route disparaît dès que la dernière session Claude du projet se
+termine et toute connexion SSE ouverte reçoit `closed` puis est libérée.
+
+SQLite porte l'état de tous les projets. Sans navigateur ouvert, un projet
+n'alloue ni processus, ni timer, ni abonnement en mémoire. Une connexion SSE est
+créée seulement pour un onglet réellement ouvert ; le heartbeat unique n'existe
+que tant qu'au moins un onglet est connecté. Une limite globale bornée protège le
+daemon. Une expiration de secours désactive aussi une session abandonnée sans
+`SessionEnd` après `SUPERVISOR_ACTIVITY_SESSION_STALE_MS`.
+
+Sur la VPS :
+
+```bash
+cd ~/projects/<project-name>
+agentic-supervisor projects
+agentic-supervisor ui --project "$PWD"
+```
+
+Depuis le Mac, garder ce tunnel ouvert (l'alias SSH peut être `vps1`) :
+
+```bash
+ssh -N -L 8787:127.0.0.1:8787 vps1
+```
+
+Puis ouvrir l'URL retournée par `agentic-supervisor ui`, par exemple
+`http://127.0.0.1:8787/factures_platform`. La route est volontairement locale :
+elle refuse les en-têtes de reverse proxy, n'est pas indexable, n'accepte aucune
+commande et ne doit pas être publiée par nginx. Le prototype statique public
+reste une démonstration sans données et n'est pas le runtime du Supervisor.
 
 Codex est lancé comme processus indépendant avec :
 
@@ -208,9 +255,20 @@ protocoles neutres de `shared/protocols/` ; ils ne changent aucune permission.
 ## Telegram
 
 Telegram est sortant uniquement et sert d'escalade humaine, pas de journal
-d'activité. Le bot notifie les permissions ou réponses attendues par Claude,
-`HUMAN_REQUIRED` et les indisponibilités finales qui empêchent une gate de se
-terminer. `CHALLENGE` et `BLOCK` restent dans les rapports internes afin que
+d'activité. Chaque message de workflow est émis par Kriton Supervisor. Claude ne
+lit pas le token, ne demande pas le token et n'appelle jamais l'API Telegram.
+Les alertes proviennent des événements structurés immédiats :
+`PermissionRequest`, `PreToolUse(AskUserQuestion|ExitPlanMode)`, `Elicitation`,
+ainsi que des audits `HUMAN_REQUIRED`. Elles indiquent le projet, la source, la
+raison, les détails disponibles et l'action attendue. Le message générique
+« Claude is waiting for your input » n'est plus une source d'alerte.
+Lors d'un arrêt gracieux, le daemon attend aussi les notifications déjà parties
+vers Telegram avant de fermer SQLite. Une panne brutale de la machine ou une
+indisponibilité Telegram peut néanmoins laisser une demande ouverte sans ID de
+livraison ; `agentic-supervisor requests --project "$PWD"` reste alors la source
+persistante de rattrapage.
+
+`CHALLENGE` et `BLOCK` restent dans l'interface et les rapports internes afin que
 Claude les corrige sans solliciter le propriétaire. Les `PASS` sont silencieux
 par défaut (`SUPERVISOR_NOTIFY_PASS=false`). Le bot n'exécute aucune commande et
 une approbation se fait toujours dans la session Claude.
@@ -255,10 +313,15 @@ Voir `config/supervisor.example.env`.
 
 - Récepteur HTTP lié exclusivement au loopback et token comparé en temps
   constant ; corps limité à 256 KiB.
+- UI d'observation en lecture seule sur loopback, CSP stricte, aucun reverse
+  proxy accepté, route active uniquement pendant une vraie session Claude.
+- URL de hook, MCP ou audit normalisée avant persistance : credentials intégrés,
+  query string et fragment ne sont jamais recopiés dans SQLite, l'UI ou Telegram.
 - Codex en lecture seule, éphémère, sans approbation et sans variables Telegram
   ou provider héritées.
 - Le garde Claude conserve les deny/ask/allow existants, étend le contrôle de
-  portée à Write/Edit et bloque les lectures Bash évidentes de credentials.
+  portée à Write/Edit et bloque aussi la lecture de la configuration privée du
+  Supervisor par Read ou Bash.
 - Texte web/repo/hook traité comme non fiable dans le contrat système.
 - Aucune API Telegram entrante, aucun shell depuis un message, aucun mécanisme
   d'escalade de privilège.

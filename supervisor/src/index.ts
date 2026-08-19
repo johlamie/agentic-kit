@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { ArtifactStore } from "./artifacts.js";
+import { ActivityBus } from "./activity.js";
 import { AuditDispatcher } from "./audits/dispatcher.js";
 import { loadConfig } from "./config.js";
 import { CliCodexRunner } from "./codex/runner.js";
@@ -17,6 +18,7 @@ async function main(): Promise<void> {
   const database = new SupervisorDatabase(config.databasePath);
   const dispatcher = new AuditDispatcher(database, config);
   const telegram = new TelegramClient(config);
+  const activity = new ActivityBus();
   const queue = new AuditQueue(
     database,
     config,
@@ -25,8 +27,9 @@ async function main(): Promise<void> {
     new ArtifactStore(config),
     telegram,
     logger,
+    activity,
   );
-  const server = new SupervisorServer(config, database, dispatcher, telegram, logger);
+  const server = new SupervisorServer(config, database, dispatcher, telegram, logger, undefined, activity);
   const recovery = queue.start();
   await server.listen();
   logger.info("supervisor.started", { host: config.host, port: server.address().port, recovery, level: config.level });

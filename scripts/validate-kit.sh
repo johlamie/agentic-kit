@@ -100,7 +100,8 @@ assert_rule() { # assert_rule <deny|ask|allow> <rule>
 # Tier 1 — wrecks the server or leaks its keys. Never, by anyone, hook included.
 for rule in 'Bash(ufw:*)' 'Bash(sudo systemctl stop ssh:*)' 'Bash(sudo rm:*)' \
             'Bash(mkfs:*)' 'Bash(sudo apt-get purge:*)' 'Read(./.env)' \
-            'Read(~/.ssh/**)' 'Write(~/.claude/CLAUDE.md)' \
+            'Read(~/.ssh/**)' 'Read(~/.config/agentic-kit/supervisor.env)' \
+            'Read(~/.config/agentic-kit/supervisor-hook-token)' 'Write(~/.claude/CLAUDE.md)' \
             'Write(~/.claude/hooks/**)' 'Write(~/.claude/production-projects)'; do
   assert_rule deny "$rule"
 done
@@ -162,7 +163,7 @@ else
 fi
 
 # Independent Supervisor structure and hook integration.
-required_hook_events=(SessionStart UserPromptSubmit SubagentStart SubagentStop PostToolUse Notification Stop)
+required_hook_events=(SessionStart UserPromptSubmit SubagentStart SubagentStop PostToolUse PostToolUseFailure PermissionRequest PermissionDenied Elicitation ElicitationResult Stop SessionEnd)
 for event_name in "${required_hook_events[@]}"; do
   if jq -e --arg event "$event_name" '.hooks[$event][]?.hooks[]? | select(.command == "~/.claude/hooks/supervisor-hook.sh")' \
        global/settings.json >/dev/null; then
@@ -171,6 +172,13 @@ for event_name in "${required_hook_events[@]}"; do
     fail "Supervisor hook missing: $event_name"
   fi
 done
+
+if jq -e '.hooks.Notification == null' global/settings.json >/dev/null \
+   && jq -e '.hooks.PreToolUse[] | select(.matcher == "AskUserQuestion|ExitPlanMode") | .hooks[] | select(.command == "~/.claude/hooks/supervisor-hook.sh")' global/settings.json >/dev/null; then
+  pass "Supervisor uses immediate structured human-attention hooks instead of generic notifications"
+else
+  fail "Supervisor human-attention hook contract is incomplete"
+fi
 
 required_supervisor_files=(
   supervisor/package.json supervisor/package-lock.json supervisor/tsconfig.json
@@ -195,7 +203,8 @@ else
 fi
 
 if grep -qx 'SUPERVISOR_UI_PROPOSAL_MODE=isolated' supervisor/config/supervisor.example.env \
-   && grep -qx 'SUPERVISOR_HOST=127.0.0.1' supervisor/config/supervisor.example.env; then
+   && grep -qx 'SUPERVISOR_HOST=127.0.0.1' supervisor/config/supervisor.example.env \
+   && grep -qx 'SUPERVISOR_ACTIVITY_UI=true' supervisor/config/supervisor.example.env; then
   pass "Supervisor example keeps proposals isolated and HTTP on loopback"
 else
   fail "unsafe Supervisor example configuration"

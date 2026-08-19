@@ -17,6 +17,8 @@ test("loads a private env file while environment overrides remain authoritative"
     `SUPERVISOR_HOOK_TOKEN_FILE=${tokenFile}`,
     "SUPERVISOR_LEVEL=light",
     "SUPERVISOR_BROWSER_ALLOWED_HOSTS=localhost,staging.example.test",
+    "SUPERVISOR_ACTIVITY_SESSION_STALE_MS=120000",
+    "SUPERVISOR_ACTIVITY_MAX_STREAMS=12",
     `GITHUB_PAT_TOKEN=${syntheticGitHubToken()}`,
     `TELEGRAM_BOT_TOKEN=${syntheticTelegramToken()}`,
     "TELEGRAM_CHAT_ID=42",
@@ -26,6 +28,9 @@ test("loads a private env file while environment overrides remain authoritative"
   assert.equal(config.level, "light");
   assert.equal(config.hookToken, "local-shared-token");
   assert.deepEqual(config.browserAllowedHosts, ["localhost", "staging.example.test"]);
+  assert.equal(config.activityUi, true);
+  assert.equal(config.activitySessionStaleMs, 120_000);
+  assert.equal(config.activityMaxStreams, 12);
   assert.equal(config.githubPatToken, syntheticGitHubToken());
   assert.equal(config.telegramChatId, "42");
   rmSync(root, { recursive: true, force: true });
@@ -46,4 +51,12 @@ test("refuses non-loopback binding and unsafe UI configuration", () => {
     SUPERVISOR_ENV_FILE: "/tmp/missing-d",
     SUPERVISOR_UI_VIEWPORTS: "invalid",
   }), /at least one/u);
+  assert.throws(() => loadConfig({
+    SUPERVISOR_ENV_FILE: "/tmp/missing-e",
+    SUPERVISOR_ACTIVITY_SESSION_STALE_MS: "1000",
+  }), /Invalid numeric/u);
+  assert.throws(() => loadConfig({
+    SUPERVISOR_ENV_FILE: "/tmp/missing-f",
+    SUPERVISOR_ACTIVITY_MAX_STREAMS: "0",
+  }), /Invalid numeric/u);
 });
