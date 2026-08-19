@@ -15,7 +15,11 @@ test("serves project routes and assets with restrictive headers", async (context
   assert.match(page.headers.get("content-type") ?? "", /text\/html/u);
   assert.match(page.headers.get("content-security-policy") ?? "", /connect-src 'none'/u);
   assert.equal(page.headers.get("x-robots-tag"), "noindex, nofollow, noarchive");
-  assert.match(await page.text(), /Fil de supervision/u);
+  const html = await page.text();
+  assert.match(html, /Événements en direct/u);
+  assert.match(html, /data-demo-only="true"/u);
+  assert.doesNotMatch(html, /class="skip-link"/u);
+  assert.doesNotMatch(html, /Données de démonstration/u);
 
   const script = await fetch(`${base}/app.js`);
   assert.equal(script.status, 200);

@@ -19,8 +19,6 @@
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <a class="skip-link" href="#activity-feed">Aller directement au fil d’activité</a>
-
     <div class="ambient ambient--one" aria-hidden="true"></div>
     <div class="ambient ambient--two" aria-hidden="true"></div>
 
@@ -55,26 +53,14 @@
         </div>
       </dl>
 
-      <div class="preview-state" aria-label="État de la maquette">
-        <span class="preview-state__dot" aria-hidden="true"></span>
-        <span>Preview autonome</span>
-      </div>
     </header>
 
     <main id="main-content" class="page-shell">
-      <section class="project-intro" aria-labelledby="project-title">
-        <div>
-          <p class="eyebrow">Centre de supervision indépendant</p>
-          <h1 id="project-title">Factures platform</h1>
-          <p class="project-intro__description">
-            Suis les contrôles, les corrections et les décisions du projet sans interrompre le travail de Claude.
-          </p>
-        </div>
-
-        <dl class="project-health" aria-label="Résumé de la supervision">
+      <section class="activity-panel" aria-labelledby="feed-title">
+        <dl class="mobile-health" aria-label="Résumé de la supervision">
           <div>
             <dt>État</dt>
-            <dd><span class="live-dot" aria-hidden="true"></span> Supervision active</dd>
+            <dd aria-label="Supervision active"><span class="live-dot" aria-hidden="true"></span> Active</dd>
           </div>
           <div>
             <dt>Dernier signal</dt>
@@ -85,32 +71,8 @@
             <dd data-human-count>1 requise</dd>
           </div>
         </dl>
-      </section>
 
-      <section class="activity-panel" aria-labelledby="feed-title">
-        <header class="activity-panel__header">
-          <div>
-            <div class="section-kicker">
-              <span class="section-kicker__pulse" aria-hidden="true"></span>
-              Événements en direct
-            </div>
-            <h2 id="feed-title">Fil de supervision</h2>
-            <p>Les événements les plus récents apparaissent en bas du fil.</p>
-          </div>
-
-          <div class="header-actions">
-            <button class="button button--ghost" id="jump-to-latest" type="button">
-              <span aria-hidden="true">↓</span>
-              Dernier événement
-            </button>
-            <button class="button button--primary" id="simulate-event" type="button">
-              <span aria-hidden="true">＋</span>
-              Simuler un événement
-            </button>
-          </div>
-        </header>
-
-        <div class="feed-toolbar" aria-label="Filtres du fil d’activité">
+        <div class="feed-toolbar" aria-label="Commandes du fil d’activité">
           <div class="filter-group" role="group" aria-label="Filtrer par statut">
             <button class="filter-chip is-active" type="button" data-filter="all" aria-pressed="true">
               Tous <span id="count-all">0</span>
@@ -126,10 +88,22 @@
             </button>
           </div>
 
-          <p class="demo-notice">
-            <span aria-hidden="true">◇</span>
-            Données de démonstration
-          </p>
+          <div class="toolbar-actions">
+            <button class="button button--ghost" id="jump-to-latest" type="button">
+              <span aria-hidden="true">↓</span>
+              Dernier événement
+            </button>
+            <!-- Demo-only control: remove when real event ingestion is connected. -->
+            <button class="button button--primary" id="simulate-event" type="button" data-demo-only="true">
+              <span aria-hidden="true">＋</span>
+              Simuler un événement
+            </button>
+          </div>
+        </div>
+
+        <div class="feed-heading">
+          <span class="section-kicker__pulse" aria-hidden="true"></span>
+          <h1 id="feed-title">Événements en direct</h1>
         </div>
 
         <div
@@ -144,7 +118,7 @@
         </div>
 
         <footer class="activity-panel__footer">
-          <p><span class="lock-icon" aria-hidden="true">⌁</span> Prototype en lecture seule · aucune donnée projet réelle</p>
+          <p><span class="lock-icon" aria-hidden="true">⌁</span> Prototype · aucune donnée réelle</p>
           <p id="visible-count" aria-live="polite">0 événement affiché</p>
         </footer>
       </section>

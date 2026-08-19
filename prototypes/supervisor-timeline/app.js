@@ -202,7 +202,7 @@ function eventNode(event, index, entering = false) {
 
   meta.append(badge, category, sequence);
 
-  const title = document.createElement("h3");
+  const title = document.createElement("h2");
   title.id = `${event.id}-title`;
   title.textContent = event.title;
 
@@ -357,7 +357,7 @@ window.addEventListener("resize", () => {
 
 const projectSlug = safeProjectSlug();
 document.querySelector("#project-breadcrumb").textContent = projectSlug;
-document.querySelector("#project-title").textContent = humanizeProject(projectSlug);
+document.querySelector(".brand").setAttribute("href", `/${projectSlug}`);
 document.title = `${humanizeProject(projectSlug)} · Kriton Supervisor`;
 
 render({ scrollToBottom: true });

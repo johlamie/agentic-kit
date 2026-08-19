@@ -8,8 +8,12 @@ The prototype:
 - reads the project slug from `/<project-name>`;
 - uses synthetic events only;
 - keeps newest events at the bottom of a scrollable vertical timeline;
-- exposes filters and a local event simulation;
+- exposes filters and a demo-only local event simulation;
 - contains no backend connection, credentials, live project data, or write path.
+
+`Simuler un événement` exists only to review dynamic timeline behavior. Remove
+that control when real Supervisor event ingestion is connected; live events
+must replace it rather than coexist with it in the operational interface.
 
 ## Local preview
 
