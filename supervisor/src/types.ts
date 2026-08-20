@@ -168,6 +168,87 @@ export interface ActivitySnapshot {
   items: ActivityItem[];
 }
 
+export type HumanRequestSource = "permission" | "question" | "elicitation" | "audit";
+
+export interface OpenHumanRequestRecord {
+  id: string;
+  projectName: string;
+  projectSlug: string | null;
+  source: HumanRequestSource;
+  message: string;
+  requestedAction: string;
+  safeToContinue: boolean;
+  createdAt: string;
+}
+
+/** Queue figures the control screen shows: the completed history is never counted. */
+export interface ControlQueueCounts {
+  pending: number;
+  running: number;
+  failed: number;
+}
+
+export interface ControlDaemonHealth {
+  version: string;
+  level: SupervisorLevel;
+  database: "ok" | "error";
+  queue: ControlQueueCounts;
+  telegram: "configured" | "not_configured";
+  activeStreams: number;
+}
+
+export interface ControlAttentionItem {
+  id: string;
+  projectName: string;
+  projectSlug: string | null;
+  source: HumanRequestSource;
+  title: string;
+  reason: string;
+  requestedAction: string;
+  createdAt: string;
+  safeToContinue: boolean;
+}
+
+export interface ControlAuditSummary {
+  type: AuditType;
+  typeLabel: string;
+  tone: ActivityItemType;
+  label: string;
+  decision: AuditDecision | null;
+  status: AuditJobStatus;
+  at: string;
+  summary: string;
+}
+
+export interface ControlProject {
+  name: string;
+  /** Null when the project name matched a redaction pattern: no link is offered. */
+  slug: string | null;
+  active: boolean;
+  activeSessionCount: number;
+  startedAt: string;
+  lastSeenAt: string;
+  openHumanRequests: number;
+  queue: QueueCounts;
+  latestAudit: ControlAuditSummary | null;
+}
+
+export interface ControlSnapshot {
+  version: 1;
+  generatedAt: string;
+  daemon: ControlDaemonHealth;
+  attention: ControlAttentionItem[];
+  /** Open human requests across every project, including those beyond attentionLimit. */
+  attentionTotal: number;
+  /** Maximum number of attention rows a snapshot carries, oldest first. */
+  attentionLimit: number;
+  projects: ControlProject[];
+  /** Maximum number of project rows a snapshot carries, active ones first. */
+  projectLimit: number;
+  /** True when projects exist beyond projectLimit and were left out. */
+  projectsTruncated: boolean;
+}
+
 export interface HumanAttention {
   type: "permission" | "question" | "elicitation";
   title: string;

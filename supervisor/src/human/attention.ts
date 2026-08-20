@@ -28,12 +28,14 @@ function questionDetails(value: unknown): string[] {
 
 export function humanAttentionFromEvent(event: NormalizedEvent): HumanAttention | null {
   if (event.event_type === "permission.requested") {
-    const toolName = metadataText(event, "tool_name", 200) ?? "opération";
+    // The hook does not always carry a tool name: every fallback below must
+    // still read as a complete French sentence, never "utiliser opération".
+    const toolName = metadataText(event, "tool_name", 200);
     const description = metadataText(event, "description", 800);
     const command = metadataText(event, "command_summary", 600);
     const target = metadataText(event, "changed_file", 1_000) ?? metadataText(event, "url", 1_000);
     const details = [
-      `Outil : ${toolName}`,
+      toolName ? `Outil : ${toolName}` : "Outil : non précisé par le hook",
       description ? `Demande : ${description}` : null,
       command ? `Commande : ${command}` : null,
       target ? `Cible : ${target}` : null,
@@ -41,7 +43,9 @@ export function humanAttentionFromEvent(event: NormalizedEvent): HumanAttention 
     return {
       type: "permission",
       title: "Autorisation requise",
-      reason: description ?? `Claude demande l’autorisation d’utiliser ${toolName}.`,
+      reason: description ?? (toolName
+        ? `Claude demande l’autorisation d’utiliser l’outil ${toolName}.`
+        : "Claude demande une autorisation avant de poursuivre son travail."),
       requestedAction: "Ouvre la session Claude pour autoriser ou refuser cette opération.",
       safeToContinue: false,
       details,

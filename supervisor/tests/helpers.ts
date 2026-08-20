@@ -43,6 +43,8 @@ export function testConfig(overrides: Partial<SupervisorConfig> = {}): Superviso
     activityUi: true,
     activitySessionStaleMs: 86_400_000,
     activityMaxStreams: 256,
+    controlUi: true,
+    controlRecentMs: 604_800_000,
     notifyPass: false,
     githubPatToken: null,
     telegramBotToken: null,

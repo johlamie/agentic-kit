@@ -32,6 +32,8 @@ export interface SupervisorConfig {
   activityUi: boolean;
   activitySessionStaleMs: number;
   activityMaxStreams: number;
+  controlUi: boolean;
+  controlRecentMs: number;
   notifyPass: boolean;
   githubPatToken: string | null;
   telegramBotToken: string | null;
@@ -145,6 +147,8 @@ export function loadConfig(overrides: NodeJS.ProcessEnv = process.env): Supervis
     activityUi: boolean(env.SUPERVISOR_ACTIVITY_UI, true),
     activitySessionStaleMs: integer(env.SUPERVISOR_ACTIVITY_SESSION_STALE_MS, 86_400_000, 60_000, 2_592_000_000),
     activityMaxStreams: integer(env.SUPERVISOR_ACTIVITY_MAX_STREAMS, 256, 1, 5_000),
+    controlUi: boolean(env.SUPERVISOR_CONTROL_UI, true),
+    controlRecentMs: integer(env.SUPERVISOR_CONTROL_RECENT_MS, 604_800_000, 60_000, 7_776_000_000),
     notifyPass: boolean(env.SUPERVISOR_NOTIFY_PASS, false),
     githubPatToken: optional(env.GITHUB_PAT_TOKEN),
     telegramBotToken: optional(env.TELEGRAM_BOT_TOKEN),

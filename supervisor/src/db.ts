@@ -2,6 +2,7 @@ import { randomUUID, createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import { redactText, safeProjectLabel } from "./security/redact.js";
 import type {
   AuditDecision,
   AuditFinding,
@@ -9,9 +10,12 @@ import type {
   AuditResult,
   AuditType,
   ActivityProject,
+  ControlQueueCounts,
   GateResult,
   HumanAttention,
+  HumanRequestSource,
   NormalizedEvent,
+  OpenHumanRequestRecord,
   QueueCounts,
   Severity,
 } from "./types.js";
@@ -141,6 +145,81 @@ CREATE UNIQUE INDEX human_requests_trigger_unique ON human_requests(trigger_even
   WHERE trigger_event_id IS NOT NULL;
 `;
 
+const MIGRATION_003 = `
+CREATE INDEX IF NOT EXISTS human_requests_project_status_idx
+  ON human_requests(project_id, status);
+`;
+
+const MIGRATION_004 = `
+CREATE INDEX IF NOT EXISTS human_requests_status_created_idx
+  ON human_requests(status, created_at);
+`;
+
+/**
+ * SQL of the control-center batch aggregates, exported so the query-plan test
+ * asserts against the exact statements the daemon runs. All three key on
+ * project_id: audits_project_idx and human_requests_project_status_idx then
+ * serve them without scanning the table.
+ */
+export function queueCountsBatchSql(placeholders: string): string {
+  return `
+    SELECT project_id, status, COUNT(*) AS count FROM audits
+    WHERE project_id IN (${placeholders})
+    GROUP BY project_id, status
+  `;
+}
+
+export function openHumanRequestCountsBatchSql(placeholders: string): string {
+  return `
+    SELECT project_id, COUNT(*) AS count FROM human_requests
+    WHERE status = 'open' AND project_id IN (${placeholders})
+    GROUP BY project_id
+  `;
+}
+
+/** Global snapshot reads. human_requests_status_created_idx serves both the
+ *  total and the oldest-first page; audits_queue_idx answers each status count
+ *  by index range instead of walking the whole audit history. */
+export function openHumanRequestTotalSql(): string {
+  return "SELECT COUNT(*) AS count FROM human_requests WHERE status = 'open'";
+}
+
+export function openHumanRequestPageSql(): string {
+  return `
+    SELECT h.id, h.type, h.message, h.requested_action, h.safe_to_continue, h.created_at,
+      p.name AS project_name, p.route_slug AS project_slug
+    FROM human_requests h JOIN projects p ON p.id = h.project_id
+    WHERE h.status = 'open'
+    ORDER BY h.created_at ASC, h.rowid ASC
+    LIMIT ?
+  `;
+}
+
+export function activeQueueCountsSql(): string {
+  return `
+    SELECT
+      (SELECT COUNT(*) FROM audits WHERE status = 'pending') AS pending,
+      (SELECT COUNT(*) FROM audits WHERE status = 'running') AS running,
+      (SELECT COUNT(*) FROM audits WHERE status = 'failed') AS failed
+  `;
+}
+
+export function latestAuditsBatchSql(placeholders: string): string {
+  return `
+    SELECT * FROM (
+      SELECT a.*, ROW_NUMBER() OVER (
+        PARTITION BY a.project_id ORDER BY a.created_at DESC, a.rowid DESC
+      ) AS project_rank
+      FROM audits a
+      WHERE a.project_id IN (${placeholders})
+    ) WHERE project_rank = 1
+  `;
+}
+
+function placeholders(values: readonly unknown[]): string {
+  return values.map(() => "?").join(",");
+}
+
 function now(): string { return new Date().toISOString(); }
 
 function projectId(projectPath: string): string {
@@ -255,6 +334,16 @@ export class SupervisorDatabase {
         this.assignMissingProjectSlugs();
         this.database.exec("CREATE UNIQUE INDEX projects_route_slug_unique ON projects(route_slug) WHERE route_slug IS NOT NULL;");
         this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(2, ?)").run(now());
+      }
+      const third = this.database.prepare("SELECT version FROM schema_migrations WHERE version = 3").get();
+      if (!third) {
+        this.database.exec(MIGRATION_003);
+        this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(3, ?)").run(now());
+      }
+      const fourth = this.database.prepare("SELECT version FROM schema_migrations WHERE version = 4").get();
+      if (!fourth) {
+        this.database.exec(MIGRATION_004);
+        this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(4, ?)").run(now());
       }
       this.database.exec("COMMIT;");
     } catch (error) {
@@ -675,6 +764,89 @@ export class SupervisorDatabase {
     return rows.map(rowToActivityProject);
   }
 
+  /**
+   * Projects seen inside the window that have no live active session. The
+   * staleness threshold is the one used by listActiveProjects, so a project is
+   * always in exactly one of the two lists and never disappears from both.
+   */
+  public listRecentProjects(withinMs: number, staleMs: number, limit = 50): ActivityProject[] {
+    const rows = this.database.prepare(`
+      SELECT p.id, p.path, p.name, p.route_slug,
+        0 AS active_session_count,
+        MIN(s.started_at) AS started_at,
+        MAX(s.last_seen_at) AS last_seen_at
+      FROM projects p
+      JOIN sessions s ON s.project_id = p.id
+      WHERE s.last_seen_at >= ?
+      GROUP BY p.id, p.path, p.name, p.route_slug
+      HAVING SUM(CASE WHEN s.status = 'active' AND s.last_seen_at >= ? THEN 1 ELSE 0 END) = 0
+      ORDER BY last_seen_at DESC
+      LIMIT ?
+    `).all(
+      new Date(Date.now() - withinMs).toISOString(),
+      new Date(Date.now() - staleMs).toISOString(),
+      Math.max(1, Math.min(limit, 500)),
+    ) as Row[];
+    return rows.map(rowToActivityProject);
+  }
+
+  public listOpenHumanRequests(limit = 50): OpenHumanRequestRecord[] {
+    const rows = this.database.prepare(openHumanRequestPageSql())
+      .all(Math.max(1, Math.min(limit, 500))) as Row[];
+    return rows.map((row) => {
+      const project = safeProjectLabel(String(row.project_name), String(row.project_slug));
+      return {
+        id: String(row.id),
+        projectName: project.name,
+        projectSlug: project.slug,
+        source: String(row.type) as HumanRequestSource,
+        message: redactText(String(row.message), 1_000),
+        requestedAction: redactText(String(row.requested_action), 500),
+        safeToContinue: asNumber(row.safe_to_continue) === 1,
+        createdAt: String(row.created_at),
+      };
+    });
+  }
+
+  /**
+   * Batch companions to projectQueueCounts/openHumanRequestCount/latestAudit.
+   * The control snapshot lists many projects at once: querying per project would
+   * put O(n) synchronous SQLite round-trips on the event loop that also serves
+   * the hook endpoints.
+   */
+  public projectQueueCountsBatch(projectIds: string[]): Map<string, QueueCounts> {
+    const result = new Map<string, QueueCounts>();
+    if (!projectIds.length) return result;
+    const rows = this.database.prepare(queueCountsBatchSql(placeholders(projectIds)))
+      .all(...projectIds as SQLInputValue[]) as Row[];
+    for (const row of rows) {
+      const id = String(row.project_id);
+      const counts = result.get(id) ?? { pending: 0, running: 0, completed: 0, failed: 0 };
+      const status = String(row.status) as keyof QueueCounts;
+      if (status in counts) counts[status] = asNumber(row.count);
+      result.set(id, counts);
+    }
+    return result;
+  }
+
+  public openHumanRequestCountsBatch(projectIds: string[]): Map<string, number> {
+    const result = new Map<string, number>();
+    if (!projectIds.length) return result;
+    const rows = this.database.prepare(openHumanRequestCountsBatchSql(placeholders(projectIds)))
+      .all(...projectIds as SQLInputValue[]) as Row[];
+    for (const row of rows) result.set(String(row.project_id), asNumber(row.count));
+    return result;
+  }
+
+  public latestAuditsBatch(projectIds: string[]): Map<string, AuditRecord> {
+    const result = new Map<string, AuditRecord>();
+    if (!projectIds.length) return result;
+    const rows = this.database.prepare(latestAuditsBatchSql(placeholders(projectIds)))
+      .all(...projectIds as SQLInputValue[]) as Row[];
+    for (const row of rows) result.set(String(row.project_id), rowToAudit(row));
+    return result;
+  }
+
   public queueCounts(): QueueCounts {
     const result: QueueCounts = { pending: 0, running: 0, completed: 0, failed: 0 };
     const rows = this.database.prepare("SELECT status, COUNT(*) AS count FROM audits GROUP BY status").all() as Row[];
@@ -720,8 +892,22 @@ export class SupervisorDatabase {
           SELECT COUNT(*) AS count FROM human_requests h JOIN projects p ON p.id = h.project_id
           WHERE h.status = 'open' AND p.path = ?
         `).get(resolve(projectPath))
-      : this.database.prepare("SELECT COUNT(*) AS count FROM human_requests WHERE status = 'open'").get();
+      : this.database.prepare(openHumanRequestTotalSql()).get();
     return asNumber((row as Row | undefined)?.count);
+  }
+
+  /**
+   * Queue counts the control screen actually shows. Unlike queueCounts(), which
+   * /health keeps using, this never walks the completed audit history: each
+   * status is one index range on audits_queue_idx.
+   */
+  public activeQueueCounts(): ControlQueueCounts {
+    const row = this.database.prepare(activeQueueCountsSql()).get() as Row | undefined;
+    return {
+      pending: asNumber(row?.pending),
+      running: asNumber(row?.running),
+      failed: asNumber(row?.failed),
+    };
   }
 
   public listHumanRequests(projectPath?: string, limit = 50): Array<Record<string, unknown>> {

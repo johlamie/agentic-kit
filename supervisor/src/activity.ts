@@ -1,13 +1,29 @@
 import { resolve } from "node:path";
+import { SUPERVISOR_VERSION, type SupervisorConfig } from "./config.js";
 import { SupervisorDatabase } from "./db.js";
 import { humanAttentionFromEvent } from "./human/attention.js";
-import { redactText } from "./security/redact.js";
-import type { ActivityItem, ActivitySnapshot, AuditRecord, AuditResult, NormalizedEvent } from "./types.js";
+import { redactText, safeProjectLabel } from "./security/redact.js";
+import type {
+  ActivityItem,
+  ActivityItemType,
+  ActivityProject,
+  ActivitySnapshot,
+  AuditRecord,
+  AuditResult,
+  ControlAttentionItem,
+  ControlAuditSummary,
+  ControlProject,
+  ControlSnapshot,
+  HumanRequestSource,
+  NormalizedEvent,
+  QueueCounts,
+} from "./types.js";
 
 type ActivityListener = () => void;
 
 export class ActivityBus {
   private readonly listeners = new Map<string, Set<ActivityListener>>();
+  private readonly globalListeners = new Set<ActivityListener>();
 
   public subscribe(projectPath: string, listener: ActivityListener): () => void {
     const key = resolve(projectPath);
@@ -20,14 +36,19 @@ export class ActivityBus {
     };
   }
 
+  public subscribeAll(listener: ActivityListener): () => void {
+    this.globalListeners.add(listener);
+    return () => { this.globalListeners.delete(listener); };
+  }
+
   public publish(projectPath: string): void {
     const projectListeners = this.listeners.get(resolve(projectPath));
-    if (!projectListeners) return;
-    for (const listener of [...projectListeners]) listener();
+    if (projectListeners) for (const listener of [...projectListeners]) listener();
+    for (const listener of [...this.globalListeners]) listener();
   }
 
   public get subscriberCount(): number {
-    let count = 0;
+    let count = this.globalListeners.size;
     for (const listeners of this.listeners.values()) count += listeners.size;
     return count;
   }
@@ -48,6 +69,20 @@ const AUDIT_LABELS: Record<AuditRecord["audit_type"], string> = {
 
 function stringValue(value: unknown, maxLength = 2_000): string | null {
   return typeof value === "string" && value.trim() ? redactText(value.trim(), maxLength) : null;
+}
+
+/** Claude's raw end reasons are enum-like identifiers; the view stays French. */
+const SESSION_END_REASONS: Record<string, string> = {
+  clear: "la session a été effacée",
+  logout: "l’utilisateur s’est déconnecté",
+  prompt_input_exit: "la saisie a été interrompue",
+  other: "non précisé",
+};
+
+function sessionEndReason(value: unknown): string {
+  const raw = stringValue(value, 100);
+  if (!raw) return "non précisé";
+  return SESSION_END_REASONS[raw] ?? "non précisé";
 }
 
 function eventItem(event: NormalizedEvent): ActivityItem | null {
@@ -89,7 +124,7 @@ function eventItem(event: NormalizedEvent): ActivityItem | null {
         timestamp: event.timestamp,
         title: "La session de supervision est terminée",
         summary: "La vue du projet est désactivée dès que sa dernière session se ferme.",
-        details: `Motif : ${stringValue(event.metadata.reason, 100) ?? "other"}`,
+        details: `Motif : ${sessionEndReason(event.metadata.reason)}`,
         auditId: null,
       };
     case "agent.started":
@@ -153,23 +188,27 @@ function parseAuditResult(audit: AuditRecord): AuditResult | null {
   catch { return null; }
 }
 
+function auditTone(audit: AuditRecord): ActivityItemType {
+  if (audit.status === "failed") return "error";
+  switch (audit.decision) {
+    case "PASS": return "pass";
+    case "CHALLENGE": return "challenge";
+    case "BLOCK": return "block";
+    case "HUMAN_REQUIRED": return "human";
+    default: return "info";
+  }
+}
+
+function auditLabel(audit: AuditRecord): string {
+  if (audit.status === "failed") return "INDISPONIBLE";
+  return audit.decision ?? (audit.status === "running" ? "EN COURS" : "PLANIFIÉ");
+}
+
 function auditItem(audit: AuditRecord): ActivityItem {
   const result = parseAuditResult(audit);
   const decision = audit.decision;
-  const type = audit.status === "failed"
-    ? "error"
-    : decision === "PASS"
-      ? "pass"
-      : decision === "CHALLENGE"
-        ? "challenge"
-        : decision === "BLOCK"
-          ? "block"
-          : decision === "HUMAN_REQUIRED"
-            ? "human"
-            : "info";
-  const label = audit.status === "failed"
-    ? "INDISPONIBLE"
-    : decision ?? (audit.status === "running" ? "EN COURS" : "PLANIFIÉ");
+  const type = auditTone(audit);
+  const label = auditLabel(audit);
   const statusSummary = audit.status === "pending"
     ? "Le contrôle a été regroupé dans la file et démarrera hors du chemin critique de Claude."
     : audit.status === "running"
@@ -224,5 +263,123 @@ export function buildActivitySnapshot(
     interventionCount: database.openHumanRequestCount(project.path),
     queue: database.projectQueueCounts(project.path),
     items,
+  };
+}
+
+const ATTENTION_TITLES: Record<HumanRequestSource, string> = {
+  permission: "Autorisation requise",
+  question: "Décision humaine requise",
+  elicitation: "Saisie MCP requise",
+  audit: "Arbitrage requis après audit",
+};
+
+const CONTROL_ATTENTION_LIMIT = 50;
+/** Hard bound on the rows a single snapshot may carry, active projects first. */
+const CONTROL_PROJECT_LIMIT = 200;
+
+function controlAuditSummary(audit: AuditRecord | null): ControlAuditSummary | null {
+  if (!audit) return null;
+  return {
+    type: audit.audit_type,
+    typeLabel: AUDIT_LABELS[audit.audit_type],
+    tone: auditTone(audit),
+    label: auditLabel(audit),
+    decision: audit.decision,
+    status: audit.status,
+    at: audit.completed_at ?? audit.started_at ?? audit.updated_at,
+    summary: redactText(audit.summary ?? "", 600),
+  };
+}
+
+interface ControlAggregates {
+  queues: Map<string, QueueCounts>;
+  requests: Map<string, number>;
+  audits: Map<string, AuditRecord>;
+}
+
+const EMPTY_QUEUE: QueueCounts = { pending: 0, running: 0, completed: 0, failed: 0 };
+
+function controlProject(project: ActivityProject, active: boolean, aggregates: ControlAggregates): ControlProject {
+  const label = safeProjectLabel(project.name, project.slug);
+  return {
+    name: label.name,
+    slug: label.slug,
+    active,
+    activeSessionCount: project.activeSessionCount,
+    startedAt: project.startedAt,
+    lastSeenAt: project.lastSeenAt,
+    openHumanRequests: aggregates.requests.get(project.id) ?? 0,
+    queue: aggregates.queues.get(project.id) ?? { ...EMPTY_QUEUE },
+    latestAudit: controlAuditSummary(aggregates.audits.get(project.id) ?? null),
+  };
+}
+
+export interface ControlRuntimeState {
+  telegramConfigured: boolean;
+  activeStreams: number;
+}
+
+export function buildControlSnapshot(
+  database: SupervisorDatabase,
+  config: SupervisorConfig,
+  runtime: ControlRuntimeState,
+): ControlSnapshot {
+  // One page of rows, active projects first, then the remaining budget of recent
+  // ones. Every per-project value below is resolved by three batch queries, so a
+  // snapshot costs a constant number of round-trips whatever the project count.
+  const activePage = database.listActiveProjects(config.activitySessionStaleMs, CONTROL_PROJECT_LIMIT + 1);
+  const activeProjects = activePage.slice(0, CONTROL_PROJECT_LIMIT);
+  const activeSlugs = new Set(activeProjects.map((project) => project.slug));
+  const remaining = CONTROL_PROJECT_LIMIT - activeProjects.length;
+  const recentPage = database.listRecentProjects(
+    config.controlRecentMs,
+    config.activitySessionStaleMs,
+    Math.max(1, remaining + 1),
+  );
+  const recentProjects = remaining > 0
+    ? recentPage.filter((project) => !activeSlugs.has(project.slug)).slice(0, remaining)
+    : [];
+  const projectsTruncated = activePage.length > CONTROL_PROJECT_LIMIT
+    || (remaining > 0 ? recentPage.length > remaining : recentPage.length > 0);
+
+  const ids = [...activeProjects, ...recentProjects].map((project) => project.id);
+  const aggregates: ControlAggregates = {
+    queues: database.projectQueueCountsBatch(ids),
+    requests: database.openHumanRequestCountsBatch(ids),
+    audits: database.latestAuditsBatch(ids),
+  };
+
+  const attention: ControlAttentionItem[] = database.listOpenHumanRequests(CONTROL_ATTENTION_LIMIT)
+    .map((request) => ({
+      id: request.id,
+      projectName: request.projectName,
+      projectSlug: request.projectSlug,
+      source: request.source,
+      title: ATTENTION_TITLES[request.source] ?? ATTENTION_TITLES.question,
+      reason: request.message,
+      requestedAction: request.requestedAction,
+      createdAt: request.createdAt,
+      safeToContinue: request.safeToContinue,
+    }));
+  return {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    daemon: {
+      version: SUPERVISOR_VERSION,
+      level: config.level,
+      database: database.ping() ? "ok" : "error",
+      queue: database.activeQueueCounts(),
+      telegram: runtime.telegramConfigured ? "configured" : "not_configured",
+      activeStreams: runtime.activeStreams,
+    },
+    attention,
+    attentionTotal: database.openHumanRequestCount(),
+    attentionLimit: CONTROL_ATTENTION_LIMIT,
+    projects: [
+      ...activeProjects.map((project) => controlProject(project, true, aggregates)),
+      ...recentProjects.map((project) => controlProject(project, false, aggregates)),
+    ],
+    projectLimit: CONTROL_PROJECT_LIMIT,
+    projectsTruncated,
   };
 }

@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { ActivityBus, buildActivitySnapshot } from "./activity.js";
+import { ActivityBus, buildActivitySnapshot, buildControlSnapshot } from "./activity.js";
 import type { SupervisorConfig } from "./config.js";
 import { SUPERVISOR_VERSION } from "./config.js";
 import { AuditDispatcher } from "./audits/dispatcher.js";
@@ -13,14 +13,16 @@ import { redactText, safeError, sanitizeUrl } from "./security/redact.js";
 import { TelegramClient } from "./telegram/client.js";
 import { formatHumanAttentionNotification } from "./telegram/formatter.js";
 import { AUDIT_TYPES, type AuditType } from "./types.js";
-import { ActivityUiAssets, type ActivityAsset } from "./ui/assets.js";
+import { ActivityUiAssets, ControlUiAssets, type ActivityAsset } from "./ui/assets.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
+const CONTROL_STREAM_DEBOUNCE_MS = 1_000;
 
 export class SupervisorServer {
   private readonly server: Server;
   private readonly adapters: Map<string, EventAdapter>;
   private readonly uiAssets: ActivityUiAssets | null;
+  private readonly controlAssets: ControlUiAssets | null;
   private readonly activityStreams = new Set<ServerResponse>();
   private readonly pendingNotifications = new Set<Promise<void>>();
   private heartbeatTimer: NodeJS.Timeout | null = null;
@@ -45,6 +47,12 @@ export class SupervisorServer {
       catch (error) { this.logger.warn("activity.ui.unavailable", { error: safeError(error) }); }
     }
     this.uiAssets = assets;
+    let control: ControlUiAssets | null = null;
+    if (config.controlUi) {
+      try { control = new ControlUiAssets(); }
+      catch (error) { this.logger.warn("control.ui.unavailable", { error: safeError(error) }); }
+    }
+    this.controlAssets = control;
   }
 
   public async listen(): Promise<void> {
@@ -85,23 +93,16 @@ export class SupervisorServer {
     try {
       if (!isLoopback(request.socket.remoteAddress)) return json(response, 403, { error: "loopback_only" });
       const url = new URL(request.url ?? "/", `http://${this.config.host}:${this.config.port}`);
-      if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
-        const activeProjects = this.config.activityUi
-          ? this.database.listActiveProjects(this.config.activitySessionStaleMs).length
-          : 0;
-        return json(response, 200, {
-          status: "ok",
-          version: SUPERVISOR_VERSION,
-          database: this.database.ping() ? "ok" : "error",
-          queue: this.database.queueCounts(),
-          telegram: this.telegram.configured ? "configured" : "not_configured",
-          hook_auth: this.config.hookToken ? "enabled" : "disabled",
-          activity_ui: !this.config.activityUi ? "disabled" : this.uiAssets ? "ready" : "error",
-          active_projects: activeProjects,
-          activity_streams: this.activityStreams.size,
-        });
+      if (request.method === "GET" && url.pathname === "/") {
+        const control = this.config.controlUi ? this.controlAssets : null;
+        // Browsers asking for a document get the control center; tooling keeps the health JSON.
+        if (control && acceptsHtml(request) && isDirectUiRequest(request, this.address().port)) {
+          return sendAsset(request, response, control.indexHtml());
+        }
+        return json(response, 200, this.health());
       }
-      if (await this.activityRoute(request, response, url)) return;
+      if (request.method === "GET" && url.pathname === "/health") return json(response, 200, this.health());
+      if (await this.uiRoute(request, response, url)) return;
       if (!this.authorized(request)) return json(response, 401, { error: "unauthorized" });
       const eventAdapter = this.eventAdapter(url.pathname);
       if (request.method === "POST" && eventAdapter) {
@@ -159,30 +160,80 @@ export class SupervisorServer {
     }
   }
 
-  private async activityRoute(request: IncomingMessage, response: ServerResponse, url: URL): Promise<boolean> {
-    if (!this.config.activityUi || !this.uiAssets) return false;
+  private health(): Record<string, unknown> {
+    return {
+      status: "ok",
+      version: SUPERVISOR_VERSION,
+      database: this.database.ping() ? "ok" : "error",
+      queue: this.database.queueCounts(),
+      telegram: this.telegram.configured ? "configured" : "not_configured",
+      hook_auth: this.config.hookToken ? "enabled" : "disabled",
+      activity_ui: !this.config.activityUi ? "disabled" : this.uiAssets ? "ready" : "error",
+      control_ui: !this.config.controlUi ? "disabled" : this.controlAssets ? "ready" : "error",
+      active_projects: this.config.activityUi
+        ? this.database.listActiveProjects(this.config.activitySessionStaleMs).length
+        : 0,
+      activity_streams: this.activityStreams.size,
+    };
+  }
+
+  private async uiRoute(request: IncomingMessage, response: ServerResponse, url: URL): Promise<boolean> {
+    const activityAssets = this.config.activityUi ? this.uiAssets : null;
+    const controlAssets = this.config.controlUi ? this.controlAssets : null;
+    if (!activityAssets && !controlAssets) return false;
     if (request.method !== "GET" && request.method !== "HEAD") return false;
+
+    const assetMatch = url.pathname.match(/^\/_supervisor\/assets\/([a-z0-9.-]{1,80})$/u);
+    const controlMatch = url.pathname === "/_supervisor/api/control/summary"
+      || url.pathname === "/_supervisor/api/control/stream";
+    const activityMatch = activityAssets
+      ? url.pathname.match(/^\/_supervisor\/api\/projects\/([a-z0-9_-]{1,64})\/activity$/u)
+      : null;
+    const streamMatch = activityAssets
+      ? url.pathname.match(/^\/_supervisor\/api\/projects\/([a-z0-9_-]{1,64})\/stream$/u)
+      : null;
+    const pageMatch = activityAssets ? url.pathname.match(/^\/([a-z0-9_-]{1,64})\/?$/u) : null;
+    // The origin guard covers UI paths only: every other GET route keeps its own
+    // authentication and must stay reachable when a UI is disabled.
+    if (!assetMatch && !controlMatch && !activityMatch && !streamMatch && !pageMatch) return false;
     if (!isDirectUiRequest(request, this.address().port)) {
       json(response, 403, { error: "activity_ui_local_only" });
       return true;
     }
 
-    const assetMatch = url.pathname.match(/^\/_supervisor\/assets\/([a-z0-9.-]{1,80})$/u);
     if (assetMatch?.[1]) {
-      const asset = this.uiAssets.asset(assetMatch[1]);
+      const asset = controlAssets?.asset(assetMatch[1]) ?? activityAssets?.asset(assetMatch[1]) ?? null;
       if (!asset) json(response, 404, { error: "not_found" });
       else sendAsset(request, response, asset);
       return true;
     }
 
-    const activityMatch = url.pathname.match(/^\/_supervisor\/api\/projects\/([a-z0-9_-]{1,64})\/activity$/u);
+    if (url.pathname === "/_supervisor/api/control/summary") {
+      if (!controlAssets) json(response, 404, { error: "not_found" });
+      else json(response, 200, buildControlSnapshot(this.database, this.config, {
+        telegramConfigured: this.telegram.configured,
+        activeStreams: this.activityStreams.size,
+      }));
+      return true;
+    }
+
+    if (url.pathname === "/_supervisor/api/control/stream") {
+      if (!controlAssets) json(response, 404, { error: "not_found" });
+      else if (request.method === "HEAD") {
+        response.writeHead(405, { Allow: "GET", "Cache-Control": "no-store" });
+        response.end();
+      } else this.openControlStream(request, response);
+      return true;
+    }
+
+    if (!activityAssets) return false;
+
     if (activityMatch?.[1]) {
       const snapshot = buildActivitySnapshot(this.database, activityMatch[1], this.config.activitySessionStaleMs);
       json(response, snapshot ? 200 : 410, snapshot ?? { error: "supervision_inactive" });
       return true;
     }
 
-    const streamMatch = url.pathname.match(/^\/_supervisor\/api\/projects\/([a-z0-9_-]{1,64})\/stream$/u);
     if (streamMatch?.[1]) {
       if (request.method === "HEAD") {
         response.writeHead(405, { Allow: "GET", "Cache-Control": "no-store" });
@@ -193,11 +244,10 @@ export class SupervisorServer {
       return true;
     }
 
-    const pageMatch = url.pathname.match(/^\/([a-z0-9_-]{1,64})\/?$/u);
     if (pageMatch?.[1]) {
       const project = this.database.activeProjectBySlug(pageMatch[1], this.config.activitySessionStaleMs);
       if (!project) json(response, 404, { error: "supervision_inactive" });
-      else sendAsset(request, response, this.uiAssets.indexHtml());
+      else sendAsset(request, response, activityAssets.indexHtml());
       return true;
     }
     return false;
@@ -238,6 +288,50 @@ export class SupervisorServer {
       writeSse(response, "refresh", { at: new Date().toISOString() });
     };
     unsubscribe = this.activity.subscribe(project.path, refresh);
+    request.once("close", close);
+    response.once("close", close);
+    writeSse(response, "refresh", { at: new Date().toISOString() });
+  }
+
+  /**
+   * Global nudge stream. It survives individual project closures and only ends
+   * with the daemon, so it emits `closed` from close() and never from a listener.
+   */
+  private openControlStream(request: IncomingMessage, response: ServerResponse): void {
+    if (this.activityStreams.size >= this.config.activityMaxStreams) {
+      return json(response, 503, { error: "activity_stream_limit" });
+    }
+    response.writeHead(200, {
+      ...activitySecurityHeaders(),
+      "Content-Type": "text/event-stream; charset=utf-8",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+    this.activityStreams.add(response);
+    this.ensureHeartbeat();
+    let closed = false;
+    let debounce: NodeJS.Timeout | null = null;
+    let unsubscribe = (): void => {};
+    const close = (): void => {
+      if (closed) return;
+      closed = true;
+      if (debounce) clearTimeout(debounce);
+      debounce = null;
+      unsubscribe();
+      this.activityStreams.delete(response);
+      this.stopHeartbeatWhenIdle();
+    };
+    const schedule = (): void => {
+      if (closed || debounce) return;
+      if (response.destroyed) return close();
+      debounce = setTimeout(() => {
+        debounce = null;
+        if (closed || response.destroyed) return close();
+        writeSse(response, "refresh", { at: new Date().toISOString() });
+      }, CONTROL_STREAM_DEBOUNCE_MS);
+      debounce.unref();
+    };
+    unsubscribe = this.activity.subscribeAll(schedule);
     request.once("close", close);
     response.once("close", close);
     writeSse(response, "refresh", { at: new Date().toISOString() });
@@ -331,6 +425,11 @@ function sendAsset(request: IncomingMessage, response: ServerResponse, asset: Ac
 function writeSse(response: ServerResponse, event: string, payload: unknown): void {
   if (response.destroyed || response.writableEnded) return;
   response.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
+}
+
+function acceptsHtml(request: IncomingMessage): boolean {
+  const accept = request.headers.accept;
+  return typeof accept === "string" && accept.toLowerCase().includes("text/html");
 }
 
 function isDirectUiRequest(request: IncomingMessage, configuredPort: number): boolean {

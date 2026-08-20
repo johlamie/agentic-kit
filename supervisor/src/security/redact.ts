@@ -4,7 +4,7 @@ const MAX_SAFE_STRING = 8_000;
 const SECRET_PATTERNS: RegExp[] = [
   /-----BEGIN (?:OPENSSH|RSA|EC|DSA|PGP) PRIVATE KEY-----[\s\S]*?-----END [^-]+-----/giu,
   /\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{8,}/giu,
-  /\b(?:sk|rk|pk|sbp|github_pat|ghp|gho|ghu|ghs|glpat|xox[baprs]|AIza)[_-]?[A-Za-z0-9_-]{12,}\b/gu,
+  /\b(?:sk|rk|pk|sbp|github_pat|ghp|gho|ghu|ghs|glpat|xox[baprs]|AIza)[_-]?[A-Za-z0-9_-]{12,}\b/giu,
   /\b\d{6,12}:[A-Za-z0-9_-]{24,}\b/gu,
   /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/gu,
   /((?:api[_-]?key|access[_-]?token|auth[_-]?token|secret|password|passwd|client[_-]?secret|bot[_-]?token)\s*[:=]\s*)[^\s,;]+/giu,
@@ -18,6 +18,27 @@ export function redactText(input: string, maxLength = MAX_SAFE_STRING): string {
   }
   value = value.replace(/(^|\n)\s*[A-Z][A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|PRIVATE_KEY)[A-Z0-9_]*\s*=.*(?=\n|$)/gu, `$1${REDACTED}`);
   return value.length > maxLength ? `${value.slice(0, maxLength)}…[TRUNCATED]` : value;
+}
+
+export interface SafeProjectLabel {
+  name: string;
+  slug: string | null;
+}
+
+/** Display label of a project whose name cannot be shown. Kept French: it reaches the UI verbatim. */
+export const MASKED_PROJECT_NAME = "Projet expurgé";
+
+/**
+ * A project name is a directory basename and can therefore carry a secret. When
+ * the name or its route slug matches a redaction pattern, both are dropped: the
+ * slug is derived from the same characters, so a link would re-expose exactly
+ * what a partially masked name removed.
+ */
+export function safeProjectLabel(name: string, slug: string, maxLength = 120): SafeProjectLabel {
+  const disclosive = redactText(name) !== name || redactText(slug) !== slug;
+  return disclosive
+    ? { name: MASKED_PROJECT_NAME, slug: null }
+    : { name: name.slice(0, maxLength), slug };
 }
 
 export function sanitizeUrl(input: unknown, maxLength = 1_000): string | null {

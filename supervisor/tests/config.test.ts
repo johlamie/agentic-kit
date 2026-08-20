@@ -19,6 +19,8 @@ test("loads a private env file while environment overrides remain authoritative"
     "SUPERVISOR_BROWSER_ALLOWED_HOSTS=localhost,staging.example.test",
     "SUPERVISOR_ACTIVITY_SESSION_STALE_MS=120000",
     "SUPERVISOR_ACTIVITY_MAX_STREAMS=12",
+    "SUPERVISOR_CONTROL_UI=false",
+    "SUPERVISOR_CONTROL_RECENT_MS=172800000",
     `GITHUB_PAT_TOKEN=${syntheticGitHubToken()}`,
     `TELEGRAM_BOT_TOKEN=${syntheticTelegramToken()}`,
     "TELEGRAM_CHAT_ID=42",
@@ -31,6 +33,8 @@ test("loads a private env file while environment overrides remain authoritative"
   assert.equal(config.activityUi, true);
   assert.equal(config.activitySessionStaleMs, 120_000);
   assert.equal(config.activityMaxStreams, 12);
+  assert.equal(config.controlUi, false);
+  assert.equal(config.controlRecentMs, 172_800_000);
   assert.equal(config.githubPatToken, syntheticGitHubToken());
   assert.equal(config.telegramChatId, "42");
   rmSync(root, { recursive: true, force: true });
@@ -59,4 +63,12 @@ test("refuses non-loopback binding and unsafe UI configuration", () => {
     SUPERVISOR_ENV_FILE: "/tmp/missing-f",
     SUPERVISOR_ACTIVITY_MAX_STREAMS: "0",
   }), /Invalid numeric/u);
+  assert.throws(() => loadConfig({
+    SUPERVISOR_ENV_FILE: "/tmp/missing-g",
+    SUPERVISOR_CONTROL_RECENT_MS: "1000",
+  }), /Invalid numeric/u);
+  assert.throws(() => loadConfig({
+    SUPERVISOR_ENV_FILE: "/tmp/missing-h",
+    SUPERVISOR_CONTROL_UI: "maybe",
+  }), /Invalid boolean/u);
 });

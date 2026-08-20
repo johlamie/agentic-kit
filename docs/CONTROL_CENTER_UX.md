@@ -156,3 +156,7 @@ projet devient cliquable vers `/` — seule retouche demandée à l'écran actue
 - Aucune modification visuelle du fil projet existant hors : lien breadcrumb
   vers `/` et affichage des compteurs de file déjà présents dans le snapshot
   (amélioration optionnelle, hors périmètre du premier incrément).
+  *Amendement du 20 août 2026* : le BLOCK de l'audit visuel `5b56641c`
+  (navigation mobile sans retour, contrastes 4,0:1, cibles de 12 px, minima
+  typographiques, contenu de repli, CSP en console) autorise des retouches
+  ciblées du fil projet strictement limitées à ces constats.

@@ -3,7 +3,8 @@
   --ink-strong: #f5f8ff;
   --ink: #d8e1f0;
   --ink-muted: #8d9bb2;
-  --ink-faint: #617089;
+  /* Lifted from #617089 (4.0:1) so small text clears 4.5:1 on every navy surface. */
+  --ink-faint: #828fa8;
   --navy-950: #030711;
   --navy-925: #050b18;
   --navy-900: #071021;
@@ -159,7 +160,7 @@ button {
 .brand__copy span {
   margin-top: 4px;
   color: var(--ink-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -180,6 +181,25 @@ button {
   margin-right: 9px;
   color: var(--ink-faint);
   content: "/";
+}
+
+/* The only route back to the control center: visible and tappable at every
+   width, so it carries a full touch target rather than bare text. */
+.breadcrumb a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 6px;
+  margin-left: -6px;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.breadcrumb a:hover,
+.breadcrumb a:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
 }
 
 .breadcrumb li[aria-current="page"] {
@@ -242,7 +262,7 @@ button {
 .section-kicker {
   margin: 0 0 12px;
   color: var(--cyan);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -293,7 +313,7 @@ button {
 .project-health dt {
   margin-bottom: 7px;
   color: var(--ink-faint);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -444,7 +464,7 @@ button {
   border-radius: 999px;
   background: rgba(138, 157, 186, 0.09);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .filter-chip:hover {
@@ -469,7 +489,7 @@ button {
   gap: 8px;
   margin: 0;
   color: var(--ink-faint);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -559,7 +579,7 @@ button {
   margin: 0 0 28px;
   color: var(--ink-faint);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -631,7 +651,7 @@ button {
   padding-top: 15px;
   color: var(--ink-faint);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -681,20 +701,21 @@ button {
   display: inline-flex;
   min-height: 24px;
   align-items: center;
-  padding: 4px 8px;
+  /* 12px floor for the badge text; padding tightened so density is unchanged. */
+  padding: 2px 7px;
   color: var(--event-color);
   border: 1px solid color-mix(in srgb, var(--event-color) 38%, transparent);
   border-radius: 7px;
   background: var(--event-soft);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
 
 .event-card__category {
   color: var(--ink-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
 }
 
@@ -702,7 +723,7 @@ button {
   margin-left: auto;
   color: var(--ink-faint);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .event-card h2 {
@@ -728,10 +749,14 @@ button {
   border-top: 1px solid var(--line);
 }
 
+/* The disclosure is the card's primary control: the whole row is the target. */
 .event-card summary {
-  width: fit-content;
+  display: flex;
+  width: auto;
+  min-height: 44px;
+  align-items: center;
   color: #b9c8dd;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -759,7 +784,7 @@ button {
   color: var(--ink-faint);
   border-top: 1px solid var(--line);
   background: rgba(4, 11, 23, 0.6);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -852,10 +877,6 @@ button {
     min-height: 68px;
   }
 
-  .breadcrumb {
-    display: none;
-  }
-
   .page-shell {
     width: calc(100% - 32px);
     padding-top: 38px;
@@ -916,7 +937,7 @@ button {
     top: 18px;
     right: 16px;
     padding: 0;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .event__marker {
@@ -950,7 +971,7 @@ button {
   .preview-state {
     min-height: 32px;
     padding-inline: 9px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .page-shell {
@@ -1128,7 +1149,7 @@ button {
   .topbar-health dt {
     margin-bottom: 5px;
     color: var(--ink-faint);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -1137,7 +1158,7 @@ button {
   .topbar-health dd {
     margin: 0;
     color: var(--ink);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     white-space: nowrap;
   }
@@ -1226,10 +1247,6 @@ button {
   .topbar {
     grid-template-columns: minmax(170px, 1fr) auto;
   }
-
-  .breadcrumb {
-    display: none;
-  }
 }
 
 /* Minimal full-viewport composition shared by every responsive format. */
@@ -1315,10 +1332,10 @@ body {
 .feed-heading h1 {
   margin: 0;
   color: inherit;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.16em;
-  line-height: 1;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -1350,14 +1367,14 @@ body {
     justify-content: flex-end;
   }
 
-  .breadcrumb li:first-child,
-  .breadcrumb li + li::before {
-    display: none;
-  }
-
+  /* "Projets" is the only route back to the control center: it stays visible
+     here, and the current project name yields the space by truncating. */
   .breadcrumb li[aria-current="page"] {
     display: block;
-    max-width: min(42vw, 240px);
+    /* min-width: 0 lets the project name shrink below its text width so the
+       "Projets" link can never be pushed out of the topbar. */
+    min-width: 0;
+    max-width: min(32vw, 180px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1405,7 +1422,7 @@ body {
   .mobile-health dt {
     margin-bottom: 5px;
     color: var(--ink-faint);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -1415,7 +1432,7 @@ body {
     margin: 0;
     overflow: hidden;
     color: var(--ink);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1450,7 +1467,7 @@ body {
     min-height: 34px;
     gap: 5px;
     padding: 6px 7px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .filter-chip span {
@@ -1473,7 +1490,7 @@ body {
     width: 100%;
     min-height: 38px;
     padding-inline: 9px;
-    font-size: 11px;
+    font-size: 12px;
     white-space: nowrap;
   }
 
@@ -1483,7 +1500,7 @@ body {
   }
 
   .feed-heading h1 {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .feed-viewport {

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
 import test from "node:test";
-import { ActivityBus } from "../src/activity.js";
+import { ActivityBus, buildActivitySnapshot } from "../src/activity.js";
+import { humanAttentionFromEvent } from "../src/human/attention.js";
 import { AuditDispatcher } from "../src/audits/dispatcher.js";
 import { SupervisorDatabase } from "../src/db.js";
 import { Logger } from "../src/logger.js";
@@ -56,6 +57,8 @@ test("serves one local activity view and releases its SSE resources at SessionEn
   const html = await page.text();
   assert.match(html, /data-supervisor-runtime="true"/u);
   assert.match(html, /Flux local · données sensibles expurgées/u);
+  // The breadcrumb is the only route back to the control center.
+  assert.match(html, /<li><a href="\/">Projets<\/a><\/li>/u);
 
   const proxied = await fetch(`${origin}/${active.slug}`, { headers: { "X-Forwarded-For": "203.0.113.10" } });
   assert.equal(proxied.status, 403);
@@ -125,6 +128,61 @@ test("tracks 1000 active projects without allocating per-project live resources"
   }
   assert.equal(database.listActiveProjects(60_000, 2_000).length, 1_000);
   assert.equal(activity.subscriberCount, 0);
+  database.close();
+});
+
+test("renders complete French sentences when hook metadata is missing", () => {
+  const project = "/tmp/supervisor-copy-project";
+  const database = new SupervisorDatabase(":memory:");
+  database.insertEvent(lifecycleEvent(project, "session.started", "copy-start"));
+  // A permission hook that carries no tool name, description or command.
+  database.insertEvent({
+    ...lifecycleEvent(project, "session.started", "copy-permission"),
+    event_type: "permission.requested",
+    timestamp: new Date().toISOString(),
+    metadata: { permission_mode: "ask", hook_event_name: "PermissionRequest" },
+  });
+
+  const snapshot = buildActivitySnapshot(database, "supervisor-copy-project", 86_400_000);
+  assert.ok(snapshot);
+  const permission = snapshot.items.find((item) => item.label === "AUTORISATION");
+  assert.ok(permission);
+  assert.equal(permission.title, "Autorisation requise");
+  assert.equal(permission.summary, "Claude demande une autorisation avant de poursuivre son travail.");
+  assert.match(permission.details, /^Outil : non précisé par le hook$/mu);
+  const serialized = JSON.stringify(snapshot);
+  assert.doesNotMatch(serialized, /utiliser opération/u, "no dangling article in the fallback sentence");
+  assert.doesNotMatch(serialized, /Outil : opération/u);
+
+  // A named tool produces a grammatically complete sentence too.
+  const named = humanAttentionFromEvent({
+    ...lifecycleEvent(project, "session.started", "copy-named"),
+    event_type: "permission.requested",
+    metadata: { tool_name: "Bash" },
+  });
+  assert.equal(named?.reason, "Claude demande l’autorisation d’utiliser l’outil Bash.");
+
+  database.close();
+});
+
+test("translates Claude session end reasons instead of leaking raw identifiers", () => {
+  const project = "/tmp/supervisor-reason-project";
+  const database = new SupervisorDatabase(":memory:");
+  database.insertEvent(lifecycleEvent(project, "session.started", "reason-start"));
+  database.insertEvent({
+    ...lifecycleEvent(project, "session.ended", "reason-end"),
+    metadata: { reason: "prompt_input_exit" },
+  });
+  const ended = database.listEvents(project, 10).find((item) => item.event_type === "session.ended");
+  assert.ok(ended);
+
+  database.insertEvent(lifecycleEvent(project, "session.started", "reason-restart"));
+  const snapshot = buildActivitySnapshot(database, "supervisor-reason-project", 86_400_000);
+  assert.ok(snapshot);
+  const stop = snapshot.items.find((item) => item.label === "ARRÊT");
+  assert.ok(stop);
+  assert.equal(stop.details, "Motif : la saisie a été interrompue");
+  assert.doesNotMatch(JSON.stringify(snapshot), /Motif : (?:other|prompt_input_exit)/u);
   database.close();
 });
 

@@ -1,0 +1,215 @@
+/* Design tokens shared by the Supervisor observation views.
+   Source of truth extracted from prototypes/supervisor-timeline/styles.css. */
+
+:root {
+  color-scheme: dark;
+  --ink-strong: #f5f8ff;
+  --ink: #d8e1f0;
+  --ink-muted: #8d9bb2;
+  /* Lifted from #617089 (4.0:1) so small text clears 4.5:1 on every navy surface. */
+  --ink-faint: #828fa8;
+  --navy-950: #030711;
+  --navy-925: #050b18;
+  --navy-900: #071021;
+  --navy-850: #0a162b;
+  --navy-800: #0e1c34;
+  --navy-750: #13233e;
+  --line: rgba(143, 163, 194, 0.17);
+  --line-strong: rgba(143, 163, 194, 0.28);
+  --cyan: #62d9f5;
+  --pass: #4ed8aa;
+  --challenge: #f6ba62;
+  --block: #ff6f82;
+  --human: #b89bff;
+  --info: #65c9ff;
+  --radius-lg: 22px;
+  --radius-md: 15px;
+  --shadow-panel: 0 34px 90px rgba(0, 0, 0, 0.28);
+  --focus: #96eaff;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--navy-950);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    radial-gradient(circle at 50% -20%, #10294d 0, var(--navy-925) 44%, var(--navy-950) 100%);
+  background-size: 48px 48px, 48px 48px, auto;
+  overflow-x: hidden;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  color: #06101c;
+  background: var(--focus);
+  border-radius: 10px;
+  font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform 150ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.ambient {
+  position: fixed;
+  z-index: -1;
+  width: 420px;
+  height: 420px;
+  top: 6vh;
+  left: -200px;
+  border-radius: 999px;
+  background: #164f78;
+  filter: blur(90px);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.brand {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink-strong);
+  text-decoration: none;
+}
+
+.brand__mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(98, 217, 245, 0.38);
+  border-radius: 12px 12px 12px 4px;
+  background: linear-gradient(145deg, rgba(98, 217, 245, 0.2), rgba(98, 217, 245, 0.05));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 8px 24px rgba(31, 157, 199, 0.12);
+}
+
+.brand__mark span {
+  color: #baf3ff;
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.brand__copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.brand__copy strong {
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+.brand__copy span {
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pass);
+  box-shadow: 0 0 0 4px rgba(78, 216, 170, 0.1), 0 0 16px rgba(78, 216, 170, 0.55);
+}
+
+.live-dot--waiting {
+  background: var(--challenge);
+  box-shadow: 0 0 0 4px rgba(246, 186, 98, 0.12);
+}
+
+.live-dot--stopped {
+  background: var(--ink-faint);
+  box-shadow: 0 0 0 4px rgba(97, 112, 137, 0.11);
+}
+
+.status-badge {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  /* 12px minimum for badge text; padding tightened so density is unchanged. */
+  padding: 2px 7px;
+  color: var(--tone-color, var(--info));
+  border: 1px solid color-mix(in srgb, var(--tone-color, var(--info)) 38%, transparent);
+  border-radius: 7px;
+  background: var(--tone-soft, rgba(101, 201, 255, 0.1));
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tone--info {
+  --tone-color: var(--info);
+  --tone-soft: rgba(101, 201, 255, 0.1);
+}
+
+.tone--pass {
+  --tone-color: var(--pass);
+  --tone-soft: rgba(78, 216, 170, 0.1);
+}
+
+.tone--challenge {
+  --tone-color: var(--challenge);
+  --tone-soft: rgba(246, 186, 98, 0.1);
+}
+
+.tone--block,
+.tone--error {
+  --tone-color: var(--block);
+  --tone-soft: rgba(255, 111, 130, 0.1);
+}
+
+.tone--human {
+  --tone-color: var(--human);
+  --tone-soft: rgba(184, 155, 255, 0.11);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

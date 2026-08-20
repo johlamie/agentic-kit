@@ -3,10 +3,39 @@ import { resolve } from "node:path";
 import { PACKAGE_ROOT } from "../config.js";
 
 const SOURCE_ROOT = resolve(PACKAGE_ROOT, "../prototypes/supervisor-timeline");
+const CONTROL_ROOT = resolve(PACKAGE_ROOT, "ui/static");
 
 export interface ActivityAsset {
   body: Buffer;
   contentType: string;
+}
+
+const controlAssetFiles = new Map<string, string>([
+  ["control.css", "text/css; charset=utf-8"],
+  ["control.js", "text/javascript; charset=utf-8"],
+  ["shared.css", "text/css; charset=utf-8"],
+  ["favicon.svg", "image/svg+xml"],
+]);
+
+/** Control center assets are versioned with the daemon: no prototype rewriting. */
+export class ControlUiAssets {
+  private readonly index: Buffer;
+  private readonly assets = new Map<string, ActivityAsset>();
+
+  public constructor() {
+    this.index = readFileSync(resolve(CONTROL_ROOT, "control.html"));
+    for (const [name, contentType] of controlAssetFiles) {
+      this.assets.set(name, { body: readFileSync(resolve(CONTROL_ROOT, name)), contentType });
+    }
+  }
+
+  public indexHtml(): ActivityAsset {
+    return { body: this.index, contentType: "text/html; charset=utf-8" };
+  }
+
+  public asset(name: string): ActivityAsset | null {
+    return this.assets.get(name) ?? null;
+  }
 }
 
 const assetFiles = new Map<string, { file: string; contentType: string }>([
