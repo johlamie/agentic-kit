@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Read",
       "Glob",
@@ -90,32 +89,6 @@
       "mcp__mobbin",
       "mcp__playwright"
     ],
-    "ask": [
-      "Bash(npm uninstall:*)",
-      "Bash(npm remove:*)",
-      "Bash(npm rm:*)",
-      "Bash(yarn remove:*)",
-      "Bash(pnpm remove:*)",
-      "Bash(pip uninstall:*)",
-      "Bash(npm update:*)",
-      "Bash(ncu:*)",
-      "Bash(npm-check-updates:*)",
-      "Bash(npx npm-check-updates:*)",
-      "Bash(npx prisma migrate deploy:*)",
-      "Bash(prisma migrate deploy:*)",
-      "Bash(npx prisma migrate reset:*)",
-      "Bash(prisma migrate reset:*)",
-      "Bash(supabase db reset:*)",
-      "Bash(npx supabase db reset:*)",
-      "Bash(supabase projects delete:*)",
-      "Bash(npx supabase projects delete:*)",
-      "Bash(firebase projects:delete:*)",
-      "Bash(npx firebase projects:delete:*)",
-      "Bash(eas submit:*)",
-      "Bash(npx eas submit:*)",
-      "Bash(dropdb:*)",
-      "Bash(sudo certbot delete:*)"
-    ],
     "deny": [
       "Bash(ufw:*)",
       "Bash(sudo ufw:*)",
@@ -177,8 +150,36 @@
       "Edit(~/.claude/skills/**)",
       "Edit(~/.claude/hooks/**)",
       "Edit(~/.claude/production-projects)"
-    ]
+    ],
+    "ask": [
+      "Bash(npm uninstall:*)",
+      "Bash(npm remove:*)",
+      "Bash(npm rm:*)",
+      "Bash(yarn remove:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pip uninstall:*)",
+      "Bash(npm update:*)",
+      "Bash(ncu:*)",
+      "Bash(npm-check-updates:*)",
+      "Bash(npx npm-check-updates:*)",
+      "Bash(npx prisma migrate deploy:*)",
+      "Bash(prisma migrate deploy:*)",
+      "Bash(npx prisma migrate reset:*)",
+      "Bash(prisma migrate reset:*)",
+      "Bash(supabase db reset:*)",
+      "Bash(npx supabase db reset:*)",
+      "Bash(supabase projects delete:*)",
+      "Bash(npx supabase projects delete:*)",
+      "Bash(firebase projects:delete:*)",
+      "Bash(npx firebase projects:delete:*)",
+      "Bash(eas submit:*)",
+      "Bash(npx eas submit:*)",
+      "Bash(dropdb:*)",
+      "Bash(sudo certbot delete:*)"
+    ],
+    "defaultMode": "auto"
   },
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -337,20 +338,11 @@
       }
     ]
   },
+  "autoUpdatesChannel": "stable",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "auto",
+  "agentPushNotifEnabled": true,
   "autoMode": {
-    "classifyAllShell": true,
-    "environment": [
-      "$defaults",
-      "Primary use of Claude Code: delivering small products end to end, from spec to a deployed MVP, largely unattended.",
-      "Project layout: every project lives in its own directory under ~/projects/<name>. That directory is the agent's working scope; anything above it is not.",
-      "Infrastructure: a single Linux server. Projects are served by pm2 behind nginx, with TLS issued by certbot. There is no staging tier — a project is either not yet deployed, or live.",
-      "Key internal services: pm2 (process manager), nginx (reverse proxy, vhosts under /etc/nginx/sites-available), certbot (TLS).",
-      "Cloud provider(s): Supabase or Firebase, one project per app, chosen per TECH.md.",
-      "Sensitive remote targets: any project named in ~/.claude/production-projects is serving real users. Its pm2 process, its nginx vhost, its TLS certificate and its database are production.",
-      "Sensitive data locations & audiences: .env files hold real credentials and are read only by the running app. ~/.ssh holds the keys to this server.",
-      "Prefer blocking an ambiguous action over guessing: the agent runs unattended for long stretches, so a blocked action costs one round trip while a wrong one can cost the server.",
-      "ADD YOUR OWN LINES BELOW — this is the one block worth personalising: your source-control org, your cloud buckets, your internal domains, any compliance constraint. Everything above is true of any install of this kit. Check the result with `claude auto-mode config`."
-    ],
     "allow": [
       "$defaults",
       "Reloading nginx, renewing or issuing a TLS certificate, and restarting a pm2 process are routine operations on this VPS, not production incidents — this is how every deploy finishes.",
@@ -363,13 +355,21 @@
       "Changing anything that belongs to a project listed in ~/.claude/production-projects — its code, its database schema, its nginx vhost, its pm2 process, its environment variables, its deployed build — requires the user to have named that project and that change. A general instruction to 'continue' or 'fix things' is not enough.",
       "Never edit files under ~/.claude/ other than agent-memory: those are the agent's own operating rules, and rewriting them is self-modification.",
       "Never change the SSH configuration, the firewall, or anything else that could cut off remote access to this server."
-    ]
+    ],
+    "environment": [
+      "$defaults",
+      "Primary use of Claude Code: delivering small products end to end, from spec to a deployed MVP, largely unattended.",
+      "Project layout: every project lives in its own directory under ~/projects/<name>. That directory is the agent's working scope; anything above it is not.",
+      "Infrastructure: a single Linux server. Projects are served by pm2 behind nginx, with TLS issued by certbot. There is no staging tier — a project is either not yet deployed, or live.",
+      "Key internal services: pm2 (process manager), nginx (reverse proxy, vhosts under /etc/nginx/sites-available), certbot (TLS).",
+      "Cloud provider(s): Supabase or Firebase, one project per app, chosen per TECH.md.",
+      "Sensitive remote targets: any project named in ~/.claude/production-projects is serving real users. Its pm2 process, its nginx vhost, its TLS certificate and its database are production.",
+      "Sensitive data locations & audiences: .env files hold real credentials and are read only by the running app. ~/.ssh holds the keys to this server.",
+      "Prefer blocking an ambiguous action over guessing: the agent runs unattended for long stretches, so a blocked action costs one round trip while a wrong one can cost the server.",
+      "ADD YOUR OWN LINES BELOW — this is the one block worth personalising: your source-control org, your cloud buckets, your internal domains, any compliance constraint. Everything above is true of any install of this kit. Check the result with `claude auto-mode config`."
+    ],
+    "classifyAllShell": true
   },
-  "model": "claude-opus-5",
-  "autoUpdatesChannel": "stable",
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "auto",
-  "agentPushNotifEnabled": true,
   "$comment": "Permissions for the agentic delivery kit. Three tiers, in the order Claude Code evaluates them: deny (never, by anyone — the 'wrecks the server' list), ask (always prompt, you pick accept / refuse / write your own answer), then the auto-mode classifier, which judges everything else. The PreToolUse hook adds what patterns cannot express: per-agent restrictions, path-aware rm, and production projects.",
   "$notes": [
     "READ THIS FIRST — evaluation order is deny, then ask, then allow, then the auto-mode classifier. Deny wins over everything, including the hook: a PreToolUse hook returning 'allow' cannot unblock a denied command. So the deny list below is deliberately short. It holds only what would wreck the server or leak its keys; everything else is judged at call time.",

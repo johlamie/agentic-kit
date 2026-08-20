@@ -9,6 +9,22 @@ failures=0
 pass() { printf 'PASS  %s\n' "$1"; }
 fail() { printf 'FAIL  %s\n' "$1" >&2; failures=$((failures + 1)); }
 
+root_visual_artifacts="$(find . -maxdepth 1 -type f \
+  \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+  -printf '%f\n' | sort)"
+if [[ -z "$root_visual_artifacts" ]]; then
+  pass "repository root contains no raster capture artifacts"
+else
+  fail "raster captures must be stored under .artifacts/screenshots/<run-id>/: ${root_visual_artifacts//$'\n'/, }"
+fi
+
+if [[ -s .artifacts/README.md ]] \
+   && grep -Fq '.artifacts/screenshots/<run-id>/' .artifacts/README.md; then
+  pass "visual artifact storage policy is documented"
+else
+  fail "missing visual artifact storage policy"
+fi
+
 if jq empty global/settings.json >/dev/null 2>&1; then
   pass "global/settings.json is valid JSON"
 else

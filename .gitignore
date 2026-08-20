@@ -4,6 +4,14 @@ settings.local.json
 *.bak-*
 .env
 
+# Machine-local Claude state
+.claude/agent-memory/
+.claude/worktrees/
+
+# Temporary visual evidence. Keep only the policy file versioned.
+.artifacts/*
+!.artifacts/README.md
+
 # Codex Supervisor build/runtime state
 supervisor/node_modules/
 supervisor/dist/

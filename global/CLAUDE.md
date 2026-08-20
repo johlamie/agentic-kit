@@ -162,6 +162,11 @@ Chrome DevTools, GitHub, Figma, and Mobbin are capability-dependent and optional
 
 - **Secrets**: never in code or commits. `.env` + `.env.example`; devops stores
   real values on the server only. Never print full secrets in output.
+- **Visual artifacts**: never write screenshots or other raster captures at a
+  project root. Store temporary evidence under
+  `.artifacts/screenshots/<run-id>/`, with scenario and viewport in each
+  filename. Only stable visual fixtures intended for CI belong under the
+  relevant `tests/fixtures/visual/` directory.
 - **Money**: creating any paid resource (cloud project beyond free tier, API key
   with billing, domain) requires G2/G4 approval with cost estimate.
 - **Demo-ready**: every shipped MVP includes seeded demo data and a test account;
