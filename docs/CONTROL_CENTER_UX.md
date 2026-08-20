@@ -1,7 +1,7 @@
 # Centre de contrôle Kriton Supervisor — Spécification UX
 
-Statut : **proposition formalisée, en attente de validation du propriétaire.**
-Document jumeau : `docs/CONTROL_CENTER_ARCHITECTURE.md`.
+Statut : **ratifié par le propriétaire le 20 août 2026** (voir le relevé de
+décisions dans le document jumeau `docs/CONTROL_CENTER_ARCHITECTURE.md`).
 
 ## 1. Intention
 

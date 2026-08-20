@@ -1,6 +1,10 @@
 # Centre de contrôle Kriton Supervisor — Architecture
 
-Statut : **proposition formalisée, en attente de validation du propriétaire.**
+Statut : **ratifié par le propriétaire le 20 août 2026** (réponse structurée
+AskUserQuestion, persistée par le Supervisor) : direction générale approuvée
+pour implémentation, D1 « racine `/` », D2 « fenêtre 7 jours », D3 « sans
+jeton, risque documenté », D4 « assets `supervisor/ui/static/` », et
+amendement du non-objectif §3 de la spec V2 (voir §1).
 Branche : `feat/supervisor-control-center`. Base : tag `supervisor-v1.1.0-stable`.
 
 Le centre de contrôle est la vue d'accueil multi-projets de l'interface
@@ -225,7 +229,7 @@ Bornées et validées dans `config.ts` comme les variables existantes.
   aux quatre viewports de la spec (390×844, 768×1024, 1440×900, 1920×1080),
   jamais à la racine du projet.
 
-## 11. Décisions soumises au propriétaire
+## 11. Relevé de décisions (ratifiées le 20 août 2026)
 
 | # | Décision | Proposition |
 |---|---|---|
