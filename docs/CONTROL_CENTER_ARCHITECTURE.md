@@ -239,4 +239,38 @@ Bornées et validées dans `config.ts` comme les variables existantes.
 | D4 | Assets | nouveau `supervisor/ui/static/`, prototype inchangé pour la vue projet |
 | §3 | Amendement spec | dérogation explicite « UI d'observation » (voir §1) |
 
+## 12. Commandes de lancement
+
+### Développement isolé (sans toucher le daemon H24)
+
+```bash
+cd <racine-du-worktree>
+npm --prefix supervisor run build
+cd supervisor && SUPERVISOR_ENV_FILE="$PWD/../.artifacts/dev/supervisor.env" node dist/src/index.js
+# → http://127.0.0.1:8788/ (données de démonstration : node .artifacts/dev/seed.mjs)
+```
+
+Vérifications : `npm --prefix supervisor run typecheck`,
+`npm --prefix supervisor test`, `node prototypes/supervisor-timeline/test.mjs`,
+`bash scripts/validate-kit.sh`.
+
+### Production (après merge, à l'initiative du propriétaire uniquement)
+
+```bash
+cd ~/agentic-kit && git pull && npm --prefix supervisor ci && npm --prefix supervisor run build
+pm2 restart agentic-supervisor   # applique aussi les migrations d'index 003/004
+```
+
+Puis, depuis le poste de travail :
+
+```bash
+ssh -N -L 8787:127.0.0.1:8787 vps1
+# navigateur → http://127.0.0.1:8787/  (centre de contrôle)
+# curl sur / continue de recevoir le JSON de santé ; /health est inchangé
+```
+
+Rollback : `git checkout supervisor-v1.1.0-stable && npm --prefix supervisor
+run build && pm2 restart agentic-supervisor` (les index ajoutés sont ignorés
+par l'ancien code et peuvent rester).
+
 La spécification UX associée est dans `docs/CONTROL_CENTER_UX.md`.
