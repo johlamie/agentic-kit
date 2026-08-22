@@ -1,5 +1,23 @@
 # Capability gaps
 
+## 2026-08-22 — Accès distant au centre de contrôle sans tunnel manuel
+
+Besoin exprimé par le propriétaire : consulter le centre de contrôle
+(`http://127.0.0.1:8787/`) sans lancer un tunnel SSH à chaque fois,
+y compris depuis un téléphone. L'exposition publique (vhost nginx sur un
+domaine) a été évaluée et écartée : elle inverse le modèle de sécurité
+ratifié (UI volontairement sans authentification car loopback uniquement)
+et le code refuse de toute façon les requêtes proxifiées.
+
+Option retenue pour la prochaine rétrospective : **VPN léger Tailscale ou
+WireGuard**. Le Supervisor resterait privé mais joignable depuis les
+appareils du VPN. Travaux à chiffrer : autoriser l'interface VPN en plus du
+loopback (bind + allowlist d'hôtes), ajuster `isDirectUiRequest`, tests, et
+documentation d'installation côté VPS et clients. Aucune modification de
+Telegram ni des gates. Alternative moindre : page de statut publique
+expurgée, distincte du centre de contrôle, si un besoin de partage externe
+apparaît.
+
 ## 2026-08-20 — L'environnement d'audit Codex ne peut pas reproduire `npm test`
 
 Constat de l'audit `a32059f1` (severity low, evidence BLOCKED) : le contrat
