@@ -33,6 +33,8 @@ jobs:
         run: ./scripts/validate-kit.sh
       - name: Test Claude and Codex shared memory, installation and attribution
         run: python3 scripts/test_agentic.py
+      - name: Contextual local-operation and memory scope checks
+        run: python3 -m unittest discover -s scripts -p "test_*operations.py" && python3 scripts/test_file_scope.py
       - name: Guard hook decision table
         run: ./global/hooks/agent-guard.sh --self-test
       - name: Smoke-test isolated installation

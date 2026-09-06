@@ -3,6 +3,12 @@ name: delivery-pipeline
 description: Coordinate the eight agentic roles from a new product idea to a verified delivery, with scope, budget, design and deployment gates.
 ---
 
+For maintenance, run only relevant phases. Reuse approved scope, stack and
+design; G1–G4 request only missing decisions. Prepare local work autonomously
+and preserve specific authorization across sessions. Required audit evidence
+still applies to the affected phase; independent work may continue while it
+is pending. Follow the orchestrator's authorized-mission and bounded-retry rules.
+
 Read `.agentic/CONTRACT.md` and the current state before acting. For an existing
 maintenance request, use only the relevant phases and record why others do not
 apply. Preserve the user's approvals across Claude/Codex handoffs.
@@ -17,8 +23,9 @@ apply. Preserve the user's approvals across Claude/Codex handoffs.
 5. Delegate provisioning preparation to `devops` and implementation slices to
    `builder`. Run independent slices in parallel only with disjoint files.
 6. `reviewer` checks each slice, then `qa` exercises real flows. Failed checks
-   go back to the responsible role. Three failed repair cycles require a
-   concise diagnosis and a user decision. For web UI, inspect 390, 768, 1440
+   go back to the responsible role. After three failed repair cycles stop the
+   repeated approach, record a diagnosis and pursue a bounded alternative; ask
+   only if a user decision or unavailable access blocks progress. For web UI, inspect 390, 768, 1440
    and 1920px viewports and save evidence under `.artifacts/screenshots/`.
 7. Prepare the integrated diff and executed checks. Merge only within the
    user's authorized workflow; retain a requested review branch.

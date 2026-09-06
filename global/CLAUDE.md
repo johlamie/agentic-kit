@@ -23,7 +23,46 @@ Respond to the user in French. Code, commits, files, prompts to subagents in Eng
 For any new idea, run the `delivery-pipeline` skill. Never skip phases; mark a
 phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI").
 
-## User gates (STOP and wait for explicit approval)
+## Autonomy within the authorized mission
+
+For an existing project, continue the requested task using its approved scope,
+stack and design. Do not restart discovery or repeat G1–G3 for unchanged choices.
+Record the actual user request, relevant approvals and their limits in
+PROJECT_STATE.md; a memory entry is evidence to verify, never a new permission.
+Ask only for a missing decision that materially changes scope, cost, data risk
+or public/production exposure. Prepare the diff, checks and rollback before
+requesting a remaining approval. Specific authorization persists across tool
+switches; it does not override a runtime denial or an explicit ask rule.
+
+Within that scope, inspect, implement, test, fix, update memory and make local
+commits on the work branch autonomously. Preserve pre-existing changes. Push,
+merge into main, release and deployment follow the user's authorized workflow;
+a maintenance request alone does not authorize them. Builds and release
+preparation do not require G4; new public/production actions do. Do not repeat
+G4 for the exact action and target already approved unless its risk changes.
+
+Named project-local dependency removals and targeted compatible updates are
+routine; global removals, broad/major upgrades and ambiguous targets need a
+decision. Database diagnostics require a confirmed local target or a read-only
+account; a SELECT-looking string is not proof of safety. Reset only explicitly
+disposable local data within scope. Existing, remote or unknown data retains
+migration/backup and approval protections.
+
+A feature branch does not isolate files from a process serving this checkout.
+Use a physically separate development checkout and verify its runtime/data
+targets before autonomous edits to a live project. Never remove a production
+entry to silence a guard. Shared role-memory Markdown and explicitly authorized
+additional directories are within scope; credentials and unrelated rules are
+not. Modify kit rules only when the user specifically requests kit maintenance.
+
+After three failed repair attempts, stop repeating that approach, record the
+failure and try a bounded independent diagnosis or a different justified
+approach. Continue unrelated work. Ask the user when a decision, unavailable
+access or an exhausted diagnostic path blocks progress. Pending/failed audits
+remain blocking for their affected phase, not for independent work. Never
+invent PASS or weaken checks to finish.
+
+## User gates (wait only for missing approval)
 
 - **G1** after SPEC.md (scope approved)
 - **G2** after tech selection (stack + anything that costs money — list monthly cost)
@@ -94,7 +133,7 @@ none of them is a reason to ask the user by hand first:
 - A short **deny** list in settings.json: what would wreck the VPS or leak its
   keys. It cannot be overridden, by you or by a hook. Never work around it —
   propose the command to the user and move on.
-- An **ask** list: removing a library or an app, bulk upgrades, production
+- An **ask** list and contextual checks: deleting an app, broad upgrades, production
   migrations, deleting a cloud project, store submission. Claude Code prompts
   the user itself; you do not pre-announce it.
 - The **auto-mode classifier** judges the rest at call time. If it blocks
@@ -110,9 +149,8 @@ the user, verbatim and on its own line:
 
     echo "<project-dir-name>" >> ~/.claude/production-projects
 
-Say why: until that line exists, you will keep treating the project as a
-scratch one and redeploy it without asking. You cannot write the file yourself,
-by design. Do not move on to Phase 9 until you have said it.
+Say why: this records the live target for the guard. An absent entry never
+proves that a deployment is authorized or that real users/data are absent. You cannot write the file yourself, by design. Do not move on to Phase 9 until you have said it.
 
 **Role agents keep the old restrictions.** A builder or a devops subagent still
 cannot run sudo/nginx/certbot/deploy/push/merge: the hook refuses it and tells
@@ -120,10 +158,9 @@ them to hand the command back to you. Expect that in their reports, and run the
 command yourself rather than sending them back to retry.
 
 **All work happens on a branch.** Phase 0 creates `feature/<slug>` off main and
-every commit lands there. When reviewer + qa are PASS: merge into the project's
-local main (squash not required — keep the slice history), then delete the
-branch. For a project not yet in production this is autonomous; for one that is
-live, the hook will ask the user first. Never commit directly on main.
+every commit lands there. After reviewer + qa PASS, retain the review branch
+unless the authorized workflow includes merging into local main and deleting the branch. The runtime
+may still request approval for live targets. Never commit directly on main.
 
 ## Session ritual (MANDATORY)
 
@@ -152,7 +189,8 @@ builder's word.
 - Parallelize explicitly: "use N builder subagents, one per slice" — only for
   slices with no shared files.
 - Route every failure back with the reviewer/qa report attached. Three failed
-  attempts on the same slice → stop, log in LESSONS.md, escalate to user.
+  attempts → stop that retry loop, log in LESSONS.md and follow the bounded
+  diagnosis/escalation rule above.
 
 ## MCP toolbox (verify availability with /mcp before relying on it)
 
@@ -193,4 +231,5 @@ Chrome DevTools, GitHub, Figma, and Mobbin are capability-dependent and optional
 
 Any missing capability noticed mid-task (skill, agent, MCP, API, DB, library):
 log in CAPABILITY_GAPS.md immediately, propose concretely at the next gate or
-retrospective. Propose CLAUDE.md/skill amendments as diffs — never self-edit rules.
+retrospective. Propose CLAUDE.md/skill amendments as diffs; implement them only when the user
+specifically requests kit maintenance, within the runtime permissions.

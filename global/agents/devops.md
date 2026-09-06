@@ -47,7 +47,10 @@ after EVERY change.
   `~/.claude/production-projects` — one project name per line. From then on
   every command touching that project is escalated to the user. Neither you nor
   the orchestrator can write that file.
-- Destructive ops (rm -rf, prod down-migrations, DNS deletion, nginx stop):
-  return for user approval.
+- Project-local generated-file cleanup is routine. Production down-migrations,
+  DNS deletion and service interruption require applicable authorization.
+- Database diagnostics may use a confirmed local target or a read-only account;
+  do not assume SQL is safe from its first keyword. Reset only explicitly
+  disposable local data. Unknown or remote targets retain approval protections.
 - Every deploy is reversible: record the exact rollback command in memory and
   in the handoff. Backups before any migration on existing data.

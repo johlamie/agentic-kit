@@ -3,6 +3,12 @@ name: delivery-pipeline
 description: Full agency pipeline from raw idea to deployed, accessible MVP. Use whenever the user brings a new idea or project.
 ---
 
+For maintenance, run only relevant phases. Reuse approved scope, stack and
+design; G1–G4 request only missing decisions. Prepare local work autonomously
+and preserve specific authorization across sessions. Required audit evidence
+still applies to the affected phase; independent work may continue while it
+is pending. Follow the orchestrator's authorized-mission and bounded-retry rules.
+
 # Delivery Pipeline — Idea → Deployed MVP
 
 Phases run autonomously between the four user gates (G1-G4). Codex Supervisor
@@ -89,17 +95,18 @@ states, hierarchy, consistency, trust, and perceived quality—not source alone.
 
 Claude reviewer + qa PASS and Supervisor PASS are required for slice DONE.
 FAIL/CHALLENGE/BLOCK returns to the responsible builder/designer with the concise
-report. Three failed repair cycles on one slice → escalate to the user with the
-diagnosis. Browser/MCP failure is an audit infrastructure ERROR, not a bad UI
+report. Three failed repair cycles → stop that approach, record a diagnosis
+and try a bounded alternative; escalate when a user decision or access is needed.
+Browser/MCP failure is an audit infrastructure ERROR, not a bad UI
 score and not a PASS.
 
 ## Phase 7.5 — Integrate (orchestrator)
-Every slice for this checkpoint is reviewer+qa PASS. Merge `feature/<slug>`
-into the project's local main, then delete the branch:
+Every slice for this checkpoint is reviewer+qa PASS. Retain the review branch
+unless the user-authorized workflow includes merging and deleting it. If authorized:
 
     git checkout main && git merge feature/<slug> && git branch -d feature/<slug>
 
-No gate for a project that is not yet live — that is the point of the branch.
+Do not repeat authorization already granted for this exact integration.
 If the project is listed in `~/.claude/production-projects`, the guard hook
 escalates the merge to the user; present what changed and wait.
 Record the merge in PROJECT_STATE.md. On a FAIL that surfaces late, stay on the

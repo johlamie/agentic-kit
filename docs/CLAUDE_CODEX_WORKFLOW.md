@@ -196,3 +196,42 @@ Références officielles OpenAI consultées le 6 septembre 2026 :
 [instructions AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md),
 [découverte des skills](https://learn.chatgpt.com/docs/build-skills),
 [configuration MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+## Autonomie sur les projets existants
+
+Une mission autorise les lectures, modifications, vérifications, corrections,
+mémoires et commits locaux sur la branche de travail nécessaires à son périmètre.
+Consigner la demande et les autorisations réelles dans `PROJECT_STATE.md` ; ne
+pas recréer G1–G3 si le périmètre, la stack et le design ne changent pas. G4 reste
+nécessaire pour une nouvelle exposition publique/action de production, mais une
+autorisation précise déjà donnée reste valable pour cette action et cette cible.
+Les refus du runtime et les règles `ask` explicites restent prioritaires.
+
+Le gardien Claude laisse au classificateur les suppressions de dépendances
+nommées dans un projet et les mises à jour ciblées compatibles. Il demande encore
+une décision pour les suppressions globales, les mises à jour larges et les
+cibles ambiguës. Python exige un exécutable de virtualenv local explicite.
+`supabase db reset --local` exige aussi `supabase/config.toml` et un fichier
+non vide `supabase/.agentic-disposable-local` décrivant l'autorisation existante
+et les données jetables concernées. Ce fichier n'accorde aucune autorisation :
+ne jamais le créer pour contourner une décision manquante. Les resets Prisma,
+`dropdb` et les opérations distantes restent protégés.
+
+Les notes Markdown des huit rôles dans `~/.claude/agent-memory/` sont accessibles
+en écriture sans le faux refus global du gardien. Les répertoires supplémentaires
+des réglages utilisateur Claude sont reconnus ; le classificateur et les règles
+natives restent applicables. Les réglages du kit et les secrets restent protégés.
+
+Une branche Git ne sépare pas les fichiers du processus qui les sert. Pour
+travailler sur un projet en production, utiliser un checkout physique distinct,
+vérifier qu'il ne sert pas l'application et qu'il ne cible pas sa base réelle.
+Ne jamais retirer une entrée de `~/.claude/production-projects` pour débloquer
+un agent. Les changements dans un dossier déclaré live conservent les demandes
+techniques du gardien. Une simple autorisation mémorisée ne désactive pas ce hook.
+
+Ces consignes sont partagées avec Codex ; les hooks Claude ne sont pas portés
+sur Codex. Son sandbox et son mécanisme d'approbation restent actifs. Relancer
+`./setup/codex-kit-setup.sh` après une mise à jour du kit pour régénérer ses rôles,
+et `agentic init` dans un projet pour actualiser sa copie du contrat partagé.
+Les règles particulières d'un ancien projet doivent être examinées : `init`
+les préserve et ne supprime jamais silencieusement une restriction locale.

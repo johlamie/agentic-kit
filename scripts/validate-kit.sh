@@ -123,10 +123,18 @@ for rule in 'Bash(ufw:*)' 'Bash(sudo systemctl stop ssh:*)' 'Bash(sudo rm:*)' \
 done
 
 # Tier 2 — irreversible but legitimate: the user decides, every time.
-for rule in 'Bash(npm uninstall:*)' 'Bash(npx prisma migrate deploy:*)' \
+for rule in 'Bash(npx prisma migrate deploy:*)' \
             'Bash(supabase projects delete:*)' 'Bash(eas submit:*)'; do
   assert_rule ask "$rule"
 done
+
+# Reversible local operations must reach contextual checks, not blanket asks.
+if jq -e '.permissions.ask | index("Bash(npm uninstall:*)") == null' global/settings.json >/dev/null \
+   && [[ -f global/hooks/local-operations.py && -f global/hooks/file-scope.py ]]; then
+  pass "local mutations use contextual checks"
+else
+  fail "local mutation checks missing or blanket uninstall ask restored"
+fi
 
 # Tier 3 — what the judge is meant to run on its own. If one of these silently
 # fell back into deny, the whole point of the model would be gone.

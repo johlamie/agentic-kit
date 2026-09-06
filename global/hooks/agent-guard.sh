@@ -39,11 +39,11 @@ PROJECTS_ROOT="${CLAUDE_PROJECTS_ROOT:-$HOME/projects}"
 # they never run them. This is the pre-judge behaviour, preserved verbatim.
 # Every alternative ends on a word boundary. Without it `git merge` also matches
 # `git merge-base`, a read-only lookup — which this hook duly refused once.
-ORCHESTRATOR_ONLY='(^|[;&|[:space:]])(sudo|nginx|certbot|systemctl|ufw|dropdb|psql|mysql)([[:space:]]|$)|pm2[[:space:]]+(delete|stop)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|(firebase|npm[[:space:]]+run|yarn|pnpm|npx[[:space:]]+firebase)[[:space:]]+deploy([[:space:]]|$)|prisma[[:space:]]+migrate[[:space:]]+deploy([[:space:]]|$)|eas[[:space:]]+submit([[:space:]]|$)|(supabase|firebase)[[:space:]]+projects[:[:space:]]*delete([[:space:]]|$)'
+ORCHESTRATOR_ONLY='(^|[;&|[:space:]])(sudo|nginx|certbot|systemctl|ufw|dropdb)([[:space:]]|$)|pm2[[:space:]]+(delete|stop)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|(firebase|npm[[:space:]]+run|yarn|pnpm|npx[[:space:]]+firebase)[[:space:]]+deploy([[:space:]]|$)|prisma[[:space:]]+migrate[[:space:]]+deploy([[:space:]]|$)|eas[[:space:]]+submit([[:space:]]|$)|(supabase|firebase)[[:space:]]+projects[:[:space:]]*delete([[:space:]]|$)'
 
 # Commands that change a running system. Harmless on a scratch project, worth a
 # prompt on one that is already serving users.
-MUTATING='(^|[;&|[:space:]])(rm|nginx|certbot|systemctl|sudo)([[:space:]]|$)|pm2[[:space:]]+(restart|reload|stop|delete|start)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|deploy|migrate|db[[:space:]]+(push|reset)([[:space:]]|$)|eas[[:space:]]+(submit|update)([[:space:]]|$)'
+MUTATING='(^|[;&|[:space:]])(rm|nginx|certbot|systemctl|sudo)([[:space:]]|$)|pm2[[:space:]]+(restart|reload|stop|delete|start)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|(^|[;&|[:space:]])(deploy|migrate)([[:space:]]|$)|db[[:space:]]+(push|reset)([[:space:]]|$)|eas[[:space:]]+(submit|update)([[:space:]]|$)'
 
 emit() { # emit <allow|deny|ask> <reason>
   jq -cn --arg d "$1" --arg r "$2" \
@@ -182,6 +182,11 @@ evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
   cwd_abs="$(abs_path "$cwd")"
   base="${target##*/}"
 
+  # Permit scoped role notes, never a symlink into rules or credentials.
+  if python3 "$(dirname "${BASH_SOURCE[0]}")/file-scope.py" memory "$target" "$HOME"; then
+    return 0
+  fi
+
   case "$target" in
     "$HOME/.claude"|"$HOME/.claude/"*|"$HOME/.ssh"|"$HOME/.ssh/"*|"$HOME/.aws"|"$HOME/.aws/"*|"$HOME/.config/gcloud"|"$HOME/.config/gcloud/"*|"$HOME/.config/agentic-kit/supervisor.env"|"$HOME/.config/agentic-kit/supervisor-hook-token"|"$HOME/.codex/auth.json"|"$HOME/.codex/config.toml")
       emit deny "Refused: $tool_name cannot modify protected agent rules or credential locations." ;;
@@ -200,6 +205,9 @@ evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
       if is_production "$target_project"; then
         emit ask "'$target_project' is listed as running in production ($PRODUCTION_LIST). Confirm this $tool_name change."
       fi
+      if python3 "$(dirname "${BASH_SOURCE[0]}")/file-scope.py" additional "$target" "$HOME"; then
+        return 0
+      fi
       if [ -n "$current_project" ] && [ "$current_project" != "$target_project" ]; then
         emit ask "This $tool_name reaches from '$current_project' into a different project ('$target_project'). Confirm the cross-project change."
       fi
@@ -207,6 +215,9 @@ evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
     "$cwd_abs"|"$cwd_abs/"*|/tmp/*)
       return 0 ;;
     *)
+      if python3 "$(dirname "${BASH_SOURCE[0]}")/file-scope.py" additional "$target" "$HOME"; then
+        return 0
+      fi
       emit deny "Refused: $tool_name targets '$target', outside the current project scope." ;;
   esac
 }
@@ -247,6 +258,14 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
     emit deny "Reserved to the orchestrator (you are running as '$agent_type'). Return the exact command and why it is needed; the orchestrator runs it."
   fi
 
+  # Selected reversible operations use target context, not a blanket ask.
+  # Empty output defers to the native classifier; this never grants allow.
+  local reason
+  if ! reason="$(python3 "$(dirname "${BASH_SOURCE[0]}")/local-operations.py" "$cmd" "$CWD")"; then
+    emit ask "Local operation scope could not be checked; inspect the hook error before proceeding."
+  fi
+  [ -z "$reason" ] || emit ask "$reason"
+
   # -- 3. Projects that are already live — the working directory's and any the
   # command reaches into.
   if printf '%s' "$scan" | grep -Eq "$MUTATING"; then
@@ -286,6 +305,7 @@ self_test() {
   check "builder cannot push"          deny  "builder" "git push origin feature/x"   "$P/demo"
   check "builder can run tests"        none  "builder" "npm test"                    "$P/demo"
   check "orchestrator may reload nginx" none ""        "sudo systemctl reload nginx" "$P/demo"
+  check "devops database diagnostic defers to classifier" none "devops" "psql -c 'SELECT 1'" "$P/demo"
   check "devops cannot deploy alone"   deny  "devops"  "firebase deploy"             "$P/demo"
   # Quoted text is data, not commands. Every case below is a real command this
   # hook wrongly refused, or would have: the first one blocked its own commit.
@@ -308,6 +328,8 @@ self_test() {
   local tmp; tmp="$(mktemp)"; printf '# live\nlive-app\n' > "$tmp"
   PRODUCTION_LIST="$tmp"
   check "mutating a live project asks" ask   ""        "pm2 restart live-app"        "$P/live-app"
+  check "diff deploy documentation is read-only" none "" "git diff -- docs/deploy.md" "$P/live-app"
+  check "actual live deploy asks" ask "" "firebase deploy" "$P/live-app"
   check "reading a live project is ok" none  ""        "npm test"                    "$P/live-app"
   check "mutating a scratch project"   none  ""        "pm2 restart demo"            "$P/demo"
   # Reaching into another project from the one you are sitting in. The working
@@ -334,6 +356,8 @@ self_test() {
   check_file "edit live project asks" ask Edit builder "$P/live-app/src/app.ts" "$P/live-app"
   check_file "cross-project edit asks" ask Edit builder "$P/other/src/app.ts" "$P/demo"
   check_file "write outside project denied" deny Write builder "/etc/nginx/site" "$P/demo"
+  check_file "shared role memory is writable" none Write builder "$HOME/.claude/agent-memory/builder/MEMORY.md" "$P/demo"
+  check_file "non-memory config remains denied" deny Write builder "$HOME/.claude/agent-memory/builder/config.json" "$P/demo"
   check_file "self-modifying agent rules denied" deny Edit builder "$HOME/.claude/settings.json" "$P/demo"
   check_file "environment secret write asks" ask Write builder "$P/demo/.env" "$P/demo"
   check "Bash cannot read .env" deny "" "cat .env" "$P/demo"
