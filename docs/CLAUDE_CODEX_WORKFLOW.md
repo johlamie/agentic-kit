@@ -57,13 +57,40 @@ agentic run codex
 # Codex lit l'état enregistré et reprend les prochaines étapes.
 ```
 
-Le projet doit déjà être un dépôt Git. `agentic init` conserve les règles
-existantes dans CLAUDE.md et AGENTS.md, avec un bloc d'intégration additionnel.
-La mémoire historique est déplacée vers `.agentic/`, puis les chemins Claude
-deviennent des liens relatifs. Aucun commit n'est créé automatiquement.
+Le projet doit déjà être un dépôt Git. **La même commande `agentic init`
+initialise un nouveau projet ou met à jour un projet existant automatiquement.**
+Fermer les sessions qui travaillent sur ce projet avant de l'exécuter.
+
+- Nouveau projet : création des mémoires et de l'intégration du kit.
+- Ancien kit Claude : sauvegarde, migration des mémoires existantes vers
+  `.agentic/` et création de liens de compatibilité aux anciens chemins.
+- Kit partagé déjà présent : actualisation des instructions gérées par le kit
+  et ajout des fichiers manquants ; l'état, les décisions et les leçons sont
+  conservés. Si tout est à jour, aucun fichier n'est réécrit et aucune nouvelle
+  sauvegarde n'est créée.
+
+Les règles existantes de CLAUDE.md et AGENTS.md sont conservées. Un lien entre
+ces deux fichiers, comme `CLAUDE.md → AGENTS.md` dans Talendici, est préservé :
+le bloc commun est ajouté une seule fois dans la cible. Les liens sortant du
+projet, circulaires ou vers d'autres fichiers demandent une résolution explicite.
+Aucun commit n'est créé et la branche courante reste inchangée.
+
+Avant une modification, la commande sauvegarde les mémoires et les instructions
+concernées, y compris les fichiers non commités/non suivis, dans le répertoire
+Git commun : `.git/agentic-backups/init-…/` pour un dépôt ordinaire. Ce dossier
+privé est hors de l'arbre de travail et n'est pas envoyé par `git push`.
+Le chemin exact est affiché après l'opération. Il contient `before.tar.gz` et
+un `manifest.json` avec les fichiers présents/absents et leurs empreintes.
+L'archive est vérifiée avant la migration ; les mémoires sont vérifiées après.
+Ces sauvegardes restent locales et sont conservées jusqu'à leur suppression
+manuelle : elles ne remplacent pas une sauvegarde sur un autre support.
+
 Si les deux emplacements contiennent déjà de la mémoire, l'initialisation
 refuse la migration avant de déplacer des fichiers. Réconcilier les contenus
-sans supprimer arbitrairement l'un des historiques.
+sans supprimer arbitrairement l'un des historiques. Si une erreur d'écriture
+interrompt l'opération, la sauvegarde reste disponible et son chemin est indiqué ;
+après résolution de l'erreur, relancer `agentic init`. La commande ne restaure
+pas automatiquement des fichiers par-dessus des changements plus récents.
 
 ```text
 mon-projet/
@@ -71,6 +98,7 @@ mon-projet/
 ├── .agentic/
 │   ├── CONTRACT.md            règles de mémoire et passation
 │   ├── CODEX.md               instructions de l'orchestrateur Codex
+│   ├── kit.json               version du schéma d'intégration
 │   ├── memory/                état, décisions, leçons, manques
 │   ├── events/                sessions, checkpoints, attribution des commits
 │   └── agent-memory/          mémoire privée par rôle (ignorée par Git)

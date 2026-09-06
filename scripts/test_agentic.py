@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import tarfile
 import unittest
 from unittest.mock import patch
 
@@ -51,6 +52,105 @@ class SharedKitTests(unittest.TestCase):
         self.assertFalse((self.project / ".claude/memory").is_symlink())
         self.assertFalse((self.project / ".agentic/memory").exists())
         self.assertFalse((self.project / "AGENTS.md").exists())
+        self.assertFalse((self.project / ".git/agentic-backups").exists())
+
+    def test_talendici_alias_migrates_and_backup_retains_uncommitted_memory(self):
+        old = self.project / ".claude/memory"
+        old.mkdir(parents=True)
+        (old / "DECISIONS.md").write_text("Decision not committed yet\n")
+        agents = self.project / "AGENTS.md"
+        agents.write_text("Project-specific rules\n")
+        alias = self.project / "CLAUDE.md"
+        alias.symlink_to("AGENTS.md")
+        result = kit.initialize(self.project)
+        self.assertEqual(result["status"], "migrated")
+        self.assertEqual(os.readlink(alias), "AGENTS.md")
+        self.assertTrue(agents.read_text().startswith("Project-specific rules\n"))
+        self.assertEqual(agents.read_text().count(kit.BEGIN), 1)
+        self.assertIn("When using Codex", agents.read_text())
+        self.assertEqual((old / "DECISIONS.md").read_text(), "Decision not committed yet\n")
+        backup = Path(result["backup"])
+        self.assertEqual(backup.stat().st_mode & 0o777, 0o700)
+        with tarfile.open(backup / "before.tar.gz") as archive:
+            self.assertEqual(archive.getmember("CLAUDE.md").linkname, "AGENTS.md")
+            self.assertEqual(archive.extractfile("AGENTS.md").read(), b"Project-specific rules\n")
+            self.assertEqual(archive.extractfile(".claude/memory/DECISIONS.md").read(),
+                             b"Decision not committed yet\n")
+        before = {p: p.stat().st_mtime_ns for p in self.project.rglob("*") if p.is_file()}
+        again = kit.initialize(self.project)
+        self.assertEqual(again, {"status": "unchanged", "backup": None})
+        self.assertEqual(before, {p: p.stat().st_mtime_ns for p in self.project.rglob("*") if p.is_file()})
+
+    def test_reverse_instruction_alias_is_preserved(self):
+        (self.project / "CLAUDE.md").write_text("Claude project rules\n")
+        (self.project / "AGENTS.md").symlink_to("CLAUDE.md")
+        kit.initialize(self.project)
+        self.assertEqual(os.readlink(self.project / "AGENTS.md"), "CLAUDE.md")
+        self.assertIn("Claude project rules", (self.project / "AGENTS.md").read_text())
+        self.assertEqual(kit.initialize(self.project)["status"], "unchanged")
+
+    def test_instruction_alias_escapes_and_loops_fail_before_migration(self):
+        external = self.root / "outside.md"
+        external.write_text("Unrelated rules")
+        alias = self.project / "CLAUDE.md"
+        alias.symlink_to(external)
+        with self.assertRaises(kit.KitError):
+            kit.initialize(self.project)
+        self.assertEqual(external.read_text(), "Unrelated rules")
+        self.assertFalse((self.project / ".agentic").exists())
+        alias.unlink()
+        alias.symlink_to("AGENTS.md")
+        (self.project / "AGENTS.md").symlink_to("CLAUDE.md")
+        with self.assertRaises(kit.KitError):
+            kit.initialize(self.project)
+
+    def test_already_shared_project_updates_without_rewriting_its_memory(self):
+        kit.initialize(self.project)
+        (self.project / ".agentic/kit.json").unlink()  # first shared-kit release had no marker
+        (self.project / ".agentic/CODEX.md").write_text("Old integration instructions\n")
+        memory = self.project / ".agentic/memory/PROJECT_STATE.md"
+        memory.write_text("Current work and approvals\n")
+        original_mtime = memory.stat().st_mtime_ns
+        result = kit.initialize(self.project)
+        self.assertEqual(result["status"], "updated")
+        self.assertEqual(memory.read_text(), "Current work and approvals\n")
+        self.assertEqual(memory.stat().st_mtime_ns, original_mtime)
+        self.assertEqual(kit.initialize(self.project)["status"], "unchanged")
+
+    def test_new_project_and_missing_template_repair(self):
+        self.assertEqual(kit.initialize(self.project)["status"], "initialized")
+        memory = self.project / ".agentic/memory/LESSONS.md"
+        memory.unlink()
+        self.assertEqual(kit.initialize(self.project)["status"], "updated")
+        self.assertTrue(memory.is_file())
+
+    def test_backup_failure_prevents_project_mutation(self):
+        old = self.project / ".claude/memory"
+        old.mkdir(parents=True)
+        (old / "PROJECT_STATE.md").write_text("Do not lose this")
+        with patch.object(kit, "backup_initialization", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                kit.initialize(self.project)
+        self.assertFalse(old.is_symlink())
+        self.assertFalse((self.project / ".agentic").exists())
+        self.assertEqual((old / "PROJECT_STATE.md").read_text(), "Do not lose this")
+
+    def test_interrupted_migration_preserves_backup_and_can_be_retried(self):
+        old = self.project / ".claude/memory"
+        old.mkdir(parents=True)
+        (old / "DECISIONS.md").write_text("Durable decision\n")
+        original = kit.atomic_write
+        def fail_generated(path, content, **kwargs):
+            if path == self.project / ".agentic/CONTRACT.md":
+                raise OSError("disk full")
+            return original(path, content, **kwargs)
+        with patch.object(kit, "atomic_write", side_effect=fail_generated):
+            with self.assertRaisesRegex(kit.KitError, "Backup preserved"):
+                kit.initialize(self.project)
+        self.assertTrue(list((self.project / ".git/agentic-backups").glob("*/manifest.json")))
+        self.assertEqual((old / "DECISIONS.md").read_text(), "Durable decision\n")
+        self.assertEqual(kit.initialize(self.project)["status"], "updated")
+        self.assertEqual(kit.initialize(self.project)["status"], "unchanged")
 
     def test_external_symlinks_cannot_redirect_memory_writes(self):
         external = self.root / "external"

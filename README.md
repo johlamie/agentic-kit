@@ -20,6 +20,9 @@ agentic run codex
 ```
 
 La mémoire historique Claude est conservée via des liens de compatibilité.
+`agentic init` détecte automatiquement l'ancien kit, sauvegarde et vérifie la
+migration, puis met à jour l'intégration. Il préserve les liens entre CLAUDE.md
+et AGENTS.md ; un projet déjà à jour n'est pas modifié.
 Les conversations, permissions et authentifications restent propres à chaque
 outil. Le [guide Claude/Codex](docs/CLAUDE_CODEX_WORKFLOW.md) détaille
 l'installation, les commits attribués, les MCP et les limites du Supervisor.

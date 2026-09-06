@@ -5,6 +5,7 @@ import argparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import uuid
 
@@ -114,46 +116,153 @@ def migration_plan(project, name):
     return old, new
 
 
+def instruction_files(project):
+    """Preserve CLAUDE.md <-> AGENTS.md aliases and update their target once."""
+    targets = set()
+    for name in ("CLAUDE.md", "AGENTS.md"):
+        try:
+            path = ensure_local(project, name)
+            target = path.resolve()
+        except RuntimeError as exc:
+            raise KitError(f"Instruction symlink loop: {name}") from exc
+        if path.is_symlink():
+            if target not in (project / "CLAUDE.md", project / "AGENTS.md") or not target.is_file():
+                raise KitError(f"Expected an instruction alias to an existing CLAUDE.md or AGENTS.md: {path}")
+        if exists(target) and not target.is_file():
+            raise KitError(f"Expected an instruction file: {target}")
+        targets.add(target)
+    return sorted(targets)
+
+
+def backup_initialization(project, paths):
+    """Keep private, verified backups outside the working tree before mutation."""
+    common = (project / git(project, "rev-parse", "--git-common-dir")).resolve()
+    directory = common / "agentic-backups"
+    if directory.is_symlink():
+        raise KitError(f"Backup directory cannot be a symlink: {directory}")
+    directory.mkdir(mode=0o700, exist_ok=True)
+    directory.chmod(0o700)
+    backup = Path(tempfile.mkdtemp(prefix="init-", dir=directory))
+    archive = backup / "before.tar.gz"
+    manifest = {"project": str(project), "entries": {}, "absent": []}
+    paths = sorted(set(paths))
+    with tarfile.open(archive, "w:gz", dereference=False) as stream:
+        for path in paths:
+            relative = str(path.relative_to(project))
+            if not exists(path):
+                manifest["absent"].append(relative)
+                continue
+            stream.add(path, arcname=relative)
+            entries = [path]
+            if path.is_dir() and not path.is_symlink():
+                entries += sorted(path.rglob("*"))
+            for entry in entries:
+                name = str(entry.relative_to(project))
+                if entry.is_symlink():
+                    manifest["entries"][name] = {"link": os.readlink(entry)}
+                elif entry.is_file():
+                    manifest["entries"][name] = {"sha256": hashlib.sha256(entry.read_bytes()).hexdigest()}
+    # Verify the actual archived bytes before changing anything in the project.
+    with tarfile.open(archive, "r:gz") as stream:
+        for name, expected in manifest["entries"].items():
+            member = stream.getmember(name)
+            if "link" in expected:
+                valid = member.issym() and member.linkname == expected["link"]
+            else:
+                with stream.extractfile(member) as content:
+                    valid = hashlib.sha256(content.read()).hexdigest() == expected["sha256"]
+            if not valid:
+                raise KitError(f"Backup verification failed: {name}")
+    atomic_write(backup / "manifest.json", json.dumps(manifest, indent=2) + "\n")
+    return backup
+
+
 def initialize(project):
+    project = project.resolve()
     plans = [migration_plan(project, name) for name in ("memory", "agent-memory")]
-    for relative in (".agentic", ".claude", ".agentic/events", ".agentic/CONTRACT.md",
-                     ".agentic/CODEX.md", "CLAUDE.md", "AGENTS.md", ".gitignore"):
-        path = ensure_local(project, relative)
+    directories = [project / name for name in (".agentic", ".claude", ".agentic/events")]
+    directories += [new for _, new in plans]
+    directories += [project / ".agentic/agent-memory" / name for name in ROLES]
+    generated = [project / name for name in (".agentic/CONTRACT.md", ".agentic/CODEX.md",
+                                            ".agentic/kit.json", ".gitignore")]
+    for path in directories + generated:
+        ensure_local(project, path.relative_to(project))
         if path.is_symlink():
             raise KitError(f"Review existing symlink before initialization: {path}")
-    claude = managed_text(project / "CLAUDE.md",
-                          "Read `.agentic/CONTRACT.md` for shared memory, attribution and handoff rules.")
-    codex = managed_text(project / "AGENTS.md",
-                         "Read `.agentic/CODEX.md` and `.agentic/CONTRACT.md` before working.\n"
-                         "Use the eight specialty subagents described there for substantial tasks.")
-    # Preflight is complete before moving either legacy directory.
-    for old, new in plans:
-        new.parent.mkdir(parents=True, exist_ok=True)
-        if exists(old) and not old.is_symlink():
-            old.rename(new)
-        else:
-            new.mkdir(exist_ok=True)
-        old.parent.mkdir(parents=True, exist_ok=True)
-        if not old.is_symlink():
-            old.symlink_to(os.path.relpath(new, old.parent), target_is_directory=True)
+        if exists(path) and (not path.is_dir() if path in directories else not path.is_file()):
+            raise KitError(f"Unexpected file type: {path}")
+    instructions = instruction_files(project)
+    block = ("Read `.agentic/CONTRACT.md` for shared memory, attribution and handoff rules.\n"
+             "When using Codex, also read `.agentic/CODEX.md` and use its specialty roles\n"
+             "for substantial tasks. Preserve this project's product and code conventions.")
+    writes = {path: managed_text(path, block) for path in instructions}
+    writes[project / ".agentic/CONTRACT.md"] = (ROOT / "shared/SESSION_CONTRACT.md").read_text()
+    writes[project / ".agentic/CODEX.md"] = (ROOT / "codex/AGENTS.md").read_text()
+    marker = project / ".agentic/kit.json"
+    if marker.exists():
+        current = json.loads(marker.read_text())
+        if not isinstance(current, dict) or current.get("schema_version") != 1:
+            raise KitError("Unsupported kit schema; use a compatible kit version before updating.")
+    writes[marker] = '{"schema_version": 1}\n'
     memory = project / ".agentic/memory"
+    legacy = project / ".claude/memory"
+    memory_source = legacy if legacy.is_dir() and not legacy.is_symlink() else memory
     for template in (ROOT / "global/templates/memory").glob("*.md"):
-        target = memory / template.name
-        if not target.exists():
-            atomic_write(target, template.read_text())
-    for name in ROLES:
-        (project / ".agentic/agent-memory" / name).mkdir(exist_ok=True)
-    (project / ".agentic/events").mkdir(exist_ok=True)
-    atomic_write(project / ".agentic/CONTRACT.md", (ROOT / "shared/SESSION_CONTRACT.md").read_text())
-    atomic_write(project / ".agentic/CODEX.md", (ROOT / "codex/AGENTS.md").read_text())
-    atomic_write(project / "CLAUDE.md", claude)
-    atomic_write(project / "AGENTS.md", codex)
+        present = memory_source / template.name
+        if exists(present):
+            if not present.is_file():
+                raise KitError(f"Expected memory file: {present}")
+        else:
+            writes[memory / template.name] = template.read_text()
     ignore_path = project / ".gitignore"
     ignore = ignore_path.read_text() if ignore_path.exists() else ""
     additions = [line for line in ("/.agentic/agent-memory/", "/.claude/agent-memory")
                  if line not in ignore.splitlines()]
     if additions:
-        atomic_write(ignore_path, ignore.rstrip() + "\n\n# Private per-role memory\n" + "\n".join(additions) + "\n")
+        writes[ignore_path] = ignore.rstrip() + "\n\n# Private per-role memory\n" + "\n".join(additions) + "\n"
+    writes = {path: content for path, content in writes.items()
+              if not path.exists() or path.read_text() != content}
+    missing = [path for path in directories if not path.exists()]
+    needs_links = any(not old.is_symlink() for old, _ in plans)
+    if not writes and not missing and not needs_links:
+        return {"status": "unchanged", "backup": None}
+    status = ("migrated" if any(old.is_dir() and not old.is_symlink() for old, _ in plans)
+              else "updated" if (project / ".agentic").exists() else "initialized")
+    backup_paths = [project / name for name in ("CLAUDE.md", "AGENTS.md")]
+    backup_paths += instructions + generated + [path for pair in plans for path in pair]
+    backup = backup_initialization(project, backup_paths)
+    try:
+        for old, new in plans:
+            new.parent.mkdir(parents=True, exist_ok=True)
+            if exists(old) and not old.is_symlink():
+                old.rename(new)
+            else:
+                new.mkdir(exist_ok=True)
+            old.parent.mkdir(parents=True, exist_ok=True)
+            if not old.is_symlink():
+                old.symlink_to(os.path.relpath(new, old.parent), target_is_directory=True)
+        for path in directories:
+            path.mkdir(parents=True, exist_ok=True)
+        for path, content in writes.items():
+            atomic_write(path, content)
+        for old, new in plans:
+            if not old.is_symlink() or old.resolve() != new.resolve():
+                raise KitError(f"Memory link verification failed: {old}")
+        for path, content in writes.items():
+            if path.read_text() != content:
+                raise KitError(f"Initialization verification failed: {path}")
+        # A rename must preserve all archived memory files, including untracked ones.
+        manifest = json.loads((backup / "manifest.json").read_text())
+        for relative, expected in manifest["entries"].items():
+            if "sha256" not in expected:
+                continue
+            if relative.startswith((".claude/memory/", ".claude/agent-memory/",
+                                    ".agentic/memory/", ".agentic/agent-memory/")):
+                if hashlib.sha256((project / relative).read_bytes()).hexdigest() != expected["sha256"]:
+                    raise KitError(f"Memory verification failed: {relative}")
+    except (OSError, KitError) as exc:
+        raise KitError(f"Initialization incomplete. Backup preserved at {backup}. Cause: {exc}") from exc
+    return {"status": status, "backup": str(backup)}
 
 
 def role_config(name):
@@ -319,8 +428,12 @@ def main(argv=None):
     project = project_root(args.project)
     if args.command == "init":
         with project_lock(project):
-            initialize(project)
-        print(f"Shared project initialized: {project}")
+            result = initialize(project)
+        messages = {"initialized": "Nouveau projet initialisé", "migrated": "Ancien kit migré vers la mémoire partagée",
+                    "updated": "Intégration du kit mise à jour", "unchanged": "Projet déjà à jour — aucune modification"}
+        print(f"{messages[result['status']]} : {project}")
+        if result["backup"]:
+            print(f"Sauvegarde vérifiée : {result['backup']}")
     elif args.command == "run":
         arguments = args.arguments[1:] if args.arguments[:1] == ["--"] else args.arguments
         return run_session(project, args.tool, arguments)
