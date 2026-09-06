@@ -31,6 +31,8 @@ jobs:
         run: shellcheck setup/*.sh scripts/*.sh global/hooks/*.sh supervisor/bin/* supervisor/scripts/*.sh
       - name: Validate manifests and configuration
         run: ./scripts/validate-kit.sh
+      - name: Test Claude and Codex shared memory, installation and attribution
+        run: python3 scripts/test_agentic.py
       - name: Guard hook decision table
         run: ./global/hooks/agent-guard.sh --self-test
       - name: Smoke-test isolated installation

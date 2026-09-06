@@ -278,6 +278,9 @@ async function requestAudit(config: ReturnType<typeof loadConfig>, args: string[
   const type = AUDIT_ALIASES[requestedType];
   if (!type || !AUDIT_TYPES.includes(type)) throw new UsageError(`Invalid audit type: ${requestedType}`);
   const body: Record<string, unknown> = { project, type };
+  const producer = option(args, "--producer") ?? process.env.AGENTIC_TOOL ?? "claude";
+  if (producer !== "claude" && producer !== "codex") throw new UsageError(`Invalid producer: ${producer}`);
+  body.producer = producer;
   const url = option(args, "--url");
   if (url) body.url = url;
   const result = await api(config, "/v1/audits", { method: "POST", body: JSON.stringify(body) });
@@ -391,7 +394,7 @@ Commands:
   ui --project <path>
   gate --project <path> --phase <research|architecture|design|code|deploy|final>
   wait --project <path> --phase <phase> [--timeout <seconds>]
-  audit --project <path> --type <research|architecture|code|qa|deploy|final|design|visual|security> [--url <url>]
+  audit --project <path> --type <research|architecture|code|qa|deploy|final|design|visual|security> [--url <url>] [--producer claude|codex]
   retry <audit-id>
   resolve <human-request-id>
   tail [--project <path>]

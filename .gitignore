@@ -18,3 +18,8 @@ supervisor/dist/
 supervisor/*.sqlite3*
 .claude/supervisor/
 .playwright-mcp/
+
+# Shared kit private role memory and Python caches
+.agentic/agent-memory/
+__pycache__/
+*.pyc

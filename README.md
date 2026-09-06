@@ -5,6 +5,25 @@ Une idée entre ; un MVP déployé et accessible sort. Le système reproduit une
 build parallèle → revue → QA E2E → déploiement → handoff → rétrospective.
 Toi, tu n'interviens qu'à 4 portes de validation.
 
+## Alterner entre Claude Code et Codex
+
+Une couche Codex reprend les huit rôles depuis les mêmes fiches d'agents et
+ajoute une mémoire partagée, des checkpoints attribués et un lanceur commun :
+
+```bash
+./setup/codex-kit-setup.sh
+cd ~/projects/mon-projet
+agentic init
+agentic run claude
+# Après un checkpoint et la fermeture de Claude :
+agentic run codex
+```
+
+La mémoire historique Claude est conservée via des liens de compatibilité.
+Les conversations, permissions et authentifications restent propres à chaque
+outil. Le [guide Claude/Codex](docs/CLAUDE_CODEX_WORKFLOW.md) détaille
+l'installation, les commits attribués, les MCP et les limites du Supervisor.
+
 ## L'équipe (8 agents, mémoire persistante)
 
 | Agent | Modèle | Mémoire | MCP |

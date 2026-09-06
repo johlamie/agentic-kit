@@ -7,6 +7,23 @@ import type { EventType, NormalizedEvent } from "../src/types.js";
 import { makeTempProject, testConfig } from "./helpers.js";
 
 let sequence = 0;
+
+test("manual audits preserve producer and never coalesce Claude with Codex", () => {
+  const database = new SupervisorDatabase(":memory:");
+  const dispatcher = new AuditDispatcher(database, testConfig());
+  try {
+    const claude = dispatcher.enqueueManual("/tmp/shared-project", "code", {});
+    const codex = dispatcher.enqueueManual("/tmp/shared-project", "code", {}, "codex");
+    const again = dispatcher.enqueueManual("/tmp/shared-project", "code", {}, "codex");
+    assert.equal(claude.producer, "claude");
+    assert.equal(codex.producer, "codex");
+    assert.notEqual(claude.id, codex.id);
+    assert.equal(again.id, codex.id);
+    assert.equal(JSON.parse(codex.context_json).producer, "codex");
+  } finally {
+    database.close();
+  }
+});
 function milestone(project: string, agentType: string | null, message = "milestone complete", type: EventType = "agent.completed"): NormalizedEvent {
   sequence += 1;
   return {

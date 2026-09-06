@@ -127,6 +127,15 @@ live, the hook will ask the user first. Never commit directly on main.
 
 ## Session ritual (MANDATORY)
 
+For a project initialized with `agentic init`, first read
+`.agentic/CONTRACT.md`. Its `.agentic/memory/` is shared with Codex;
+`.claude/memory/` is a compatibility link to the same files. Follow its
+checkpoint attribution and handoff rules. The orchestrator consolidates
+subagent memory proposals to avoid concurrent edits. User-scoped role memory
+remains in `~/.claude/agent-memory/` and is shared with Codex, without copying
+private facts into Git. On projects not yet initialized, retain the existing
+memory paths below.
+
 Start: read `.claude/memory/PROJECT_STATE.md`, `DECISIONS.md`, `LESSONS.md`,
 plus `.claude/supervisor/LATEST.md` when present; summarize state in ≤3 lines;
 continue from "Next steps". The Supervisor database/STATE.json remain separate

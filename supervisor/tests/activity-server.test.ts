@@ -78,13 +78,22 @@ test("serves one local activity view and releases its SSE resources at SessionEn
     body: JSON.stringify({
       project,
       type: "visual_ux_audit",
+      producer: "codex",
       url: "http://127.0.0.1:4173/preview?code=unit-test-preview-code#complete",
     }),
   });
   assert.equal(auditResponse.status, 202);
   const storedAudit = database.listAudits(project, 1)[0];
   assert.equal(storedAudit?.audit_target, "http://127.0.0.1:4173/preview");
+  assert.equal(storedAudit?.producer, "codex");
   assert.doesNotMatch(storedAudit?.context_json ?? "", /unit-test-preview-code|complete/u);
+
+  const invalidProducer = await fetch(`${origin}/v1/audits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Agentic-Supervisor-Token": "activity-hook-token" },
+    body: JSON.stringify({ project, type: "code", producer: "unknown" }),
+  });
+  assert.equal(invalidProducer.status, 400);
 
   const streamResponse = await fetch(`${origin}/_supervisor/api/projects/${active.slug}/stream`);
   assert.equal(streamResponse.status, 200);

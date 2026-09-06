@@ -89,6 +89,14 @@ puis relancer l'audit concerné afin d'obtenir une preuve fraîche.
 
 Audit manuel :
 
+Les projets pilotés par Codex peuvent demander ces audits avec
+`--producer codex` (ou via `agentic run codex`, qui fournit `AGENTIC_TOOL`).
+Le CLI et le daemon doivent tous deux être reconstruits avec cette version.
+L'attribution est conservée dans les rapports ; deux producteurs ne partagent
+pas le même audit en attente. Cela n'ajoute pas de hooks de session Codex ni de
+notifications Telegram de cycle de vie. L'auditeur reste Codex, dans une
+exécution séparée. Voir [le guide Claude/Codex](../docs/CLAUDE_CODEX_WORKFLOW.md).
+
 ```bash
 agentic-supervisor audit --project "$PWD" --type research
 agentic-supervisor audit --project "$PWD" --type architecture

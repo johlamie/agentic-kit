@@ -136,6 +136,8 @@ export class SupervisorServer {
         const body = await readJsonBody(request) as Record<string, unknown>;
         if (typeof body.project !== "string" || !body.project.trim()) return json(response, 400, { error: "project_required" });
         if (typeof body.type !== "string" || !AUDIT_TYPES.includes(body.type as AuditType)) return json(response, 400, { error: "invalid_audit_type" });
+        const producer = body.producer ?? "claude";
+        if (producer !== "claude" && producer !== "codex") return json(response, 400, { error: "invalid_producer" });
         const context: Record<string, unknown> = {};
         if (typeof body.url === "string") {
           const targetUrl = sanitizeUrl(body.url);
@@ -143,7 +145,7 @@ export class SupervisorServer {
           context.url = targetUrl;
         }
         if (typeof body.reason === "string") context.reason = redactText(body.reason, 2_000);
-        const audit = this.dispatcher.enqueueManual(resolve(body.project), body.type as AuditType, context);
+        const audit = this.dispatcher.enqueueManual(resolve(body.project), body.type as AuditType, context, producer);
         this.activity.publish(audit.project_path);
         return json(response, 202, { audit_id: audit.id, status: audit.status });
       }

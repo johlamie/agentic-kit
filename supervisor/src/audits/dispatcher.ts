@@ -44,7 +44,7 @@ export class AuditDispatcher {
     return scheduled;
   }
 
-  public enqueueManual(projectPath: string, auditType: AuditType, context: Record<string, unknown>): AuditRecord {
+  public enqueueManual(projectPath: string, auditType: AuditType, context: Record<string, unknown>, producer: "claude" | "codex" = "claude"): AuditRecord {
     const timestamp = new Date(Date.now() + this.config.auditDebounceMs).toISOString();
     const targetUrl = sanitizeUrl(context.url);
     const safeContext = { ...context };
@@ -55,11 +55,12 @@ export class AuditDispatcher {
     return this.database.enqueueAudit({
       projectPath,
       auditType,
-      context: { ...safeContext, manual: true },
-      coalesceKey: `manual:${resolve(projectPath)}:${auditType}`,
+      context: { ...safeContext, manual: true, producer },
+      coalesceKey: `manual:${resolve(projectPath)}:${producer}:${auditType}`,
       notBefore: timestamp,
       maxAttempts: this.config.maxRetries + 1,
       auditTarget: targetUrl,
+      producer,
     });
   }
 
