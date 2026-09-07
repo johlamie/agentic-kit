@@ -1,0 +1,577 @@
+{
+  "tool": "codex",
+  "role": "qa",
+  "url": "http://audit-fixture.invalid/",
+  "integration": "synthetic HTTP routes; actual static assets; EventSource unavailable fixture to exercise polling fallback; fresh browser context per case",
+  "results": [
+    {
+      "name": "populated-390",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "1 projet actif, 1 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": false,
+        "daemon": "v1.1.0 · base ok",
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          },
+          {
+            "text": "AUTORISATIONsynthetic-projectà l’instantAutorisation synthétiqueAction de test n",
+            "href": "/synthetic-project"
+          },
+          {
+            "text": "synthetic-projectCHALLENGECodeà l’instant1 session active · file 1 en cours / 0 ",
+            "href": "/synthetic-project"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": {
+        "firstFocus": {
+          "tag": "A",
+          "text": "Aller au contenu",
+          "outline": "solid",
+          "rectTop": 12
+        },
+        "afterSkip": {
+          "tag": "A",
+          "href": "/synthetic-project",
+          "outline": "solid"
+        }
+      },
+      "recovery": null,
+      "navigation": {
+        "url": "http://audit-fixture.invalid/#main-content",
+        "heading": "Synthetic navigation target only"
+      },
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/synthetic-project",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/populated-390.png"
+    },
+    {
+      "name": "populated-768",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "1 projet actif, 1 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": false,
+        "daemon": "v1.1.0 · base ok",
+        "documentWidth": 768,
+        "viewportWidth": 768,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          },
+          {
+            "text": "AUTORISATIONsynthetic-projectà l’instantAutorisation synthétiqueAction de test n",
+            "href": "/synthetic-project"
+          },
+          {
+            "text": "synthetic-projectCHALLENGECodeà l’instant1 session active · file 1 en cours / 0 ",
+            "href": "/synthetic-project"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": null,
+      "navigation": null,
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/populated-768.png"
+    },
+    {
+      "name": "populated-1440",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "1 projet actif, 1 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": false,
+        "daemon": "v1.1.0 · base ok",
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          },
+          {
+            "text": "AUTORISATIONsynthetic-projectà l’instantAutorisation synthétiqueAction de test n",
+            "href": "/synthetic-project"
+          },
+          {
+            "text": "synthetic-projectCHALLENGECodeà l’instant1 session active · file 1 en cours / 0 ",
+            "href": "/synthetic-project"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": null,
+      "navigation": null,
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/populated-1440.png"
+    },
+    {
+      "name": "populated-1920",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "1 projet actif, 1 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": false,
+        "daemon": "v1.1.0 · base ok",
+        "documentWidth": 1920,
+        "viewportWidth": 1920,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          },
+          {
+            "text": "AUTORISATIONsynthetic-projectà l’instantAutorisation synthétiqueAction de test n",
+            "href": "/synthetic-project"
+          },
+          {
+            "text": "synthetic-projectCHALLENGECodeà l’instant1 session active · file 1 en cours / 0 ",
+            "href": "/synthetic-project"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": null,
+      "navigation": null,
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/populated-1920.png"
+    },
+    {
+      "name": "empty-390",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "0 projet actif, 0 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": true,
+        "daemon": "v1.1.0 · base ok",
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": null,
+      "navigation": null,
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/empty-390.png"
+    },
+    {
+      "name": "error-recovery-1440",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "L’état de la supervision n’a pas pu être lu.",
+        "live": "Reconnexion…",
+        "errorVisible": true,
+        "welcomeVisible": false,
+        "daemon": "—",
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": {
+        "summary": "1 projet actif, 1 intervention attendue.",
+        "errorVisible": false,
+        "live": "En direct"
+      },
+      "navigation": null,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/error-recovery-1440.png"
+    },
+    {
+      "name": "malformed-1440",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "0 projet actif, 0 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": true,
+        "daemon": "v— · base ok",
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": null,
+      "navigation": null,
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/malformed-1440.png"
+    },
+    {
+      "name": "injection-390",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "state": {
+        "title": "Centre de contrôle · Kriton Supervisor",
+        "summary": "1 projet actif, 1 intervention attendue.",
+        "live": "En direct",
+        "errorVisible": false,
+        "welcomeVisible": false,
+        "daemon": "v1.1.0 · base ok",
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "overflow": [],
+        "links": [
+          {
+            "text": "Aller au contenu",
+            "href": "#main-content"
+          },
+          {
+            "text": "K\n        \n          Kriton\n          Supervisor",
+            "href": "/"
+          },
+          {
+            "text": "AUTORISATIONsynthetic-projectà l’instantAutorisation synthétique<img src=\"https:",
+            "href": "/evil"
+          },
+          {
+            "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "href": "/synthetic-project"
+          }
+        ],
+        "injected": false,
+        "imgElements": 0
+      },
+      "keyboard": null,
+      "recovery": null,
+      "navigation": null,
+      "errors": [],
+      "denied": [],
+      "requests": [
+        {
+          "url": "http://audit-fixture.invalid/",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/shared.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.css",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/control.js",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/api/control/summary",
+          "method": "GET"
+        },
+        {
+          "url": "http://audit-fixture.invalid/_supervisor/assets/favicon.svg",
+          "method": "GET"
+        }
+      ],
+      "screenshot": "evidence/browser/injection-390.png"
+    }
+  ]
+}

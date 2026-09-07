@@ -1,0 +1,26 @@
+{
+  "checked_utc": "2026-09-07T11:25:27.688426+00:00",
+  "finding_count": 14,
+  "finding_schema_and_evidence_errors": [],
+  "fixture_symlinks": [
+    {
+      "link": "fixtures/guards/home/projects/demo/to-live",
+      "target_in_audit": true,
+      "target": "fixtures/guards/home/projects/live-app"
+    },
+    {
+      "link": "fixtures/guards/home/projects/demo/safe.txt",
+      "target_in_audit": true,
+      "target": "fixtures/guards/home/projects/demo/.env"
+    },
+    {
+      "link": "fixtures/guards/home/projects/demo/to-rules",
+      "target_in_audit": true,
+      "target": "fixtures/guards/home/.claude"
+    }
+  ],
+  "all_fixture_symlinks_remain_in_audit": true,
+  "source_bytes_or_modes_changed": [],
+  "snapshot_implementation_bytes_or_modes_changed": [],
+  "note": "Synthetic symlinks leave their project but never the audit root; fake canaries are synthetic. No real secrets were loaded."
+}

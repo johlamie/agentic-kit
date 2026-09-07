@@ -1,0 +1,22 @@
+{
+  "condition": null,
+  "repeat": null,
+  "model": null,
+  "model_version": null,
+  "cli_version": null,
+  "status": "NOT_EXECUTED",
+  "acceptance_passed": null,
+  "acceptance_total": 12,
+  "regressions": null,
+  "planned_gate_interventions": null,
+  "troubleshooting_interventions": null,
+  "wall_seconds": null,
+  "human_wait_seconds": null,
+  "tool_calls": null,
+  "iterations": null,
+  "tokens": null,
+  "cost": null,
+  "candidate_sha256": null,
+  "maintainability_review": null,
+  "evidence": []
+}

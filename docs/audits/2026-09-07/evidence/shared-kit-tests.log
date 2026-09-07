@@ -1,0 +1,13 @@
+..[feature/test (root-commit) 03427b6] feat: intended change
+ 1 file changed, 1 insertion(+)
+ create mode 100644 intended
+..................
+----------------------------------------------------------------------
+Ran 20 tests in 0.859s
+
+OK
+/tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-test-vz9le51n/project with spaces/.agentic/events/20260907T110039.275343Z-26a80629690940b1af5fee2699d99a43.json
+Installed 8 Codex agents, 3 skills and /tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-test-7fkgq44s/user/.local/bin/agentic
+Existing config.toml, models, MCP credentials and Claude settings preserved.
+Installed 8 Codex agents, 3 skills and /tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-test-7fkgq44s/user/.local/bin/agentic
+Existing config.toml, models, MCP credentials and Claude settings preserved.

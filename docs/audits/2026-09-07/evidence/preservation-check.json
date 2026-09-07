@@ -1,0 +1,8 @@
+{
+  "checked_utc": "2026-09-07T11:15:42.223610+00:00",
+  "source_tracked_files_changed_since_snapshot": [],
+  "audited_copy_implementation_files_changed": [],
+  "current_head": "06e3974d2c80dc1434ec0e575a40f605484fc58b",
+  "current_status": "## feature/codex-shared-kit...origin/feature/codex-shared-kit\n M global/agents/builder.md\n M global/agents/product-manager.md\n M global/agents/reviewer.md\n M global/settings.json\n",
+  "note": "Original source, branch, commit and initial four dirty files preserved. Synthetic Git commits inside tests existed only in disposable test repositories."
+}

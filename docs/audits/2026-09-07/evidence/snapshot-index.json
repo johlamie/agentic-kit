@@ -1,0 +1,16 @@
+{
+  "id": "snapshot-index",
+  "command": [
+    "git",
+    "add",
+    "."
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T10:59:30.853154+00:00",
+  "duration_seconds": 0.085,
+  "timeout_seconds": 120,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/snapshot-index.log"
+}

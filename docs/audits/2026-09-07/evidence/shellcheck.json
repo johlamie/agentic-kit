@@ -1,0 +1,16 @@
+{
+  "id": "shellcheck",
+  "command": [
+    "bash",
+    "-c",
+    "shellcheck setup/*.sh scripts/*.sh global/hooks/*.sh supervisor/bin/* supervisor/scripts/*.sh"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T10:59:51.660910+00:00",
+  "duration_seconds": 2.029,
+  "timeout_seconds": 60,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/shellcheck.log"
+}

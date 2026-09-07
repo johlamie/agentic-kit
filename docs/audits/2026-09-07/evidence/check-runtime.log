@@ -1,0 +1,121 @@
+PASS  repository root contains no raster capture artifacts
+PASS  visual artifact storage policy is documented
+PASS  global/settings.json is valid JSON
+PASS  setup/bootstrap-vps.sh has valid Bash syntax
+PASS  setup/codex-kit-setup.sh has valid Bash syntax
+PASS  setup/codex-mcp-setup.sh has valid Bash syntax
+PASS  setup/link-kit.sh has valid Bash syntax
+PASS  setup/mcp-setup.sh has valid Bash syntax
+PASS  setup/supervisor-setup.sh has valid Bash syntax
+PASS  scripts/check-runtime.sh has valid Bash syntax
+PASS  scripts/smoke-install.sh has valid Bash syntax
+PASS  scripts/validate-kit.sh has valid Bash syntax
+PASS  global/hooks/agent-guard.sh has valid Bash syntax
+PASS  global/hooks/supervisor-hook.sh has valid Bash syntax
+PASS  supervisor/bin/agentic-supervisor has valid Bash syntax
+PASS  supervisor/scripts/install-service.sh has valid Bash syntax
+PASS  supervisor/scripts/smoke-install.sh has valid Bash syntax
+PASS  supervisor/scripts/uninstall-service.sh has valid Bash syntax
+PASS  guard hook is present and executable
+PASS  settings.json registers the guard hook on PreToolUse
+PASS  guard hook self-test (agent tiers, rm targets, production projects)
+PASS  required agent manifests were inspected
+PASS  required skill manifests were inspected
+PASS  memory template exists: PROJECT_STATE.md
+PASS  memory template exists: DECISIONS.md
+PASS  memory template exists: LESSONS.md
+PASS  memory template exists: CAPABILITY_GAPS.md
+PASS  deny rule present: Bash(ufw:*)
+PASS  deny rule present: Bash(sudo systemctl stop ssh:*)
+PASS  deny rule present: Bash(sudo rm:*)
+PASS  deny rule present: Bash(mkfs:*)
+PASS  deny rule present: Bash(sudo apt-get purge:*)
+PASS  deny rule present: Read(./.env)
+PASS  deny rule present: Read(~/.ssh/**)
+PASS  deny rule present: Read(~/.config/agentic-kit/supervisor.env)
+PASS  deny rule present: Read(~/.config/agentic-kit/supervisor-hook-token)
+PASS  deny rule present: Write(~/.claude/CLAUDE.md)
+PASS  deny rule present: Write(~/.claude/hooks/**)
+PASS  deny rule present: Write(~/.claude/production-projects)
+PASS  ask rule present: Bash(npx prisma migrate deploy:*)
+PASS  ask rule present: Bash(supabase projects delete:*)
+PASS  ask rule present: Bash(eas submit:*)
+PASS  local mutations use contextual checks
+PASS  allow rule present: Bash(git push:*)
+PASS  allow rule present: Bash(git merge:*)
+PASS  allow rule present: Bash(sudo nginx:*)
+PASS  allow rule present: Bash(sudo certbot:*)
+PASS  allow rule present: Bash(firebase deploy:*)
+PASS  every npx-spelled ask rule has its bare counterpart
+PASS  no rule is both allowed and denied
+PASS  permissions.defaultMode is auto (current Claude settings syntax)
+PASS  classifyAllShell is on (closes the npm-script wrapper hole)
+PASS  Supervisor hook registered: SessionStart
+PASS  Supervisor hook registered: UserPromptSubmit
+PASS  Supervisor hook registered: SubagentStart
+PASS  Supervisor hook registered: SubagentStop
+PASS  Supervisor hook registered: PostToolUse
+PASS  Supervisor hook registered: PostToolUseFailure
+PASS  Supervisor hook registered: PermissionRequest
+PASS  Supervisor hook registered: PermissionDenied
+PASS  Supervisor hook registered: Elicitation
+PASS  Supervisor hook registered: ElicitationResult
+PASS  Supervisor hook registered: Stop
+PASS  Supervisor hook registered: SessionEnd
+PASS  Supervisor uses immediate structured human-attention hooks instead of generic notifications
+PASS  Supervisor file exists: supervisor/package.json
+PASS  Supervisor file exists: supervisor/package-lock.json
+PASS  Supervisor file exists: supervisor/tsconfig.json
+PASS  Supervisor file exists: supervisor/config/supervisor.example.env
+PASS  Supervisor file exists: supervisor/schemas/hook-event.schema.json
+PASS  Supervisor file exists: supervisor/schemas/audit-result.schema.json
+PASS  Supervisor file exists: supervisor/ecosystem.config.cjs
+PASS  Supervisor file exists: supervisor/bin/agentic-supervisor
+PASS  Supervisor file exists: supervisor/README.md
+PASS  Supervisor file exists: docs/HUMAN_ACTIONS_AND_CONFIGURATION.md
+PASS  Supervisor file exists: docs/PROJECT_WORKFLOW_GUIDE.md
+PASS  Supervisor file exists: setup/supervisor-setup.sh
+PASS  Supervisor file exists: setup/codex-mcp-setup.sh
+PASS  valid JSON: supervisor/schemas/audit-result.schema.json
+PASS  valid JSON: supervisor/schemas/hook-event.schema.json
+PASS  valid JSON: supervisor/package.json
+PASS  valid JSON: supervisor/package-lock.json
+PASS  Supervisor requires Node.js 22+
+PASS  Supervisor example keeps proposals isolated and HTTP on loopback
+PASS  Supervisor skill metadata valid: accessibility-review
+PASS  Supervisor skill protocol resolves: accessibility-review -> ui-ux-audit.md
+PASS  Supervisor skill metadata valid: api-source-due-diligence
+PASS  Supervisor skill protocol resolves: api-source-due-diligence -> source-due-diligence.md
+PASS  Supervisor skill metadata valid: architecture-challenge
+PASS  Supervisor skill protocol resolves: architecture-challenge -> architecture-challenge.md
+PASS  Supervisor skill protocol resolves: architecture-challenge -> source-due-diligence.md
+PASS  Supervisor skill metadata valid: pre-deploy-audit
+PASS  Supervisor skill protocol resolves: pre-deploy-audit -> pre-deploy.md
+PASS  Supervisor skill protocol resolves: pre-deploy-audit -> security-review.md
+PASS  Supervisor skill metadata valid: security-review
+PASS  Supervisor skill protocol resolves: security-review -> security-review.md
+PASS  Supervisor skill metadata valid: ui-ux-due-diligence
+PASS  Supervisor skill protocol resolves: ui-ux-due-diligence -> ui-ux-audit.md
+PASS  Supervisor skill metadata valid: visual-quality-audit
+PASS  Supervisor skill protocol resolves: visual-quality-audit -> ui-ux-audit.md
+PASS  Supervisor contains no known privilege-escalation instruction
+PASS  Supervisor executable paths contain no Kimi/Grok integration
+PASS  no tracked runtime .env file
+
+All offline validations passed.
+PASS  isolated installation smoke test
+PASS  isolated Supervisor setup smoke test
+PASS  required command available: claude
+PASS  required command available: codex
+PASS  required command available: node
+PASS  required command available: npm
+PASS  required command available: git
+PASS  required command available: jq
+PASS  required command available: sqlite3
+PASS  required command available: pm2
+PASS  delivery command available: supabase
+PASS  delivery command available: firebase
+PASS  delivery command available: eas
+WARN  delivery command unavailable: nginx
+PASS  delivery command available: certbot
+AUDIT_ISOLATION: external CLI blocked

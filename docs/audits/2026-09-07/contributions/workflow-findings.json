@@ -1,0 +1,45 @@
+{
+  "tool": "codex",
+  "role": "architect",
+  "scope": "Workflow, memory, portability; synthetic CLI characterization only",
+  "findings": [
+    {
+      "id": "WF-01",
+      "title": "agentic log follows individual event symlinks outside the project",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "files": [{"path": "scripts/agentic.py", "lines": [445, 446, 447]}, {"path": "scripts/agentic.py", "lines": [77, 78, 79, 80, 81, 82]}],
+      "preconditions": ["An initialized local Git project contains .agentic/events", "An attacker or imported repository content can place an event filename ending .json pointing to a readable file outside that project", "The user or an agent invokes agentic log with OS-level read access to the target"],
+      "reproduction": ["Run the supplied characterize_workflow.py fixture with the source snapshot and evidence directory", "The fixture creates a synthetic sibling file outside project B containing SYNTHETIC_ONLY_FAKE_SECRET_CANARY_782", "It symlinks project-b/.agentic/events/99999999-external.json to that synthetic file", "It invokes python3 scripts/agentic.py log --project project-b"],
+      "expected": "Reject or skip event entries whose actual target leaves the project; do not disclose the canary",
+      "observed": "Exit code 0; stdout contains the synthetic external file content and canary. The parent directory is validated but individual glob entries are read without ensure_local",
+      "impact": "A log inspection can disclose arbitrary OS-readable local file content to terminal, tool output or model context through an untrusted event symlink. No privilege escalation or real-secret disclosure demonstrated",
+      "minimal_recommendation": "Validate every event path before reading; reject symlinks or resolve each entry beneath the canonical project, preferably open without following symlinks where required. Preserve normal event reading",
+      "correction_test": "Repeat the fixture: the event alias must be rejected/skipped and stdout must not contain the canary; ordinary event JSON must remain readable. Add the regression to scripts/test_agentic.py",
+      "confidence": "high",
+      "evidence": ["evidence/workflow/characterization-results.json scenario log-follows-external-event-symlink", "fixtures/workflow/characterize_workflow.py"]
+    },
+    {
+      "id": "WF-02",
+      "title": "Public workflow guidance contradicts the current merge and production authorization contract",
+      "severity": "moyenne",
+      "proof_status": "ÉTABLI PAR INSPECTION",
+      "files": [{"path": "README.md", "lines": [202, 203, 204, 205, 269, 270, 271, 272, 273, 274, 275, 276, 277]}, {"path": "docs/PROJECT_WORKFLOW_GUIDE.md", "lines": [212, 213, 214, 215, 216, 217, 300, 301, 302, 303, 305, 306, 307]}, {"path": "global/CLAUDE.md", "lines": [28, 29, 37, 38, 39, 40, 147, 152, 153, 160, 161, 162, 163]}, {"path": "global/skills/delivery-pipeline/SKILL.md", "lines": [6, 7, 8, 103, 104, 105]}],
+      "preconditions": ["A maintainer or another developer uses README or PROJECT_WORKFLOW_GUIDE to decide workflow permissions", "The project has not separately authorized local main integration, or its actual production status differs from the manually declared list"],
+      "reproduction": ["Read README's Git & branches section: after reviewer+qa PASS it directs local merge and calls that autonomous for projects not yet live", "Read README lines 202–205: unlisted projects are described as sandboxed by the judge and deployed without asking", "Compare global/CLAUDE.md and the current pipeline: merge requires the authorized workflow; absence from production list does not establish authorization or absence of real users/data", "Compare the old existing-feature guide's complete pipeline instruction with the current relevant-phases-only maintenance contract"],
+      "expected": "The public operating guide and current runtime contract state the same permission rule and proportional maintenance workflow",
+      "observed": "Conflicting instructions coexist; the newer runtime contract is safer, but readers of the introductory docs are told broader automatic behavior",
+      "impact": "Incorrect expectation about safe default integration, live-project declarations and necessary gates; additional owner interpretation is needed during adoption. This is a documentation/contract drift, not proof that a runtime actually merged or deployed without consent",
+      "minimal_recommendation": "Align README and PROJECT_WORKFLOW_GUIDE with the canonical authorized-mission contract; document the production registry as a guard input, never authorization; link a single canonical rule instead of duplicating variants",
+      "correction_test": "Review the concrete examples for maintenance without merge authorization, unlisted live target and previously approved exact action; all public and runtime documents should yield the same prescribed action. Keep actual model behavior marked untested until an isolated scenario verifies it",
+      "confidence": "high",
+      "evidence": ["contributions/workflow.md section Points contradictoires et contre-preuves"]
+    }
+  ],
+  "limits_not_confirmed_bugs": [
+    {"id": "WL-01", "status": "OBSERVÉ", "claim": "Checkpoint test strings and file paths are accepted without execution or artifact existence checks", "qualification": "The contract explicitly says checkpoints are self-reported; this does not establish a Supervisor PASS or an implementation defect by itself"},
+    {"id": "WL-02", "status": "OBSERVÉ", "claim": "Stale and malicious-looking synthetic memory text is preserved", "qualification": "No LLM consumed it; resistance to prompt injection and semantic resumption are NON TESTÉES"},
+    {"id": "WL-03", "status": "NON TESTÉ", "claim": "Actual delivery quality, role invocation, G1–G4 adherence, and reduction in owner interventions", "qualification": "No real model, deployed project or baseline comparative trial in this contribution"},
+    {"id": "WL-04", "status": "ÉTABLI PAR INSPECTION", "claim": "Role frontmatter model identifiers differ from README opus/sonnet table", "qualification": "No real runtime validation of identifier availability; not labeled invalid models"}
+  ]
+}

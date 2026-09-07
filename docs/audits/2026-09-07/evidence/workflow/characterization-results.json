@@ -1,0 +1,388 @@
+{
+  "tool": "codex",
+  "role": "architect",
+  "source": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "isolation": {
+    "root": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+    "clean_home": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/home",
+    "no_real_CLI": true,
+    "commands_timeout_seconds": 15,
+    "links": [
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-c/.claude/memory/PROJECT_STATE.md",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.agentic/memory/PROJECT_STATE.md",
+        "within_fixture": true
+      },
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/CLAUDE.md",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/AGENTS.md",
+        "within_fixture": true
+      },
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.claude/memory",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.agentic/memory",
+        "within_fixture": true
+      },
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.claude/agent-memory",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.agentic/agent-memory",
+        "within_fixture": true
+      },
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.agentic/events/99999999-external.json",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/outside-synthetic/fake-secret.json",
+        "within_fixture": true
+      },
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.claude/memory",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.agentic/memory",
+        "within_fixture": true
+      },
+      {
+        "path": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.claude/agent-memory",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.agentic/agent-memory",
+        "within_fixture": true
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "legacy-migration-and-idempotence",
+      "expected": "preserve bytes, alias and verified backup; rerun unchanged",
+      "observed": {
+        "memory_hash": "2b394ce7feed301ebb7f1a699d50208741c2b59c3b9e8a620fd3577e98f0cc3a",
+        "alias": "../.agentic/memory",
+        "backup_verified": true,
+        "mtimes_unchanged": true
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "separate-project-storage",
+      "expected": "project B status must not show A project objective",
+      "observed": {
+        "a_marker_in_b_status": false
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "qa-claim-without-artifact",
+      "expected": "characterize claim recording; no claim of verified QA",
+      "observed": {
+        "accepted": true,
+        "recorded_tests": [
+          "Browser QA PASS"
+        ],
+        "referenced_artifact_exists": false,
+        "event": {
+          "version": 1,
+          "timestamp": "20260907T110301.601348Z",
+          "kind": "checkpoint",
+          "tool": "codex",
+          "agent": "qa",
+          "session": "manual-60f3dcd391264223b030f5846272b4ef",
+          "summary": "QA PASS",
+          "next_steps": "ship (unverified fixture)",
+          "tests": [
+            "Browser QA PASS"
+          ],
+          "files": [
+            "qa/evidence/nonexistent.png"
+          ],
+          "observed": {
+            "head": null,
+            "branch": "feature/audit",
+            "dirty_paths": [
+              "?? .agentic/",
+              "?? .claude/",
+              "?? .gitignore",
+              "?? AGENTS.md",
+              "?? CLAUDE.md"
+            ]
+          }
+        }
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "stale-decision-not-reconciled",
+      "expected": "characterize storage; CLI does not reconcile semantic contradictions",
+      "observed": {
+        "status_exit": 0,
+        "stale_decision_preserved": true,
+        "status_shows_reported_QA_PASS": true
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "imported-instruction-storage",
+      "expected": "preserve text; no model was invoked and no resistance conclusion",
+      "observed": {
+        "payload_preserved": true,
+        "LLM_execution": false
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "cross-project-memory-symlink-denied",
+      "expected": "reject before migrating project C",
+      "observed": {
+        "exit_code": 1,
+        "stderr": "ERROR: Review memory symlink before migration: /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-c/.claude/memory/PROJECT_STATE.md\n",
+        "canonical_memory_created": false
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "partial-context-launch-and-tool-failure",
+      "expected": "stub starts; error code recorded; not a QA verdict",
+      "observed": {
+        "exit_code": 7,
+        "stub": {
+          "argv": [
+            "--sandbox",
+            "workspace-write",
+            "--ask-for-approval",
+            "on-request"
+          ],
+          "tool": "codex"
+        },
+        "session_end": {
+          "version": 1,
+          "timestamp": "20260907T110302.209885Z",
+          "kind": "session-end",
+          "tool": "codex",
+          "agent": "orchestrator",
+          "session": "d2524d602713403aa097d28be04cebc2",
+          "exit_code": 7,
+          "observed": {
+            "head": null,
+            "branch": "feature/audit",
+            "dirty_paths": [
+              "?? .agentic/",
+              "?? .claude/",
+              "?? .gitignore",
+              "?? AGENTS.md",
+              "?? CLAUDE.md",
+              "?? stub-launch.json"
+            ]
+          },
+          "note": "Process exit is not a QA verdict. Read the latest checkpoint."
+        }
+      },
+      "assertion_passed": true
+    },
+    {
+      "name": "log-follows-external-event-symlink",
+      "expected": "security expectation: reject or omit escaped event target",
+      "observed": {
+        "exit_code": 0,
+        "canary_disclosed": true,
+        "alias": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.agentic/events/99999999-external.json",
+        "target": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/outside-synthetic/fake-secret.json",
+        "security_expectation_met": false
+      },
+      "assertion_passed": true
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/usr/bin/git",
+        "init",
+        "-q",
+        "-b",
+        "feature/audit",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.009,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "init",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.146,
+      "stdout": "Ancien kit migr\u00e9 vers la m\u00e9moire partag\u00e9e : /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a\nSauvegarde v\u00e9rifi\u00e9e : /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.git/agentic-backups/init-633f842b\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "init",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.138,
+      "stdout": "Projet d\u00e9j\u00e0 \u00e0 jour \u2014 aucune modification : /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/git",
+        "init",
+        "-q",
+        "-b",
+        "feature/audit",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.009,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "init",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.151,
+      "stdout": "Nouveau projet initialis\u00e9 : /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b\nSauvegarde v\u00e9rifi\u00e9e : /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b/.git/agentic-backups/init-x22hf5be\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "status",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.11,
+      "stdout": "{\n  \"head\": null,\n  \"branch\": \"feature/audit\",\n  \"dirty_paths\": [\n    \"?? .agentic/\",\n    \"?? .claude/\",\n    \"?? .gitignore\",\n    \"?? AGENTS.md\",\n    \"?? CLAUDE.md\"\n  ]\n}\n# PROJECT STATE\n> Read at every session start. Updated at every session end / checkpoint.\n\n## Current objective\n(one line)\n\n## Done\n-\n\n## In progress\n-\n\n## Next steps (ordered)\n1.\n\n## Blockers / waiting on user\n-\n\n## Last updated\n(date \u2014 session summary in 2 lines)\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "checkpoint",
+        "--tool",
+        "codex",
+        "--agent",
+        "qa",
+        "--summary",
+        "QA PASS",
+        "--next",
+        "ship (unverified fixture)",
+        "--test",
+        "Browser QA PASS",
+        "--file",
+        "qa/evidence/nonexistent.png",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.121,
+      "stdout": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a/.agentic/events/20260907T110301.601348Z-69113ea625c3460bad61527a03b4d6b9.json\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "status",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.121,
+      "stdout": "{\n  \"head\": null,\n  \"branch\": \"feature/audit\",\n  \"dirty_paths\": [\n    \"?? .agentic/\",\n    \"?? .claude/\",\n    \"?? .gitignore\",\n    \"?? AGENTS.md\",\n    \"?? CLAUDE.md\",\n    \"?? app.txt\"\n  ]\n}\n# Synthetic project A\nCurrent objective: use SQLite.\nQA PASS (self-reported, no artifacts).\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "init",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.136,
+      "stdout": "Projet d\u00e9j\u00e0 \u00e0 jour \u2014 aucune modification : /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-a\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/git",
+        "init",
+        "-q",
+        "-b",
+        "feature/audit",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-c"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.009,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "init",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-c"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 1,
+      "seconds": 0.147,
+      "stdout": "",
+      "stderr": "ERROR: Review memory symlink before migration: /tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-c/.claude/memory/PROJECT_STATE.md\n"
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "run",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b",
+        "codex"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 7,
+      "seconds": 0.201,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/agentic-kit-audit-2026-09-07/work/source/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf/project-b"
+      ],
+      "cwd": "/tmp/agentic-kit-audit-2026-09-07/evidence/workflow/synthetic-n2ixirxf",
+      "exit_code": 0,
+      "seconds": 0.102,
+      "stdout": "{\n  \"version\": 1,\n  \"timestamp\": \"20260907T110302.146765Z\",\n  \"kind\": \"session-start\",\n  \"tool\": \"codex\",\n  \"agent\": \"orchestrator\",\n  \"session\": \"d2524d602713403aa097d28be04cebc2\",\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/audit\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n{\n  \"version\": 1,\n  \"timestamp\": \"20260907T110302.209885Z\",\n  \"kind\": \"session-end\",\n  \"tool\": \"codex\",\n  \"agent\": \"orchestrator\",\n  \"session\": \"d2524d602713403aa097d28be04cebc2\",\n  \"exit_code\": 7,\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/audit\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\",\n      \"?? stub-launch.json\"\n    ]\n  },\n  \"note\": \"Process exit is not a QA verdict. Read the latest checkpoint.\"\n}\n{\"fake_secret\": \"SYNTHETIC_ONLY_FAKE_SECRET_CANARY_782\"}\n",
+      "stderr": ""
+    }
+  ]
+}

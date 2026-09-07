@@ -1,0 +1,54 @@
+TAP version 13
+# Subtest: mocked BRVM research challenges an unsupported scraping assumption
+ok 1 - mocked BRVM research challenges an unsupported scraping assumption
+  ---
+  duration_ms: 37.784191
+  type: 'test'
+  ...
+# Subtest: bad authorization code blocks the slice even when Claude reviewer says PASS
+ok 2 - bad authorization code blocks the slice even when Claude reviewer says PASS
+  ---
+  duration_ms: 146.050042
+  type: 'test'
+  ...
+# Subtest: paid/login-only evidence becomes HUMAN_REQUIRED without account action
+ok 3 - paid/login-only evidence becomes HUMAN_REQUIRED without account action
+  ---
+  duration_ms: 17.259429
+  type: 'test'
+  ...
+# Subtest: mocked weak and severe rendered frontends produce CHALLENGE and BLOCK
+ok 4 - mocked weak and severe rendered frontends produce CHALLENGE and BLOCK
+  ---
+  duration_ms: 183.302107
+  type: 'test'
+  ...
+# Subtest: redesign proposal remains isolated and never overwrites the active frontend
+ok 5 - redesign proposal remains isolated and never overwrites the active frontend
+  ---
+  duration_ms: 17.937017
+  type: 'test'
+  ...
+# Subtest: artifact storage refuses a symlinked project control directory
+ok 6 - artifact storage refuses a symlinked project control directory
+  ---
+  duration_ms: 19.390974
+  type: 'test'
+  ...
+# Subtest: prompt-injection text stays untrusted and forbidden secret paths are recognized
+ok 7 - prompt-injection text stays untrusted and forbidden secret paths are recognized
+  ---
+  duration_ms: 14.252462
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 449.493347
+(node:5) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

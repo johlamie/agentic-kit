@@ -1,0 +1,16 @@
+{
+  "id": "supervisor-typecheck",
+  "command": [
+    "npm",
+    "run",
+    "typecheck"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:02:16.218048+00:00",
+  "duration_seconds": 8.974,
+  "timeout_seconds": 60,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/supervisor-typecheck.log"
+}

@@ -1,0 +1,46 @@
+{
+  "global/agents/builder.md": {
+    "head_model": [
+      "model: claude-opus-5"
+    ],
+    "working_model": [
+      "model: claude-fable-5-1"
+    ]
+  },
+  "global/agents/product-manager.md": {
+    "head_model": [
+      "model: claude-opus-5"
+    ],
+    "working_model": [
+      "model: claude-fable-5-1"
+    ]
+  },
+  "global/agents/reviewer.md": {
+    "head_model": [
+      "model: sonnet"
+    ],
+    "working_model": [
+      "model: claude-fable-5-1"
+    ]
+  },
+  "global/settings.json": [
+    {
+      "path": "/autoUpdatesChannel",
+      "old": "stable",
+      "new": null
+    },
+    {
+      "path": "/permissions/additionalDirectories",
+      "old": null,
+      "new": [
+        "[LOCAL_PROJECT_PATH_1]",
+        "[LOCAL_PROJECT_PATH_2]"
+      ]
+    },
+    {
+      "path": "/model",
+      "old": "claude-fable-5[1m]",
+      "new": "fable[1m]"
+    }
+  ]
+}

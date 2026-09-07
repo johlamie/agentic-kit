@@ -1,0 +1,11 @@
+{
+  "source": "/home/ubuntu/agentic-kit",
+  "snapshot": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "captured_utc": "2026-09-07T10:57:00.104247+00:00",
+  "commit": "06e3974d2c80dc1434ec0e575a40f605484fc58b",
+  "branch": "feature/codex-shared-kit",
+  "status": "## feature/codex-shared-kit...origin/feature/codex-shared-kit\n M global/agents/builder.md\n M global/agents/product-manager.md\n M global/agents/reviewer.md\n M global/settings.json\n",
+  "tracked_file_count": 181,
+  "tracked_symlinks": [],
+  "excluded": "Git metadata, ignored files, original node_modules, personal .claude memory and all global configuration excluded."
+}

@@ -1,0 +1,24 @@
+{
+  "payload_data_never_executed": {
+    "tool_name": "Bash",
+    "agent_type": "builder",
+    "cwd": "/tmp/agentic-kit-audit-2026-09-07/fixtures/guards/home/projects/demo",
+    "tool_input": {
+      "command": "git push origin synthetic-audit-topic"
+    }
+  },
+  "results": [
+    {
+      "PATH": "/usr/bin:/bin",
+      "exit_code": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Reserved to the orchestrator (you are running as 'builder'). Return the exact command and why it is needed; the orchestrator runs it.\"}}\n",
+      "stderr": ""
+    },
+    {
+      "PATH": "/agentic-audit-nonexistent-bin",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

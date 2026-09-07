@@ -1,0 +1,15 @@
+{
+  "id": "supervisor-module-diagnostics",
+  "command": [
+    "python3",
+    "/tmp/agentic-kit-audit-2026-09-07/fixtures/diagnose-suite.py"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:06:23.520637+00:00",
+  "duration_seconds": 7.715,
+  "timeout_seconds": 120,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/supervisor-module-diagnostics.log"
+}

@@ -1,0 +1,434 @@
+{
+  "audit_date": "2026-09-07",
+  "version": "06e3974d2c80dc1434ec0e575a40f605484fc58b",
+  "branch": "feature/codex-shared-kit",
+  "working_tree_is_audited": true,
+  "ratings": "No global numeric score; end-to-end delivery and comparative productivity not evaluable.",
+  "finding_counts": {
+    "total": 14,
+    "observed": 12,
+    "inspection": 2,
+    "critical": 0
+  },
+  "findings": [
+    {
+      "id": "SUP-01",
+      "title": "Un PASS n’est pas lié au contenu du candidat validé",
+      "severity": "élevée",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/db.ts:975-1017",
+        "supervisor/src/codex/runner.ts:28-40",
+        "supervisor/src/hooks/normalize.ts:210-220"
+      ],
+      "preconditions": [
+        "Un audit code PASS existe pour un projet."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/characterize.mjs, scénario stale_pass_after_code_change.",
+        "Créer app.js, enregistrer PASS, changer ses octets, consulter gate(code)."
+      ],
+      "expected": "Le changement de candidat invalide le PASS précédent.",
+      "observed": "PASS avant et après modification; même audit_id; aucun audit reviewer_meta ou QA n’est nécessaire dans ce scénario.",
+      "impact": "Le code ensuite intégré ou livré peut différer de celui évalué sans invalidation technique. Aucun déploiement réel réalisé.",
+      "minimal_recommendation": "Lier audit/gate à une empreinte du candidat incluant les changements pertinents; vérifier avant/après audit et au point de progression. Définir les preuves requises par phase.",
+      "correction_test": "PASS pour A; fichier suivi/non suivi modifié vers B: gate PENDING/STALE; seul un audit B peut valider B.",
+      "evidence": [
+        "evidence/supervisor-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "SUP-02",
+      "title": "Une preuve reviewer arrivée pendant un audit est stockée sans être évaluée",
+      "severity": "élevée",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/audits/dispatcher.ts:67-86",
+        "supervisor/src/db.ts:508-521",
+        "supervisor/src/queue.ts:70-83"
+      ],
+      "preconditions": [
+        "Audit code running avec prompt déjà construit; reviewer termine pendant son exécution."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/characterize.mjs, reviewer_evidence_coalesced_after_start.",
+        "Suspendre le runner JS après capture du prompt; ingérer LATE_REVIEW_BLOCK; libérer le runner retournant un PASS simulé."
+      ],
+      "expected": "La nouvelle preuve doit être évaluée avant validation du jalon.",
+      "observed": "Même audit_id; marqueur dans context_json, absent du prompt reçu; un seul audit et gate PASS.",
+      "impact": "La présence d’une preuve dans l’historique ne signifie pas qu’elle a été soumise à l’auditeur. Risque de validation malgré un défaut reviewer tardif.",
+      "minimal_recommendation": "Coalescer seulement pending; pour running programmer un suivi identifié ou invalider puis relancer avec les nouvelles preuves.",
+      "correction_test": "Pendant runner suspendu, injecter FAIL reviewer/QA: gate non PASS avant un audit ayant réellement reçu le marqueur.",
+      "evidence": [
+        "evidence/supervisor-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "SUP-03",
+      "title": "La limite d’historique masque un BLOCK encore non résolu",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/db.ts:691-698",
+        "supervisor/src/db.ts:995-1017",
+        "supervisor/src/db.ts:1028-1052"
+      ],
+      "preconditions": [
+        "BLOCK visual_ux_audit suivi de nombreux QA PASS sans réévaluation visuelle."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/characterize.mjs, stop_gate_history_250 et phase_gate_history_500."
+      ],
+      "expected": "Le dernier verdict applicable de chaque type subsiste indépendamment du volume d’autres audits.",
+      "observed": "À 250 QA ultérieurs, stopGate=PASS; à 500, gate(code)=PASS. Le BLOCK existe toujours dans SQLite.",
+      "impact": "Sur projet durable, l’accumulation suffit à effacer le blocage des décisions sans corriger son motif.",
+      "minimal_recommendation": "Sélectionner le dernier audit par type par SQL; réserver la pagination aux vues d’historique.",
+      "correction_test": "Au-delà de 500 lignes, maintenir BLOCK jusqu’à nouvelle évaluation du même type.",
+      "evidence": [
+        "evidence/supervisor-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "SUP-04",
+      "title": "SQLite conserve les sorties Codex sans expurger les secrets reconnaissables",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/db.ts:664-683",
+        "supervisor/src/db.ts:601-625",
+        "supervisor/src/queue.ts:73-80",
+        "supervisor/src/queue.ts:98-105"
+      ],
+      "preconditions": [
+        "Une sortie CLI contient accidentellement un secret reconnaissable; test limité à une sentinelle synthétique."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/characterize.mjs, raw_codex_output_persisted.",
+        "Écrire stdout/stderr via recordCodexRun puis rouvrir SQLite en lecture seule."
+      ],
+      "expected": "La politique d’expurgation s’applique avant persistance.",
+      "observed": "Les deux colonnes conservent la sentinelle; slice(-8000) borne la taille mais ne filtre pas. Les résultats structurés sont également stockés bruts par inspection.",
+      "impact": "La DB et ses sauvegardes peuvent retenir des secrets accidentels. Répertoire privé prévu; aucune fuite réelle, aucun secret réel lu.",
+      "minimal_recommendation": "Expurger à la frontière DB les sorties, erreurs et résultats structurés; supprimer les sorties brutes inutiles.",
+      "correction_test": "Sentinelles dans succès/erreur/résultat: absentes des colonnes DB, rapports et logs après réouverture.",
+      "evidence": [
+        "evidence/supervisor-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "SUP-05",
+      "title": "Le hook Stop n’impose plus le blocage lorsque la gate est ERROR",
+      "severity": "élevée",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/hooks/forwarder.ts:31-45",
+        "supervisor/src/db.ts:1012-1013",
+        "global/CLAUDE.md:84-89"
+      ],
+      "preconditions": [
+        "Audit indispensable en erreur; consommation par forwardHook au moment Stop."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/characterize.mjs, mock_forwarder_gate et mock_forwarder_transport_failure.",
+        "Injecter les réponses fetch ERROR puis BLOCK dans le vrai forwardHook."
+      ],
+      "expected": "L’erreur d’un audit requis conserve un refus de progression de sa phase. La télémétrie facultative peut rester non bloquante.",
+      "observed": "BLOCK/PENDING/CHALLENGE/HUMAN_REQUIRED: decision:block. ERROR: systemMessage seul. Transport échoué: null. Aucun ERROR transformé en PASS dans SQLite.",
+      "impact": "La barrière Stop s’efface précisément en mode dégradé; respecter l’obligation repose sur les instructions du modèle. Le comportement réel d’une session Claude reste NON TESTÉ.",
+      "minimal_recommendation": "Séparer transport optionnel et validation requise; faire consommer ERROR/exit50 au point réel de progression, sans bloquer les tâches indépendantes.",
+      "correction_test": "Échec audit requis: progression concernée refusée; erreur conservée; travail indépendant possible.",
+      "evidence": [
+        "evidence/supervisor-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "SUP-06",
+      "title": "Le dépassement de sortie ne garantit pas l’arrêt borné du sous-processus",
+      "severity": "moyenne",
+      "proof_status": "ÉTABLI PAR INSPECTION",
+      "source_references": [
+        "supervisor/src/codex/runner.ts:101-117",
+        "supervisor/src/codex/runner.ts:127-131"
+      ],
+      "preconditions": [
+        "L’enfant dépasse la limite de sortie et ignore SIGTERM."
+      ],
+      "reproduction": [
+        "Inspecter append puis finishReject.",
+        "Fixture bounded-process.mjs tentée avec enfant auto-terminé; les deux essais ont reçu CODEX_TIMEOUT et non CODEX_OUTPUT_LIMIT."
+      ],
+      "expected": "Toute limite de ressources mène à un arrêt borné et ferme les flux.",
+      "observed": "Inspection: chemin output-limit envoie TERM, annule le timeout, sans KILL différé; les handlers continuent d’accumuler. Reproduction dynamique NON OBTENUE; aucun succès revendiqué pour ces essais.",
+      "impact": "Un enfant peut poursuivre son activité après rejet; chevauchement avec retries plausible. La survie effective n’a pas été confirmée dans cet environnement.",
+      "minimal_recommendation": "Centraliser l’arrêt TERM puis KILL borné, attendre close et arrêter/capper la capture de flux.",
+      "correction_test": "Fixture ignorante de TERM: après output-limit, enfant arrêté dans la borne et aucune croissance des buffers.",
+      "evidence": [
+        "evidence/supervisor-process-bound.log",
+        "evidence/supervisor-process-bound-relaxed.log",
+        "fixtures/supervisor/bounded-process.mjs"
+      ],
+      "confidence": "élevé sur le chemin de code; effet dynamique non confirmé"
+    },
+    {
+      "id": "SUP-07",
+      "title": "La déduplication ne couvre pas deux livraisons identiques d’un hook researcher",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/hooks/normalize.ts:209-220",
+        "supervisor/src/audits/dispatcher.ts:19-21",
+        "supervisor/src/db.ts:524-528"
+      ],
+      "preconditions": [
+        "Même SubagentStop researcher livré deux fois pour même session/projet/agent."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/characterize.mjs, duplicate_raw_hook."
+      ],
+      "expected": "Une retransmission du même jalon est idempotente.",
+      "observed": "Deux normalisations du même payload créent deux UUID, deux événements et deux audits.",
+      "impact": "Audits, coûts et demandes humaines peuvent être répétés. La déduplication DB des mêmes IDs fonctionne, mais pas cette frontière d’entrée.",
+      "minimal_recommendation": "Clé idempotente de jalon/source lorsque session+agent+type représentent une occurrence; distinguer vrais nouveaux événements.",
+      "correction_test": "Deux livraisons même jalon: un audit; deux sessions/agents différents: deux audits.",
+      "evidence": [
+        "evidence/supervisor-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "SUP-08",
+      "title": "Une fermeture précoce du stdin enfant peut terminer le processus appelant sur EPIPE",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "supervisor/src/codex/runner.ts:116-125",
+        "supervisor/src/queue.ts:70-105"
+      ],
+      "preconditions": [
+        "L’exécutable enfant sort avant d’accepter le prompt sur stdin."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/supervisor/incomplete-output.mjs avec le runner réel et un faux CLI shell qui fait uniquement exit 0.",
+        "Deux essais indépendants; comparer à incomplete-output-consumed.mjs où le faux CLI consomme stdin avant de sortir."
+      ],
+      "expected": "Retour d’erreur structuré sans exception non interceptée du processus parent.",
+      "observed": "Deux sorties code1 avec Unhandled error event, write EPIPE sur child.stdin.end. Le catch autour de runner.run n’intercepte pas cet événement. Si stdin est consommé, retour attendu CODEX_NO_OUTPUT, sans PASS.",
+      "impact": "Une CLI qui sort tôt peut faire tomber le processus hébergeant le runner; indisponibilité temporaire du Supervisor plausible malgré reprise externe. Le daemon PM2 réel n’a pas été lancé.",
+      "minimal_recommendation": "Installer un gestionnaire d’erreur stdin avant end, normaliser le rejet et finaliser le processus une seule fois.",
+      "correction_test": "Enfant exit0/exitnonzero avant lecture du prompt: runner rejette proprement, processus parent reste vivant; ensuite un audit normal fonctionne.",
+      "evidence": [
+        "evidence/incomplete-codex-output.log",
+        "evidence/runner-early-exit-repeat.log",
+        "evidence/incomplete-output-consumed.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "PERM-01",
+      "title": "Les symlinks évitent les décisions de protection des outils de fichiers",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "global/hooks/agent-guard.sh:54-81",
+        "global/hooks/agent-guard.sh:176-221",
+        "global/hooks/agent-guard.sh:122-147"
+      ],
+      "preconditions": [
+        "Projet demo avec alias vers live-app enregistré, règles .claude synthétiques et faux .env."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/guards/characterize.py; comparer file-live/symlink-live, file-rules/symlink-rules, file-env/symlink-env."
+      ],
+      "expected": "Une même destination physique conserve ask ou deny.",
+      "observed": "live direct ask / alias NO_OPINION; règles directes deny / alias NO_OPINION; faux .env direct ask / alias NO_OPINION.",
+      "impact": "Perte des décisions déterministes sur des destinations sensibles. NO_OPINION n’est pas ALLOW; permissions natives et classifier Claude NON TESTÉS.",
+      "minimal_recommendation": "Résoudre la destination physique et les ancêtres existants; appliquer les contrôles sensibles/production/périmètre au chemin réel. Ne pas présenter ceci comme une sandbox.",
+      "correction_test": "Paires chemin/alias avec fichier nouveau sous répertoire lié: décision sensible conservée.",
+      "evidence": [
+        "evidence/guard-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "PERM-02",
+      "title": "Le filtre lexical manque des formes shell ordinaires et des mutations live",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "global/hooks/agent-guard.sh:42-46",
+        "global/hooks/agent-guard.sh:98-118",
+        "global/hooks/agent-guard.sh:130-174",
+        "global/hooks/agent-guard.sh:229-275"
+      ],
+      "preconditions": [
+        "Payloads Bash synthétiques; aucune commande du payload exécutée."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/guards/characterize.py.",
+        "Comparer rm /etc/... et rm \"/etc/...\"; git push et git -C ... push; cat .env et /bin/cat .env; pm2 restart live-app depuis live et demo."
+      ],
+      "expected": "Les variantes équivalentes d’une action protégée conservent la protection annoncée.",
+      "observed": "Refus directs; NO_OPINION pour plusieurs variantes citées, redirections sur live/règles, cp dans live, wrapper release.",
+      "impact": "La couche du hook est plus étroite que les promesses. Les autres permissions peuvent encore bloquer; aucune exécution non autorisée Claude démontrée.",
+      "minimal_recommendation": "Réduire les promesses; utiliser une restriction de processus/périmètre réelle pour les frontières indispensables. Pour le filtre conservé, analyser les syntaxes supportées et escalader les ambiguïtés.",
+      "correction_test": "Régressions sur paires équivalentes et vrais essais natifs inoffensifs isolés pour connaître la décision finale.",
+      "evidence": [
+        "evidence/guard-characterization.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "PERM-03",
+      "title": "Sans jq le garde-fou s’efface sans diagnostic",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "source_references": [
+        "global/hooks/agent-guard.sh:382-395"
+      ],
+      "preconditions": [
+        "Hook lancé explicitement via /bin/bash; PATH synthétique sans jq."
+      ],
+      "reproduction": [
+        "Exécuter fixtures/guards/missing-jq.py, même payload builder git push avec et sans jq."
+      ],
+      "expected": "Dépendance indispensable indisponible: refus conservateur ou erreur explicite reconnue du runtime.",
+      "observed": "Avec jq deny; sans jq code0, stdout/stderr vides.",
+      "impact": "Restrictions spécifiques du hook disparues en mode dégradé; autres couches non évaluées.",
+      "minimal_recommendation": "Échouer explicitement pour la couche permission; réserver le mode ouvert à la télémétrie optionnelle.",
+      "correction_test": "Sans jq, décision conservatrice et diagnostic non sensible; même action directe reste protégée.",
+      "evidence": [
+        "evidence/guard-missing-jq.log"
+      ],
+      "confidence": "élevé"
+    },
+    {
+      "id": "WF-01",
+      "title": "agentic log follows individual event symlinks outside the project",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "preconditions": [
+        "An initialized local Git project contains .agentic/events",
+        "An attacker or imported repository content can place an event filename ending .json pointing to a readable file outside that project",
+        "The user or an agent invokes agentic log with OS-level read access to the target"
+      ],
+      "reproduction": [
+        "Run the supplied characterize_workflow.py fixture with the source snapshot and evidence directory",
+        "The fixture creates a synthetic sibling file outside project B containing SYNTHETIC_ONLY_FAKE_SECRET_CANARY_782",
+        "It symlinks project-b/.agentic/events/99999999-external.json to that synthetic file",
+        "It invokes python3 scripts/agentic.py log --project project-b"
+      ],
+      "expected": "Reject or skip event entries whose actual target leaves the project; do not disclose the canary",
+      "observed": "Exit code 0; stdout contains the synthetic external file content and canary. The parent directory is validated but individual glob entries are read without ensure_local",
+      "impact": "A log inspection can disclose arbitrary OS-readable local file content to terminal, tool output or model context through an untrusted event symlink. No privilege escalation or real-secret disclosure demonstrated",
+      "minimal_recommendation": "Validate every event path before reading; reject symlinks or resolve each entry beneath the canonical project, preferably open without following symlinks where required. Preserve normal event reading",
+      "correction_test": "Repeat the fixture: the event alias must be rejected/skipped and stdout must not contain the canary; ordinary event JSON must remain readable. Add the regression to scripts/test_agentic.py",
+      "confidence": "high",
+      "evidence": [
+        "evidence/workflow/characterization-results.json",
+        "fixtures/workflow/characterize_workflow.py"
+      ],
+      "source_references": [
+        "scripts/agentic.py:445-447",
+        "scripts/agentic.py:77-82"
+      ]
+    },
+    {
+      "id": "WF-02",
+      "title": "Public workflow guidance contradicts the current merge and production authorization contract",
+      "severity": "moyenne",
+      "proof_status": "ÉTABLI PAR INSPECTION",
+      "preconditions": [
+        "A maintainer or another developer uses README or PROJECT_WORKFLOW_GUIDE to decide workflow permissions",
+        "The project has not separately authorized local main integration, or its actual production status differs from the manually declared list"
+      ],
+      "reproduction": [
+        "Read README's Git & branches section: after reviewer+qa PASS it directs local merge and calls that autonomous for projects not yet live",
+        "Read README lines 202–205: unlisted projects are described as sandboxed by the judge and deployed without asking",
+        "Compare global/CLAUDE.md and the current pipeline: merge requires the authorized workflow; absence from production list does not establish authorization or absence of real users/data",
+        "Compare the old existing-feature guide's complete pipeline instruction with the current relevant-phases-only maintenance contract"
+      ],
+      "expected": "The public operating guide and current runtime contract state the same permission rule and proportional maintenance workflow",
+      "observed": "Conflicting instructions coexist; the newer runtime contract is safer, but readers of the introductory docs are told broader automatic behavior",
+      "impact": "Incorrect expectation about safe default integration, live-project declarations and necessary gates; additional owner interpretation is needed during adoption. This is a documentation/contract drift, not proof that a runtime actually merged or deployed without consent",
+      "minimal_recommendation": "Align README and PROJECT_WORKFLOW_GUIDE with the canonical authorized-mission contract; document the production registry as a guard input, never authorization; link a single canonical rule instead of duplicating variants",
+      "correction_test": "Review the concrete examples for maintenance without merge authorization, unlisted live target and previously approved exact action; all public and runtime documents should yield the same prescribed action. Keep actual model behavior marked untested until an isolated scenario verifies it",
+      "confidence": "high",
+      "evidence": [
+        "contributions/workflow.md"
+      ],
+      "source_references": [
+        "README.md:202-277",
+        "docs/PROJECT_WORKFLOW_GUIDE.md:212-307",
+        "global/CLAUDE.md:28-163",
+        "global/skills/delivery-pipeline/SKILL.md:6-105"
+      ]
+    },
+    {
+      "id": "BR-01",
+      "title": "The control UI converts a schema-invalid HTTP 200 response into a healthy empty state",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "tool": "codex",
+      "role": "qa",
+      "confidence": "high for the client behavior; production occurrence not established",
+      "preconditions": [
+        "Control UI loads the audited static assets.",
+        "Its summary endpoint returns HTTP 200 application/json with {}.",
+        "Browser polling fallback is active in the observed fixture."
+      ],
+      "reproduction": [
+        "Run fixtures/browser/qa/run-control-browser.js using Playwright MCP browser_run_code_unsafe code argument.",
+        "Inspect scenario malformed-1440.",
+        "Compare evidence/browser/malformed-1440.png and evidence/browser/results.json."
+      ],
+      "expected": "An incomplete snapshot is reported as unavailable or invalid, without inventing a healthy database or absence of projects.",
+      "observed": "The page displays 'En direct', 'v— · base ok', '0 projet actif, 0 intervention attendue.', shows the empty welcome state and hides the error.",
+      "impact": "A malformed/contract-incompatible response can reassure the operator that there are no interventions. This observation concerns UI presentation only: it is not a Supervisor audit verdict PASS and does not establish a gate bypass.",
+      "minimal_recommendation": "Validate the snapshot envelope and required daemon status/collection fields before applying defensive display defaults; route failures through the existing error state.",
+      "correction_test": "Return HTTP 200 {} and assert the error is visible, database health is unknown, the empty-project success state is not shown, and a later valid snapshot recovers.",
+      "evidence": [
+        "evidence/browser/results.json",
+        "evidence/browser/malformed-1440.png"
+      ],
+      "limits": "Response shape was fault-injected by a mock route. No evidence that the current real server emits this response.",
+      "source_references": [
+        "supervisor/ui/static/control.js:175-197",
+        "supervisor/ui/static/control.js:358-369"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "HYP-01",
+      "proof_status": "HYPOTHÈSE",
+      "claim": "Prompt/role/gate overhead may outweigh benefits on trivial changes.",
+      "needed_evidence": "Matched real Claude A/B runs with external evaluator."
+    },
+    {
+      "id": "HYP-02",
+      "proof_status": "HYPOTHÈSE",
+      "claim": "User-scoped memory or hostile imported text may contaminate future project reasoning.",
+      "needed_evidence": "Real isolated LLM runs; storage preservation alone proves neither exploit nor resistance."
+    },
+    {
+      "id": "HYP-03",
+      "proof_status": "HYPOTHÈSE",
+      "claim": "Inherited MCP/browser credentials could permit effects outside the shell read-only boundary.",
+      "needed_evidence": "Inspect effective scoped runtime config and inert remote sentinel; no real remote action performed."
+    }
+  ],
+  "not_tested": [
+    "Real Claude/Codex model delivery and comparison",
+    "Actual runtime permission/classifier decisions",
+    "Supervisor HTTP auth and SSE integration (socket EPERM)",
+    "Authenticated MCP/browser remote side effects",
+    "Real Telegram notification",
+    "Real deployment/G4/public QA",
+    "Fresh dependency retrieval and vulnerability registry (DNS blocked)"
+  ]
+}

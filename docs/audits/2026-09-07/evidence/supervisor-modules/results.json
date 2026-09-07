@@ -1,0 +1,258 @@
+[
+  {
+    "module": "acceptance.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/acceptance.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "7"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/acceptance.test.log"
+  },
+  {
+    "module": "activity-server.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/activity-server.test.js"
+    ],
+    "exit_code": 1,
+    "pass": [
+      "3"
+    ],
+    "fail": [
+      "1"
+    ],
+    "environment_block": true,
+    "log": "evidence/supervisor-modules/activity-server.test.log"
+  },
+  {
+    "module": "capabilities.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/capabilities.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "4"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/capabilities.test.log"
+  },
+  {
+    "module": "config.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/config.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "2"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/config.test.log"
+  },
+  {
+    "module": "control-client.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-client.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "3"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/control-client.test.log"
+  },
+  {
+    "module": "control-server.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js"
+    ],
+    "exit_code": 1,
+    "pass": [
+      "4"
+    ],
+    "fail": [
+      "8"
+    ],
+    "environment_block": true,
+    "log": "evidence/supervisor-modules/control-server.test.log"
+  },
+  {
+    "module": "database.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/database.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "9"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/database.test.log"
+  },
+  {
+    "module": "dispatcher.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/dispatcher.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "5"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/dispatcher.test.log"
+  },
+  {
+    "module": "hook-e2e.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/hook-e2e.test.js"
+    ],
+    "exit_code": 1,
+    "pass": [
+      "0"
+    ],
+    "fail": [
+      "1"
+    ],
+    "environment_block": true,
+    "log": "evidence/supervisor-modules/hook-e2e.test.log"
+  },
+  {
+    "module": "hook-launcher.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/hook-launcher.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "1"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/hook-launcher.test.log"
+  },
+  {
+    "module": "normalize.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/normalize.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "4"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/normalize.test.log"
+  },
+  {
+    "module": "parser.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/parser.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "4"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/parser.test.log"
+  },
+  {
+    "module": "queue.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/queue.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "6"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/queue.test.log"
+  },
+  {
+    "module": "repository-contract.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/repository-contract.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "4"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/repository-contract.test.log"
+  },
+  {
+    "module": "runner.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/runner.test.js"
+    ],
+    "exit_code": 0,
+    "pass": [
+      "5"
+    ],
+    "fail": [
+      "0"
+    ],
+    "environment_block": false,
+    "log": "evidence/supervisor-modules/runner.test.log"
+  },
+  {
+    "module": "telegram-server.test.js",
+    "command": [
+      "node",
+      "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/telegram-server.test.js"
+    ],
+    "exit_code": 1,
+    "pass": [
+      "5"
+    ],
+    "fail": [
+      "3"
+    ],
+    "environment_block": true,
+    "log": "evidence/supervisor-modules/telegram-server.test.log"
+  }
+]

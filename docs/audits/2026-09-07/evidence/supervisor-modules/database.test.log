@@ -1,0 +1,66 @@
+TAP version 13
+# Subtest: persists events and audits across database restart
+ok 1 - persists events and audits across database restart
+  ---
+  duration_ms: 24.006433
+  type: 'test'
+  ...
+# Subtest: migrates a version-1 database in place without reviving old stopping sessions
+ok 2 - migrates a version-1 database in place without reviving old stopping sessions
+  ---
+  duration_ms: 27.485572
+  type: 'test'
+  ...
+# Subtest: activates one virtual project route per SessionStart and removes it after the final SessionEnd
+ok 3 - activates one virtual project route per SessionStart and removes it after the final SessionEnd
+  ---
+  duration_ms: 24.355973
+  type: 'test'
+  ...
+# Subtest: uses stable collision-safe project slugs and expires abandoned sessions
+ok 4 - uses stable collision-safe project slugs and expires abandoned sessions
+  ---
+  duration_ms: 7.085653
+  type: 'test'
+  ...
+# Subtest: deduplicates event audits and coalesces related evidence
+ok 5 - deduplicates event audits and coalesces related evidence
+  ---
+  duration_ms: 5.342269
+  type: 'test'
+  ...
+# Subtest: recovers interrupted queue jobs after restart and fails exhausted jobs
+ok 6 - recovers interrupted queue jobs after restart and fails exhausted jobs
+  ---
+  duration_ms: 21.438965
+  type: 'test'
+  ...
+# Subtest: maps gate decisions to stable exit codes
+ok 7 - maps gate decisions to stable exit codes
+  ---
+  duration_ms: 25.816355
+  type: 'test'
+  ...
+# Subtest: phase gate cannot hide an unresolved audit behind a newer PASS of another type
+ok 8 - phase gate cannot hide an unresolved audit behind a newer PASS of another type
+  ---
+  duration_ms: 10.053961
+  type: 'test'
+  ...
+# Subtest: an open human request survives a newer PASS until explicitly resolved
+ok 9 - an open human request survives a newer PASS until explicitly resolved
+  ---
+  duration_ms: 7.481481
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 178.549579
+(node:63) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

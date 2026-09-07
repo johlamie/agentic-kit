@@ -1,0 +1,16 @@
+{
+  "id": "runner-early-exit-repeat",
+  "command": [
+    "node",
+    "/tmp/agentic-kit-audit-2026-09-07/fixtures/supervisor/incomplete-output.mjs",
+    "/tmp/agentic-kit-audit-2026-09-07"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:13:22.137169+00:00",
+  "duration_seconds": 0.322,
+  "timeout_seconds": 10,
+  "timed_out": false,
+  "exit_code": 1,
+  "log": "evidence/runner-early-exit-repeat.log"
+}

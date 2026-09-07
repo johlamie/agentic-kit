@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: keeps routine audit decisions internal and notifies only human escalation
+ok 1 - keeps routine audit decisions internal and notifies only human escalation
+  ---
+  duration_ms: 72.334125
+  type: 'test'
+  ...
+# Subtest: processes an audit asynchronously and writes concise project artifacts
+ok 2 - processes an audit asynchronously and writes concise project artifacts
+  ---
+  duration_ms: 16.156563
+  type: 'test'
+  ...
+# Subtest: bounded queue failure becomes ERROR and never PASS
+ok 3 - bounded queue failure becomes ERROR and never PASS
+  ---
+  duration_ms: 19.462541
+  type: 'test'
+  ...
+# Subtest: visual audit distinguishes missing Playwright from product quality
+ok 4 - visual audit distinguishes missing Playwright from product quality
+  ---
+  duration_ms: 86.49466
+  type: 'test'
+  ...
+# Subtest: visual audit runs when target and browser capability are available
+ok 5 - visual audit runs when target and browser capability are available
+  ---
+  duration_ms: 91.579365
+  type: 'test'
+  ...
+# Subtest: visual audit refuses non-allowlisted hosts and embedded credentials
+ok 6 - visual audit refuses non-allowlisted hosts and embedded credentials
+  ---
+  duration_ms: 31.810951
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 328.614416
+{"timestamp":"2026-09-07T11:06:29.558Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-supervisor-project-ryPskh","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"bb0a016b-ac02-48c2-bb72-abc3dee4635b","audit_type":"code","codex_run_id":"4de78570-d873-461f-a086-eeb1abffa37e","retrying":false,"error":"Codex audit timed out"}
+(node:112) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"timestamp":"2026-09-07T11:06:29.647Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-supervisor-project-QFh5zQ","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"0a849faf-c05b-4a88-b2a2-5ff453e6771a","audit_type":"visual_ux_audit","codex_run_id":"62060f38-35ed-4a33-9563-c109790ba3ae","retrying":false,"error":"Codex Playwright MCP is not configured"}
+{"timestamp":"2026-09-07T11:06:29.756Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-supervisor-project-lyuz1P","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"a2c70d80-bc67-4917-a8ff-1e16b7731497","audit_type":"visual_ux_audit","codex_run_id":"20c156cc-d031-4e39-8094-d294eaaeb5dd","retrying":false,"error":"Visual audit host is not allowlisted: unapproved.example"}
+{"timestamp":"2026-09-07T11:06:29.772Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-audit-2026-09-07/work/tmp/agentic-supervisor-project-QedjDa","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"6336dd5e-228c-48ab-a544-f944a7749c34","audit_type":"visual_ux_audit","codex_run_id":"fc1d89a2-bcf3-4e15-864e-2391e497cb72","retrying":false,"error":"Visual audit target must be an HTTP(S) URL without embedded credentials"}

@@ -1,0 +1,14 @@
+{
+  "id": "validate-kit",
+  "command": [
+    "./scripts/validate-kit.sh"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T10:59:51.604529+00:00",
+  "duration_seconds": 8.494,
+  "timeout_seconds": 90,
+  "timed_out": false,
+  "exit_code": 1,
+  "log": "evidence/validate-kit.log"
+}

@@ -1,0 +1,9 @@
+import pathlib,shutil,subprocess,json,os
+r=pathlib.Path('/tmp/agentic-kit-audit-2026-09-07');s=r/'work/source';out=r/'evidence/mutations';out.mkdir(exist_ok=True);rows=[]
+def run(id,cmd,cwd,env=None):
+ p=subprocess.run(cmd,cwd=cwd,env=env or os.environ.copy(),capture_output=True,text=True,timeout=60);log=p.stdout+p.stderr;(out/(id+'.log')).write_text(log);rows.append({'id':id,'command':cmd,'cwd':str(cwd),'exit_code':p.returncode,'log':'evidence/mutations/'+id+'.log'});return p
+m=r/'work/mutations/guard';shutil.copytree(s/'global/hooks',m,dirs_exist_ok=True);p=m/'agent-guard.sh';text=p.read_text();old='if [ -n "$agent_type" ] && printf \'%s\' "$scan" | grep -Eq "$ORCHESTRATOR_ONLY"; then';assert old in text;p.write_text(text.replace(old,'if false; then',1));e=dict(os.environ,CLAUDE_PROJECTS_ROOT='/home/agentic-kit-audit-synthetic/projects');run('guard-role-check-removed',['/bin/bash',str(p),'--self-test'],m,e)
+for label,rel,old,new,test in [('parser-security-floor','src/codex/parser.ts','if (securityCritical && result.decision !== "HUMAN_REQUIRED") result.decision = "BLOCK";','if (securityCritical && result.decision !== "HUMAN_REQUIRED") result.decision = result.decision;','parser.test.js'),('retry-counter','src/db.ts','attempt_count = attempt_count + 1','attempt_count = attempt_count + 0','database.test.js')]:
+ m=r/'work/mutations'/label/'supervisor';shutil.copytree(s/'supervisor',m,ignore=shutil.ignore_patterns('node_modules'),dirs_exist_ok=True);(m/'node_modules').symlink_to(r/'work/dependencies',target_is_directory=True);p=m/rel;text=p.read_text();assert old in text;p.write_text(text.replace(old,new,1));built=run(label+'-build',['npm','run','build'],m)
+ if built.returncode==0:run(label+'-test',['node','dist/tests/'+test],m)
+(out/'results.json').write_text(json.dumps({'purpose':'Deliberate changes in disposable copies, not defects present in audited implementation','results':rows},indent=2));print(json.dumps(rows,indent=2))

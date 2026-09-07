@@ -1,0 +1,3 @@
+(node:4) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"scenario":"exit_zero_missing_output","error":"CODEX_NO_OUTPUT","passReturned":false,"fakeCli":true}

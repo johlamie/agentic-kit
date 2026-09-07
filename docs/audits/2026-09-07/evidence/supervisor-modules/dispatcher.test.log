@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: manual audits preserve producer and never coalesce Claude with Codex
+ok 1 - manual audits preserve producer and never coalesce Claude with Codex
+  ---
+  duration_ms: 10.056016
+  type: 'test'
+  ...
+# Subtest: routes meaningful subagent milestones without auditing each tool call
+ok 2 - routes meaningful subagent milestones without auditing each tool call
+  ---
+  duration_ms: 12.627759
+  type: 'test'
+  ...
+# Subtest: coalesces reviewer/QA evidence into a slice audit and schedules one rendered UI audit
+ok 3 - coalesces reviewer/QA evidence into a slice audit and schedules one rendered UI audit
+  ---
+  duration_ms: 12.864543
+  type: 'test'
+  ...
+# Subtest: schedules final audit only for a meaningful non-recursive Stop
+ok 4 - schedules final audit only for a meaningful non-recursive Stop
+  ---
+  duration_ms: 6.301654
+  type: 'test'
+  ...
+# Subtest: off and light levels enforce cost-control routing
+ok 5 - off and light levels enforce cost-control routing
+  ---
+  duration_ms: 4.664677
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 64.754358
+(node:70) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

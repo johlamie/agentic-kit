@@ -1,0 +1,17 @@
+{
+  "id": "guard-self-test-logical-home",
+  "command": [
+    "env",
+    "CLAUDE_PROJECTS_ROOT=/home/agentic-kit-audit-synthetic/projects",
+    "./global/hooks/agent-guard.sh",
+    "--self-test"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:04:12.943818+00:00",
+  "duration_seconds": 6.637,
+  "timeout_seconds": 90,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/guard-self-test-logical-home.log"
+}

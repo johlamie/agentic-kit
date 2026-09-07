@@ -1,0 +1,116 @@
+TAP version 13
+# Subtest: persists events and audits across database restart
+ok 1 - persists events and audits across database restart
+  ---
+  duration_ms: 50.424738
+  type: 'test'
+  ...
+# Subtest: migrates a version-1 database in place without reviving old stopping sessions
+ok 2 - migrates a version-1 database in place without reviving old stopping sessions
+  ---
+  duration_ms: 45.269876
+  type: 'test'
+  ...
+# Subtest: activates one virtual project route per SessionStart and removes it after the final SessionEnd
+ok 3 - activates one virtual project route per SessionStart and removes it after the final SessionEnd
+  ---
+  duration_ms: 43.211672
+  type: 'test'
+  ...
+# Subtest: uses stable collision-safe project slugs and expires abandoned sessions
+ok 4 - uses stable collision-safe project slugs and expires abandoned sessions
+  ---
+  duration_ms: 10.282166
+  type: 'test'
+  ...
+# Subtest: deduplicates event audits and coalesces related evidence
+ok 5 - deduplicates event audits and coalesces related evidence
+  ---
+  duration_ms: 7.237947
+  type: 'test'
+  ...
+# Subtest: recovers interrupted queue jobs after restart and fails exhausted jobs
+not ok 6 - recovers interrupted queue jobs after restart and fails exhausted jobs
+  ---
+  duration_ms: 17.414814
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/mutations/retry-counter/supervisor/dist/tests/database.test.js:188:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      {
+    +   failed: 0,
+    +   recovered: 2
+    -   failed: 1,
+    -   recovered: 1
+      }
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    recovered: 1
+    failed: 1
+  actual:
+    recovered: 2
+    failed: 0
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/agentic-kit-audit-2026-09-07/work/mutations/retry-counter/supervisor/dist/tests/database.test.js:200:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: maps gate decisions to stable exit codes
+not ok 7 - maps gate decisions to stable exit codes
+  ---
+  duration_ms: 28.615946
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/mutations/retry-counter/supervisor/dist/tests/database.test.js:207:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    40 !== 50
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 50
+  actual: 40
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/agentic-kit-audit-2026-09-07/work/mutations/retry-counter/supervisor/dist/tests/database.test.js:238:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: phase gate cannot hide an unresolved audit behind a newer PASS of another type
+ok 8 - phase gate cannot hide an unresolved audit behind a newer PASS of another type
+  ---
+  duration_ms: 7.923147
+  type: 'test'
+  ...
+# Subtest: an open human request survives a newer PASS until explicitly resolved
+ok 9 - an open human request survives a newer PASS until explicitly resolved
+  ---
+  duration_ms: 6.874028
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 7
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 251.239882
+(node:861) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

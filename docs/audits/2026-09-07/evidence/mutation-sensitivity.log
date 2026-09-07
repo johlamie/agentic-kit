@@ -1,0 +1,55 @@
+[
+  {
+    "id": "guard-role-check-removed",
+    "command": [
+      "/bin/bash",
+      "/tmp/agentic-kit-audit-2026-09-07/work/mutations/guard/agent-guard.sh",
+      "--self-test"
+    ],
+    "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/mutations/guard",
+    "exit_code": 1,
+    "log": "evidence/mutations/guard-role-check-removed.log"
+  },
+  {
+    "id": "parser-security-floor-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/mutations/parser-security-floor/supervisor",
+    "exit_code": 0,
+    "log": "evidence/mutations/parser-security-floor-build.log"
+  },
+  {
+    "id": "parser-security-floor-test",
+    "command": [
+      "node",
+      "dist/tests/parser.test.js"
+    ],
+    "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/mutations/parser-security-floor/supervisor",
+    "exit_code": 1,
+    "log": "evidence/mutations/parser-security-floor-test.log"
+  },
+  {
+    "id": "retry-counter-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/mutations/retry-counter/supervisor",
+    "exit_code": 0,
+    "log": "evidence/mutations/retry-counter-build.log"
+  },
+  {
+    "id": "retry-counter-test",
+    "command": [
+      "node",
+      "dist/tests/database.test.js"
+    ],
+    "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/mutations/retry-counter/supervisor",
+    "exit_code": 1,
+    "log": "evidence/mutations/retry-counter-test.log"
+  }
+]

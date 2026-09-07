@@ -1,0 +1,4 @@
+npm warn audit request to https://registry.npmjs.org/-/npm/v1/security/audits/quick failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+undefined
+npm error audit endpoint returned an error
+npm error A complete log of this run can be found in: /tmp/agentic-kit-audit-2026-09-07/work/npm-cache/_logs/2026-09-07T11_11_19_405Z-debug-0.log

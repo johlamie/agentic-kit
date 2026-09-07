@@ -1,0 +1,18 @@
+{"scenario":"stale_pass_after_code_change","before":"PASS","after":"PASS","sameAudit":true,"reviewerAudits":0,"qaAudits":0}
+{"scenario":"stop_gate_history_250","phase":"BLOCK","stop":"PASS","blockedStillStored":"BLOCK"}
+{"scenario":"phase_gate_history_500","phase":"PASS","blockedStillStored":"BLOCK"}
+{"scenario":"reviewer_evidence_coalesced_after_start","sameAudit":true,"storedHasEvidence":true,"runnerSawEvidence":false,"totalAudits":1,"gate":"PASS"}
+{"scenario":"duplicate_raw_hook","events":2,"audits":2}
+{"scenario":"raw_codex_output_persisted","stdoutContainsSyntheticSecret":true,"stderrContainsSyntheticSecret":true}
+{"scenario":"human_persistence_project_isolation","reopened":"HUMAN_REQUIRED","otherProject":"PASS"}
+{"scenario":"recovery_retry_budget","recovered":1,"attempts":2,"decision":"ERROR"}
+{"scenario":"mock_forwarder_gate","decision":"PASS","blocks":false,"output":null}
+{"scenario":"mock_forwarder_gate","decision":"PENDING","blocks":true,"output":{"decision":"block","reason":"CODEX SUPERVISOR — PENDING\nSynthetic PENDING\nAudit: fixture\nRead .claude/supervisor/LATEST.md and address or re-run the relevant gate."}}
+{"scenario":"mock_forwarder_gate","decision":"CHALLENGE","blocks":true,"output":{"decision":"block","reason":"CODEX SUPERVISOR — CHALLENGE\nSynthetic CHALLENGE\nAudit: fixture\nRead .claude/supervisor/LATEST.md and address or re-run the relevant gate."}}
+{"scenario":"mock_forwarder_gate","decision":"BLOCK","blocks":true,"output":{"decision":"block","reason":"CODEX SUPERVISOR — BLOCK\nSynthetic BLOCK\nAudit: fixture\nRead .claude/supervisor/LATEST.md and address or re-run the relevant gate."}}
+{"scenario":"mock_forwarder_gate","decision":"HUMAN_REQUIRED","blocks":true,"output":{"decision":"block","reason":"CODEX SUPERVISOR — HUMAN_REQUIRED\nSynthetic HUMAN_REQUIRED\nAudit: fixture\nRead .claude/supervisor/LATEST.md and address or re-run the relevant gate."}}
+{"scenario":"mock_forwarder_gate","decision":"ERROR","blocks":false,"output":{"systemMessage":"Codex Supervisor degraded: Synthetic ERROR. No PASS was recorded."}}
+{"scenario":"mock_forwarder_transport_failure","output":null,"blocks":false}
+{"scenario":"mock_forwarder_recursive_stop","output":null,"blocks":false}
+(node:4) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

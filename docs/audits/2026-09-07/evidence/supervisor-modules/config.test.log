@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: loads a private env file while environment overrides remain authoritative
+ok 1 - loads a private env file while environment overrides remain authoritative
+  ---
+  duration_ms: 7.98342
+  type: 'test'
+  ...
+# Subtest: refuses non-loopback binding and unsafe UI configuration
+ok 2 - refuses non-loopback binding and unsafe UI configuration
+  ---
+  duration_ms: 5.304374
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27.632121

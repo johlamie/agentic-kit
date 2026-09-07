@@ -1,0 +1,907 @@
+[
+  {
+    "path": ".artifacts/README.md",
+    "sha256": "b910e45be923b5231a0e82cd04971bba680e9c0933855f98f2dd82f42c51e7c7",
+    "mode": "0o664"
+  },
+  {
+    "path": ".github/workflows/validate.yml",
+    "sha256": "7ce1f41f888935f58c2e9ed37ec7bac02669b053388ca06847c23ef217fba94d",
+    "mode": "0o664"
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "8be1b095f6dfaeb0d8cf5372585fbd72532d14215c9931da3632fd39529a8d4e",
+    "mode": "0o664"
+  },
+  {
+    "path": "CAPABILITY_GAPS.md",
+    "sha256": "82d5ce241638bfb238a8db78e24916943acc9863e764ad3cace036b54ca3fa4f",
+    "mode": "0o664"
+  },
+  {
+    "path": "CODEX_AUDIT.md",
+    "sha256": "0ef3e9820b2493d774799699d1642834543d85799ac6ff0017e8afcc0368b860",
+    "mode": "0o664"
+  },
+  {
+    "path": "CODEX_SUPERVISOR_IMPLEMENTATION_SPEC_V2_UI_UX.md",
+    "sha256": "3ee7ca097f7bb4a5b42f9658b173db06bf29475c5e34b1e4139b69e809cdce0e",
+    "mode": "0o644"
+  },
+  {
+    "path": "README.md",
+    "sha256": "936b353d05a437149ed9cb18d3810f4daa6b384cdd94095945d65fa681f4da53",
+    "mode": "0o664"
+  },
+  {
+    "path": "REVUE_TECHNIQUE_2026-09-06.md",
+    "sha256": "6ff760582b2988f7ea130598eba95a0c9ce8230c3651b13145ec678e706e43c5",
+    "mode": "0o664"
+  },
+  {
+    "path": "codex/AGENTS.md",
+    "sha256": "e2941b298c03483f88e7b4be1eec5057013e349db74223464949c6d14e73a61c",
+    "mode": "0o664"
+  },
+  {
+    "path": "codex/skills/adopt-project/SKILL.md",
+    "sha256": "0a8b4ba21ea351b0a4ec315e4e9eddc1160f3c409367291f85d5afad3e8a7597",
+    "mode": "0o664"
+  },
+  {
+    "path": "codex/skills/delivery-pipeline/SKILL.md",
+    "sha256": "d2c7c839cc3c59b423be658568c053bcd2e58920287bffbefff0a5847e7a7f69",
+    "mode": "0o664"
+  },
+  {
+    "path": "codex/skills/retrospective/SKILL.md",
+    "sha256": "55996a799d5ac2e0802802b64a21f45c36f877dd6d8a826c27d2dfde9b3bdfe6",
+    "mode": "0o664"
+  },
+  {
+    "path": "docs/CLAUDE_CODEX_WORKFLOW.md",
+    "sha256": "d042cc7e3d4db10454ce7821b117cbbc2144ba96556b973bd8bb0b746c37376e",
+    "mode": "0o664"
+  },
+  {
+    "path": "docs/CONTROL_CENTER_ARCHITECTURE.md",
+    "sha256": "f3b28831b09f01f17227222ed16a8864b8bff9ae313b522e448bce95d6efad97",
+    "mode": "0o664"
+  },
+  {
+    "path": "docs/CONTROL_CENTER_UX.md",
+    "sha256": "0a500f1255f9888ab67207ce31575e4e6f9c8dc23883a17d305d4fdba4db05e8",
+    "mode": "0o664"
+  },
+  {
+    "path": "docs/HUMAN_ACTIONS_AND_CONFIGURATION.md",
+    "sha256": "11dcf267000f9782d0e952bc89808dc6f0f69f909e33beb01366c5fe4dbb2932",
+    "mode": "0o664"
+  },
+  {
+    "path": "docs/PROJECT_WORKFLOW_GUIDE.md",
+    "sha256": "ac7198984713bc4c4efb97b9ee5bcb5788e06a6d50006f7be55c4f64e7d7758a",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/CLAUDE.md",
+    "sha256": "5efda89be901e09b86b95fe1fe53a311aa8a7e06f3f1e2fa9cbebd3cd935acdd",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/architect.md",
+    "sha256": "9e91cad043920e78d80c721e03ee392629ec0f48ee603a24286b623aaba82cb2",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/builder.md",
+    "sha256": "8930426732ca36f8276e277f22b1467d59bdd9dd471a5c7ed6969ba24b814b6a",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/designer.md",
+    "sha256": "e09b64c3bb64fa3bf98254dbdc75e00b6a4332fb28bc2654025f5d4a028e6492",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/devops.md",
+    "sha256": "7d37f82c7ae0d4ea6fc1db3c467fb32a35f1798d972a7ecaddf5f7df20314894",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/product-manager.md",
+    "sha256": "e4c846c2d16f40aa781988d4e675a9d1d8593f48981fc678830307ac9ddca5a5",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/qa.md",
+    "sha256": "963a24bb6d154f8056736fee3f771cd7b2e079811d7bec36104f0a2eebca1fe0",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/researcher.md",
+    "sha256": "792c6dbe26ec9a4260508d66f3dcdc01be1b6699be9c7403be1a0bc9d5605211",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/agents/reviewer.md",
+    "sha256": "8f7350a8d9c9a8f579edec542c0f5cdb880cfbbe10b476dad0fa7f37686a9a04",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/hooks/agent-guard.sh",
+    "sha256": "5b0898bc14b465c494b551298e4d19500e156567299bd7991fa134eca450de66",
+    "mode": "0o775"
+  },
+  {
+    "path": "global/hooks/file-scope.py",
+    "sha256": "0cdd8749470232b5b2d264c463dd381745e5b846b576e60b2c3f539bdcf8a6bb",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/hooks/local-operations.py",
+    "sha256": "91db899bb255189ac96b48f6da2a483744b5eb7219eb52630ca9bcff011c9fb5",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/hooks/supervisor-hook.sh",
+    "sha256": "104c193bb3098158152a65a09dd704e6021af29f3e142374f621fe820108dea1",
+    "mode": "0o775"
+  },
+  {
+    "path": "global/settings.json",
+    "sha256": "b18534313d9fc85dc927003261898e760094150316a4234d844db98471aac16d",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/skills/adopt-project/SKILL.md",
+    "sha256": "6bd220f41b1d896402c1b64a278b11e65c82fcdadc8439c9f17b556c6af7ecb4",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/skills/delivery-pipeline/SKILL.md",
+    "sha256": "4a66038adbfc94ade767ca14f0b79ca27d2870f24d09988c4929e66af67b32c5",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/skills/retrospective/SKILL.md",
+    "sha256": "5cd9f59d83f4d8c2b923c271f44e0fb1407c11a012255e0cfad4701cc251a956",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/templates/memory/CAPABILITY_GAPS.md",
+    "sha256": "9e5c477e6a25232f16e5f1d8515e37da258b95bb1b9f06b0e6b0878f26a8c25b",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/templates/memory/DECISIONS.md",
+    "sha256": "b5889465a60c4ef25c6d9ceb6246bb52b113aaa30c12f19fa900bbadd9c15f0a",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/templates/memory/LESSONS.md",
+    "sha256": "86540ef1b287fdffa30c36cc46f6529a7a219cf88c0c76f6d36e7a1aa63f5f15",
+    "mode": "0o664"
+  },
+  {
+    "path": "global/templates/memory/PROJECT_STATE.md",
+    "sha256": "6ca68f005f695419a39a7b6bec9bb74ef5e0896de5158488979fe2ce7f913a3b",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/AGENTS.md",
+    "sha256": "0822861feedc4a654f46268389cf38cc68a1382fba40a550887fdb389d68eaff",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/README.md",
+    "sha256": "a304f32d264166836c9a7353defcb2b2d370972d40a34724fe620cf61ba67bc0",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/config/mcp.example.json",
+    "sha256": "8c0d0c5e5e679856eaeb0cff410f2925be6a7aaad0b7a75f14adda8b3aa9973a",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/config/permissions.toml",
+    "sha256": "d96b91d7777db8bd82ab57022964b8afdd355eb6092e43856d516ee07d2aa508",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/scripts/smoke-install.sh",
+    "sha256": "9937fced4cbc1539d3d687776ece4d96b4774eca48921e2b3f03c797e5f900f7",
+    "mode": "0o775"
+  },
+  {
+    "path": "kimi/scripts/validate-kit.sh",
+    "sha256": "1dcd021395c05428a2f264441677bfd5998e86cf9e441574e7d2029faf882555",
+    "mode": "0o775"
+  },
+  {
+    "path": "kimi/setup/bootstrap-vps.sh",
+    "sha256": "daa249ac3ce12fdf323493c3d5d8687722365f16a45b1fff4b68442c88ddd7b5",
+    "mode": "0o775"
+  },
+  {
+    "path": "kimi/setup/link-kit.sh",
+    "sha256": "bf870b96ad28e7af5afba6ceb5706474c7e063ba61636b3cf69a4f534dea85eb",
+    "mode": "0o775"
+  },
+  {
+    "path": "kimi/setup/mcp-setup.sh",
+    "sha256": "d14bc6dff5a1a427faf4b1f9e9ddd027e1c40f7e14085dbe98cc647464f90a88",
+    "mode": "0o775"
+  },
+  {
+    "path": "kimi/skills/adopt-project/SKILL.md",
+    "sha256": "748c0d7e6d9ddc3a3bca9a9c96a1905311d87d59e847d57482e3940a67c92e23",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/architect/SKILL.md",
+    "sha256": "c5936aff4e71a26bf4a125fd3b9ed789f8ea347e90a588602633f4f20a23ce91",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/builder/SKILL.md",
+    "sha256": "755faf5f805e6be537eb8189750d5ff18ff0660e1d745a4f66e17e86353e99f9",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/delivery-pipeline/SKILL.md",
+    "sha256": "b006176ee97212d2f2e66974b7d2f78b08fe32e0153827c5d3be70f31666b2c3",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/designer/SKILL.md",
+    "sha256": "6a744126d7ef67a682222847f9329859302644ec7be8e8fbf0123f75107dcc2c",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/devops/SKILL.md",
+    "sha256": "c6272308ec297f887b40c74997120ead889ffde5520702e7c754509f376a832d",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/product-manager/SKILL.md",
+    "sha256": "88512448a31ee4c723fdc24c9d2df28b576a13c6175a620e0b3474f5c8b012cc",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/qa/SKILL.md",
+    "sha256": "caae8fa40c281dc3e52b093f86a26b8404581e49a16219862c68bea5e116cbe8",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/researcher/SKILL.md",
+    "sha256": "23915962668b739eebe82726e71526cc1ced8cb1dbbd3d0403835432547b68c2",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/retrospective/SKILL.md",
+    "sha256": "39a624a920ff5558ca0d190279c8bf22221aafd97d61230c59a0f0640acf02aa",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/skills/reviewer/SKILL.md",
+    "sha256": "d4cc0d2cae6d3d430c0f0e67078664c477fdba7d63129d49583c32d5682680fb",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/templates/memory/CAPABILITY_GAPS.md",
+    "sha256": "9e5c477e6a25232f16e5f1d8515e37da258b95bb1b9f06b0e6b0878f26a8c25b",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/templates/memory/DECISIONS.md",
+    "sha256": "b5889465a60c4ef25c6d9ceb6246bb52b113aaa30c12f19fa900bbadd9c15f0a",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/templates/memory/LESSONS.md",
+    "sha256": "86540ef1b287fdffa30c36cc46f6529a7a219cf88c0c76f6d36e7a1aa63f5f15",
+    "mode": "0o664"
+  },
+  {
+    "path": "kimi/templates/memory/PROJECT_STATE.md",
+    "sha256": "6ca68f005f695419a39a7b6bec9bb74ef5e0896de5158488979fe2ce7f913a3b",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/README.md",
+    "sha256": "9d0c9b67b6e214ea9409e32bf01b03fb7671c0443cd5e40c0eeb58110eb8103b",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/app.js",
+    "sha256": "27c0bdb3b5dac454bd2d82497aac4b89ca3cbbec701749570a4c674f0d011cff",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/deploy/nginx/supervisor-preview.conf",
+    "sha256": "032f075557060c875f413352b93c886705ffd7047a408911fc80d68732b32b38",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/favicon.svg",
+    "sha256": "3ea558b241200319e51e8cb1b7e4f3ba4d5d3a14e4a439dbcdc1cb78d1049cad",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/index.html",
+    "sha256": "c5a24891f9776b6993ac7748004d9b91bdb2931dbb4b88c0cd0e805f87cdcab4",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/server.mjs",
+    "sha256": "878103cc50466216863a1c914727365a2fc1252f80ff9c546115a9b01e341e77",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/styles.css",
+    "sha256": "447e07018947c6e89234e95c8cc13bbc21069603e15d44ff9ba210194725d031",
+    "mode": "0o664"
+  },
+  {
+    "path": "prototypes/supervisor-timeline/test.mjs",
+    "sha256": "570d7176236052ee0a1c90a5d1564b72933a881b608a132a70e669e8c8740829",
+    "mode": "0o664"
+  },
+  {
+    "path": "scripts/agentic.py",
+    "sha256": "f563f548fd091eecc7d4651eabd7c63c795a910e11906735ae892e03dd8e8b24",
+    "mode": "0o775"
+  },
+  {
+    "path": "scripts/check-runtime.sh",
+    "sha256": "2183344072ea7816e165f33b71e7ef16688d908efb9fdf8d1321db8444c4f339",
+    "mode": "0o775"
+  },
+  {
+    "path": "scripts/smoke-install.sh",
+    "sha256": "e4f6441263255a45d1a619cc41fcd4833ccd8e5e09534cf0ccf0151a6482bcbd",
+    "mode": "0o775"
+  },
+  {
+    "path": "scripts/test_agentic.py",
+    "sha256": "0a594af0f7d1562d61a47d5f43c471f8722193f551dbe9b0184ae10840610dc3",
+    "mode": "0o664"
+  },
+  {
+    "path": "scripts/test_file_scope.py",
+    "sha256": "f1c976e48c1f32223ed73b4f99c134da2b905163c46ef999507fe106818aedea",
+    "mode": "0o664"
+  },
+  {
+    "path": "scripts/test_local_operations.py",
+    "sha256": "df7343fbd147f69b6fcfdd9a43ecc914702a12e4703e4cddece6d877b9cc0c0a",
+    "mode": "0o664"
+  },
+  {
+    "path": "scripts/validate-kit.sh",
+    "sha256": "83e4505f9dd543ed11be09e669e71edb6ae019545f23f0629a4d5c9c2f2ff424",
+    "mode": "0o775"
+  },
+  {
+    "path": "setup/bootstrap-vps.sh",
+    "sha256": "107a0c83dbfead4757fefbfed18eb261e0e6d1b2c48c5a5b165a57e7c04c29b2",
+    "mode": "0o775"
+  },
+  {
+    "path": "setup/codex-kit-setup.sh",
+    "sha256": "a802b72880ebed2edf0f35e8d338d88f4174ae7f23cf62f0fca89d94d4d80f4a",
+    "mode": "0o775"
+  },
+  {
+    "path": "setup/codex-mcp-setup.sh",
+    "sha256": "5a7f72e06efc99470d9ffb74ba727e9935397d4ad51817d288aa353adbb8c5b9",
+    "mode": "0o775"
+  },
+  {
+    "path": "setup/link-kit.sh",
+    "sha256": "3417b5fd0b43632a1311c32f0be6443e8092acef4608b3bcc7078c4e7ca67295",
+    "mode": "0o775"
+  },
+  {
+    "path": "setup/mcp-setup.sh",
+    "sha256": "0758730a4b012c34cfb084d0189c224f5623ee878dcb3c12fb46daa2b4c4791e",
+    "mode": "0o775"
+  },
+  {
+    "path": "setup/supervisor-setup.sh",
+    "sha256": "9e7f060c1c0f547bbeaa1300cea8aceab5fef14b5a518813e4d5f6891f64f493",
+    "mode": "0o775"
+  },
+  {
+    "path": "shared/SESSION_CONTRACT.md",
+    "sha256": "436ae93ecb07ecb55f4bb4bb1733b3180c25b0e09899c0055d2f8ca5f39ed658",
+    "mode": "0o664"
+  },
+  {
+    "path": "shared/protocols/architecture-challenge.md",
+    "sha256": "eb11517213090c44699ebb48967f72e341da64a410ae786c564fefbed752f54e",
+    "mode": "0o664"
+  },
+  {
+    "path": "shared/protocols/pre-deploy.md",
+    "sha256": "b19988c33418f68c1e08cab468fbdb148f5f41df815c10043b356fab515e3e48",
+    "mode": "0o664"
+  },
+  {
+    "path": "shared/protocols/security-review.md",
+    "sha256": "36519f44034d61359647e455b3b3af8d0fcc26d5a86b9dd00d03779f8114351e",
+    "mode": "0o664"
+  },
+  {
+    "path": "shared/protocols/source-due-diligence.md",
+    "sha256": "0e88b4ce8777242450d6059da96de4fadaf6c7ef2c827f4b5010113fea1343c7",
+    "mode": "0o664"
+  },
+  {
+    "path": "shared/protocols/ui-ux-audit.md",
+    "sha256": "abcfe7ccf1001dcf7a11832ea79f81648b7f71a779275ccc95861a397253deb5",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/COMPATIBILITY.md",
+    "sha256": "9683171d944b9eb08072ad660e915250b30f1f43d1accb705deb68136db64383",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/IMPLEMENTATION_NOTES.md",
+    "sha256": "544265254dd8f88aae38ea99879076ed9d332c1c378a2c497382986d8fa1b477",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/README.md",
+    "sha256": "42d57e9cc159590aa3b27ad70f3de2d46629e5de9d1d6bf0b251ba9ece3b9f0e",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/bin/agentic-supervisor",
+    "sha256": "b79759a615b832f7356b191e089a3a2ed8d3d06a9cd0e2af06525f46b49f5f00",
+    "mode": "0o775"
+  },
+  {
+    "path": "supervisor/config/supervisor.example.env",
+    "sha256": "17c035ec95e730d43340da4c1d1fb2fdd967d9c73bab470fb4b239a38c9ab6ee",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/ecosystem.config.cjs",
+    "sha256": "0c0890ebcf76610e8fa54db3c87c046b6760eb836c3be8b0d2a30e39024cdd80",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/package-lock.json",
+    "sha256": "1d89e591575ebe33a383793a1e635a7b1cdc3d3b1c96d6b0bacf3eb802aa2090",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/package.json",
+    "sha256": "7cb9a52a88f9583d0edcce07fa8695a5849c2d7405f968b85f67fd25da2b0101",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/ARCHITECTURE_AUDIT.md",
+    "sha256": "6c6982abbfd291dee083cd0b437eaadd28ba475909ff295e6706cb6f37b436ee",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/CODE_AUDIT.md",
+    "sha256": "e20a9fe54e2eb4859c99448efb3d72acf5b78807a85253a92319abb64e96ce4a",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/DEPLOYMENT_AUDIT.md",
+    "sha256": "1d645d91ac446b2bd66870dc04a5f9ff69ef25ff7231a432106c37329dd19314",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/DESIGN_DUE_DILIGENCE.md",
+    "sha256": "0336b7000c59271abff9b2d836b923b532137a88265a5a80653eb9adfec496ac",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/FINAL_AUDIT.md",
+    "sha256": "fc36a2b683fb8c5807c4335dc1f12e281444ff3fb3c9fe23acb4443988fea069",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/QA_AUDIT.md",
+    "sha256": "66409d5e4a5179c4b236fa56739ec4a50eb2ba78da611cc9e4f23845c52650ce",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/RESEARCH_AUDIT.md",
+    "sha256": "69a96f042d2ffd01926f8a77c1d967aa4035f0c328ef5781b722fcf09958d350",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/REVIEWER_META_AUDIT.md",
+    "sha256": "2613e40dd175567025a24e345f22f40a3edd531d054c9fec1520babbaec8cf62",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/SECURITY_AUDIT.md",
+    "sha256": "baa7613dd2cb5f96ed379bb8d324f6658e495128a7d4cd1a617cb145c1a02a5e",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/SYSTEM.md",
+    "sha256": "55d16f39c454cecaecb250c495964c86b87ab30540dce2c88d772b27ca6b4bf4",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/prompts/VISUAL_UX_AUDIT.md",
+    "sha256": "ad90aa85a9a29faac71c52e3bca026a030c2382071373a22d82882ccceccc3f1",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/schemas/audit-result.schema.json",
+    "sha256": "cc8ba0fc609ecb5edb5b264cc175327ea0bffa413865327e095c8be737a9180b",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/schemas/hook-event.schema.json",
+    "sha256": "aa0191cced4039f98e5272a578f31496743c1089b0550041cbbab2b8202d4c88",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/scripts/install-service.sh",
+    "sha256": "cf4382092f5aa444afe21266ae5ef18c59d087f9b4388cf0088dc102171c5b44",
+    "mode": "0o775"
+  },
+  {
+    "path": "supervisor/scripts/smoke-install.sh",
+    "sha256": "b4a8eea5418506332b13b79140f05bafa06c8d75d1b1ff59f152972f5f9aab02",
+    "mode": "0o775"
+  },
+  {
+    "path": "supervisor/scripts/uninstall-service.sh",
+    "sha256": "2b9dd3c9efd7119c886bd6c1ceea48028831e7c3e94ea2eddfcb3647372ebb0e",
+    "mode": "0o775"
+  },
+  {
+    "path": "supervisor/skills/accessibility-review/SKILL.md",
+    "sha256": "ad3f59f5c278133004a708ee042c451be6ec5f59367b10c23c3dfcfd2597a0e5",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/accessibility-review/agents/openai.yaml",
+    "sha256": "2a502a4641d3a884767d9cbc33161a6c181fa3475edf815e6cf768940394ce1b",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/api-source-due-diligence/SKILL.md",
+    "sha256": "394bd11f40627dd993a252d3d7ab4d6ac7ba0b74513678f3914da11e973d039b",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/api-source-due-diligence/agents/openai.yaml",
+    "sha256": "86f38a9348f4d8247a0e4b96aed7524cfec3aded1b3e6b074da23de7f9caf0c2",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/architecture-challenge/SKILL.md",
+    "sha256": "04b7864e529d92f1ce64b61506a76dbd3b5370a6e74d1ba0540f71a4ab1b6052",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/architecture-challenge/agents/openai.yaml",
+    "sha256": "060c5869740662e3375f6db65bba135725adde50e9123e49952128058d9cb9e8",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/pre-deploy-audit/SKILL.md",
+    "sha256": "a57bb1385ba1d1b90245c344488fd2828e0834f10116529b3dd8e06e51789efa",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/pre-deploy-audit/agents/openai.yaml",
+    "sha256": "04d3d6da5ab568b757e45132791bef9848be7339f7fa2e9070cbec31963b64a9",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/security-review/SKILL.md",
+    "sha256": "8dcb3b7eb506933c5fb6168db4f95c4afe45b4dc7c206219efe92157cad0a0a1",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/security-review/agents/openai.yaml",
+    "sha256": "5323d31dbab167c8cd8091458fca65ea744ec19889d799c45ee8fd75e74f97f8",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/ui-ux-due-diligence/SKILL.md",
+    "sha256": "1e5bd6e5c74760a3c2aeb6916c623dbe8d83db2689fd66c96c8cd026657d6eee",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/ui-ux-due-diligence/agents/openai.yaml",
+    "sha256": "e2dd6c138145bbca431c92765bf004afe44ef76f44691b47a5d17ab48f04ac37",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/visual-quality-audit/SKILL.md",
+    "sha256": "ca480031d8bd103dfc8d14e3253b59fb03ebdaf4e0a881f076ad53d81ad9d91a",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/skills/visual-quality-audit/agents/openai.yaml",
+    "sha256": "0ba49412c7d0d307ca97807e777554a92cadb7316a6918c2bdb469630173be8a",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/activity.ts",
+    "sha256": "2aa3fa555807270af617521c28d2ae4f2c49629fbffe563f17fcf271796358ed",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/artifacts.ts",
+    "sha256": "acc2d3a871ea5d1f6989af6b31ac92d0766f3942fee37b87f8844bb5cd3561c2",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/audits/dispatcher.ts",
+    "sha256": "3a99782b60b0445a1a04a3cc00b1baee650d7e831e4727cf4ff9f0163b509d79",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/capabilities.ts",
+    "sha256": "1fcb57b24f61d911cb54d595d967511396413b963c924265c42b0604cee08385",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/cli/main.ts",
+    "sha256": "0d08d451a7849d5dfaab865b7ea82c44113c27e58272c3081a916797df4af697",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/codex/parser.ts",
+    "sha256": "0dc7be111be2db93b17cf3b2e136882f40bb1499b70aa76251bf919091740d17",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/codex/prompt-builder.ts",
+    "sha256": "d575a99a874c0f3ff2ab850463c79399bac98ce702ddf3459c3abdfdbcaf1596",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/codex/runner.ts",
+    "sha256": "ebbfce9b3865f79990615620530c5ea10480f676ed48affa0ac4930445977f47",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/config.ts",
+    "sha256": "7212a721c6d6bb3e4a56683b59487b55a28f393aa9da4b36a97b51f0ffd41181",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/db.ts",
+    "sha256": "27798f4883f46b01cde513b631bb3f4177e5c93677a616a8bebbdd28b3647536",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/hooks/adapter.ts",
+    "sha256": "d2a6ee5618e61113e81c40d20bf25a06e9a01c2eba73ef0976d3f0f99cc0d93a",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/hooks/forwarder.ts",
+    "sha256": "61df16176168d86aa13f54e1020ffea0cc77c3c60aa94540a3bf010df0b201a0",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/hooks/normalize.ts",
+    "sha256": "8b28ff89e7ce62237146a7ce6bad28d40f9a601771d60355beb09dd23437918b",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/human/attention.ts",
+    "sha256": "60720c8ee39c806c76b6fb9bad43614954be1813dfb2eafdaa6440c4fe8228c4",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/index.ts",
+    "sha256": "e2d8f2a2e58092561ae7b5115fcc89356c2fe496f01da50deb54841f804ffe61",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/logger.ts",
+    "sha256": "34bee7b06f224788fbb5e4d3a958961ea99b62272bd4a6857d1029b079373e56",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/queue.ts",
+    "sha256": "3148d622b398829ab1b43e0c582996995017798e8fab0e53b47fae10c55e29aa",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/security/redact.ts",
+    "sha256": "72b615b89b564028c67a4e6e201473c38f89020b1d54102c94198c638f5fe5fe",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/server.ts",
+    "sha256": "75fe9b504a6569fe670911de9bd0fd711cdc1ce69aca216fbb19d9dd2f4e5fc3",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/telegram/client.ts",
+    "sha256": "caa847e71474f6970233cb2ba15f4e15d7d25e6f5d7e6929ff68cbdd51d8d559",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/telegram/formatter.ts",
+    "sha256": "0ad6a6a9ae4ef4b36835dc5decf6b0a20e277163042fc1d8c89eb47d78d4d19e",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/types.ts",
+    "sha256": "a2a93be286e4777a07f329ff4cf365d4aaa823fda759f2e06dc5f380afe7dcfa",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/src/ui/assets.ts",
+    "sha256": "890f35264f8f6bfd54cdcb1cae728b8e48e4be3c2bf24e470ab4e2da890603a4",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/acceptance.test.ts",
+    "sha256": "6fc0f739c0292b16bb9ac48309f8f9e5023acca36b7bfa7fd0e115f9fc732615",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/activity-server.test.ts",
+    "sha256": "53cac8ebb9bc5288725dff59b8f9c823f17dd35925af7354799fd19244bd5801",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/capabilities.test.ts",
+    "sha256": "e363e52fb1fa7027e71cd3d7409ce0969cfcb1b97e2c990c654fb9cffcbbc023",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/config.test.ts",
+    "sha256": "0b120c6170d5246fa28c1f78cd1339e12eafb2e7f86dbbbf4c6f7a0cb67a7469",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/control-client.test.ts",
+    "sha256": "726ff2ee3dde35f114e62919f57558e75fa2a2245c70ca309591b32c22c50d89",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/control-server.test.ts",
+    "sha256": "2f7cde484eeff711a7dd4d304f4479e232025bf76aed8211eb55e8a2a7d1a9da",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/database.test.ts",
+    "sha256": "8af99830daf62ab51dfec80ee82d1a17013482184fe78a17caa8e0ad649e9267",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/dispatcher.test.ts",
+    "sha256": "b5f7279c75d474ef5bc0bfea1800741b780501ed811b66922e6c02b0b9ec3c3f",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/bad-code/REVIEW.md",
+    "sha256": "69a12a8ab08a0f1d25f87b3e2cbc24e2110c1288e8ad805efa7fe91841277065",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/bad-code/src/api.ts",
+    "sha256": "e720513d09d0fae355c35f4a0514ca46bb4f961e3fd533243ade404d02c52452",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/brvm-research/RESEARCH.md",
+    "sha256": "8a1298fdf4868274718d171aeb7966d07688938d87fdca47a149bbda32171a1a",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/brvm-research/SPEC.md",
+    "sha256": "63f0c6e6796ae086cca8286c4aeb125e1ba376be84dfe7210d66dbe3e3000c89",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/human-required/RESEARCH.md",
+    "sha256": "8389908075858a965934d685e9778243c49c4e010d831fa3a178aa555a6a09bc",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/prompt-injection/page.txt",
+    "sha256": "31963352692737bbb849a6689ec8e98664194f10cd6841d60fea3053e57314fc",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/ui-bad/index.html",
+    "sha256": "4580a798c47f4264f057856ff575f48b68907de27c5eb8064df1d2d13e2c755b",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/fixtures/ui-severe/index.html",
+    "sha256": "6ab90ada6a14104e4fd9398f51c76db91e2996451ba1d9ff5d0fdd3efe9779b0",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/helpers.ts",
+    "sha256": "50935e9cfa2589fabddaf6069ed2d6a93ad1a6604cdd16488938f0935a97306e",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/hook-e2e.test.ts",
+    "sha256": "ce80a0a23df7dded45abba9172914c290eae1fe2dbb2787f06db4159fc0239bd",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/hook-launcher.test.ts",
+    "sha256": "a16389dc920a2247d58a8d65bf0d483f68debdd0973703d9e71d57d50fdf3791",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/normalize.test.ts",
+    "sha256": "687b8aa452add334425ee8d9c8bb5f38cf00d36a28a80325bd2e982bedeb163d",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/parser.test.ts",
+    "sha256": "2b6309be875494ce8ff44b1219fd30adbc88e7c28b3a978574ecd4dc2db9729e",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/queue.test.ts",
+    "sha256": "a8d1bba68a7241472f784c8d7e60d9fa9bf1c81c95aaa98cdd63759dcddeef4c",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/repository-contract.test.ts",
+    "sha256": "10cbd2b1a392a306759ac26eeee2fc3a54319720b6e885b29d3f4c454d6de408",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/runner.test.ts",
+    "sha256": "baf1b3cebc10caf38169013d445e602b92308e7c7f5493ae4d107b32021969ab",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tests/telegram-server.test.ts",
+    "sha256": "30f84f5c12abf64e4741af733bebce3b81250ca49e2aa80133549da3c8e8968a",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/tsconfig.json",
+    "sha256": "3afc62071805dd9ab20d438750adb7e74fa4374c213d4ca1a9275446d7a8d06d",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/ui/static/control.css",
+    "sha256": "c73dd87e0108b807ae9783e9e1e1b77cbebc0fbacfb1e20c54273e356ead60e4",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/ui/static/control.html",
+    "sha256": "818040182321abf0a9de0b060ab49018774647c8ce148f57f8574b47d37f0bf8",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/ui/static/control.js",
+    "sha256": "6ecf1ab8ae473bcac990137f4354564f6878fc5ef362eed13ff16201d52b3684",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/ui/static/favicon.svg",
+    "sha256": "3ea558b241200319e51e8cb1b7e4f3ba4d5d3a14e4a439dbcdc1cb78d1049cad",
+    "mode": "0o664"
+  },
+  {
+    "path": "supervisor/ui/static/shared.css",
+    "sha256": "0b3d089adf3d31b5729b61b9712d8bcba4f8251e4d8c3f0f82f8e31a0d03781b",
+    "mode": "0o664"
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "os": "Linux-5.15.0-186-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12",
+  "node": "v22.23.1",
+  "npm": "10.9.8",
+  "git": "git version 2.34.1",
+  "shellcheck": "ShellCheck - shell script analysis tool\nversion: 0.8.0\nlicense: GNU General Public License, version 3\nwebsite: https://www.shellcheck.net",
+  "runtime_limitations": [
+    "npm registry DNS EAI_AGAIN",
+    "loopback sockets listen EPERM",
+    "clean HOME has no real model credentials; no imports or real account calls authorized",
+    "no OS sandbox escalations requested"
+  ]
+}

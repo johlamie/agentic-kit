@@ -1,0 +1,156 @@
+TAP version 13
+# Subtest: serves the control center to a browser and keeps the health JSON for tooling
+not ok 1 - serves the control center to a browser and keeps the health JSON for tooling
+  ---
+  duration_ms: 38.826189
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:133:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: debounces global nudges, shares the stream budget, and releases the subscription
+not ok 2 - debounces global nudges, shares the stream budget, and releases the subscription
+  ---
+  duration_ms: 13.717413
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:216:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: disables the whole control center when SUPERVISOR_CONTROL_UI is off
+not ok 3 - disables the whole control center when SUPERVISOR_CONTROL_UI is off
+  ---
+  duration_ms: 8.983684
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:249:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: bounds the snapshot and aggregates per-project values when a thousand projects exist
+not ok 4 - bounds the snapshot and aggregates per-project values when a thousand projects exist
+  ---
+  duration_ms: 1655.684135
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:268:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: declares the true open request total when the attention list is capped
+not ok 5 - declares the true open request total when the attention list is capped
+  ---
+  duration_ms: 53.946765
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:354:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: keeps a flat SQL budget per control snapshot whatever the project count
+ok 6 - keeps a flat SQL budget per control snapshot whatever the project count
+  ---
+  duration_ms: 637.701226
+  type: 'test'
+  ...
+# Subtest: serves every control batch aggregate from an index instead of a table scan
+ok 7 - serves every control batch aggregate from an index instead of a table scan
+  ---
+  duration_ms: 120.905894
+  type: 'test'
+  ...
+# Subtest: adds the human request index to a database created before the migration
+ok 8 - adds the human request index to a database created before the migration
+  ---
+  duration_ms: 20.778041
+  type: 'test'
+  ...
+# Subtest: resolves queue, request and audit aggregates for a batch of projects in one pass
+ok 9 - resolves queue, request and audit aggregates for a batch of projects in one pass
+  ---
+  duration_ms: 7.766904
+  type: 'test'
+  ...
+# Subtest: masks project names carrying a secret in either case form and drops their links
+not ok 10 - masks project names carrying a secret in either case form and drops their links
+  ---
+  duration_ms: 17.077219
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:483:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: scopes the origin guard to UI paths so other routes stay reachable
+not ok 11 - scopes the origin guard to UI paths so other routes stay reachable
+  ---
+  duration_ms: 8.496657
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:535:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: serves the control assets without touching the prototype activity assets
+not ok 12 - serves the control assets without touching the prototype activity assets
+  ---
+  duration_ms: 8.42516
+  type: 'test'
+  location: '/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor/dist/tests/control-server.test.js:559:1'
+  failureType: 'testCodeFailure'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 4
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2621.610225
+(node:55) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,0 +1,15 @@
+{
+  "id": "guard-characterization",
+  "command": [
+    "python3",
+    "/tmp/agentic-kit-audit-2026-09-07/fixtures/guards/characterize.py"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:03:43.515084+00:00",
+  "duration_seconds": 13.124,
+  "timeout_seconds": 120,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/guard-characterization.log"
+}

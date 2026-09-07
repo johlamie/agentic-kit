@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: invokes Codex with read-only ephemeral arguments and a restricted environment
+ok 1 - invokes Codex with read-only ephemeral arguments and a restricted environment
+  ---
+  duration_ms: 202.578273
+  type: 'test'
+  ...
+# Subtest: does not inherit an ambient GitHub token when Supervisor configuration omits it
+ok 2 - does not inherit an ambient GitHub token when Supervisor configuration omits it
+  ---
+  duration_ms: 203.065738
+  type: 'test'
+  ...
+# Subtest: reports malformed Codex output
+ok 3 - reports malformed Codex output
+  ---
+  duration_ms: 137.272987
+  type: 'test'
+  ...
+# Subtest: reports Codex timeout without returning PASS
+ok 4 - reports Codex timeout without returning PASS
+  ---
+  duration_ms: 101.732468
+  type: 'test'
+  ...
+# Subtest: reports unavailable and failing Codex executables
+ok 5 - reports unavailable and failing Codex executables
+  ---
+  duration_ms: 240.528913
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 894.504048
+(node:141) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

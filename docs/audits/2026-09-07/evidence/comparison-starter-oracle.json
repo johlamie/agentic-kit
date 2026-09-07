@@ -1,0 +1,16 @@
+{
+  "id": "comparison-starter-oracle",
+  "command": [
+    "python3",
+    "/tmp/agentic-kit-audit-2026-09-07/fixtures/comparison/evaluator/evaluate.py",
+    "/tmp/agentic-kit-audit-2026-09-07/fixtures/comparison/starter"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:10:54.701836+00:00",
+  "duration_seconds": 0.084,
+  "timeout_seconds": 30,
+  "timed_out": false,
+  "exit_code": 1,
+  "log": "evidence/comparison-starter-oracle.log"
+}

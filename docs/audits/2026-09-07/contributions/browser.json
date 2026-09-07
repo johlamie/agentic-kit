@@ -1,0 +1,50 @@
+{
+  "tool": "codex",
+  "role": "qa",
+  "verdict": "FAIL on schema-invalid snapshot; otherwise scoped rendering checks PASS",
+  "url": "http://audit-fixture.invalid/",
+  "browser": "Chromium 150.0.7871.114",
+  "findings": [
+    {
+      "id": "BR-01",
+      "title": "The control UI converts a schema-invalid HTTP 200 response into a healthy empty state",
+      "severity": "moyenne",
+      "proof_status": "OBSERVÉ",
+      "tool": "codex",
+      "role": "qa",
+      "confidence": "high for the client behavior; production occurrence not established",
+      "source": [
+        {
+          "file": "supervisor/ui/static/control.js",
+          "lines": "175-197",
+          "details": "Missing daemon data becomes database ok; missing arrays become empty lists."
+        },
+        {
+          "file": "supervisor/ui/static/control.js",
+          "lines": "358-369",
+          "details": "Any syntactically valid JSON HTTP 200 snapshot clears the error state."
+        }
+      ],
+      "preconditions": [
+        "Control UI loads the audited static assets.",
+        "Its summary endpoint returns HTTP 200 application/json with {}.",
+        "Browser polling fallback is active in the observed fixture."
+      ],
+      "reproduction": [
+        "Run fixtures/browser/qa/run-control-browser.js using Playwright MCP browser_run_code_unsafe code argument.",
+        "Inspect scenario malformed-1440.",
+        "Compare evidence/browser/malformed-1440.png and evidence/browser/results.json."
+      ],
+      "expected": "An incomplete snapshot is reported as unavailable or invalid, without inventing a healthy database or absence of projects.",
+      "observed": "The page displays 'En direct', 'v— · base ok', '0 projet actif, 0 intervention attendue.', shows the empty welcome state and hides the error.",
+      "impact": "A malformed/contract-incompatible response can reassure the operator that there are no interventions. This observation concerns UI presentation only: it is not a Supervisor audit verdict PASS and does not establish a gate bypass.",
+      "minimal_recommendation": "Validate the snapshot envelope and required daemon status/collection fields before applying defensive display defaults; route failures through the existing error state.",
+      "correction_test": "Return HTTP 200 {} and assert the error is visible, database health is unknown, the empty-project success state is not shown, and a later valid snapshot recovers.",
+      "evidence": [
+        "evidence/browser/results.json",
+        "evidence/browser/malformed-1440.png"
+      ],
+      "limits": "Response shape was fault-injected by a mock route. No evidence that the current real server emits this response."
+    }
+  ]
+}

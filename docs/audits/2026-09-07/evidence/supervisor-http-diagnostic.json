@@ -1,0 +1,15 @@
+{
+  "id": "supervisor-http-diagnostic",
+  "command": [
+    "node",
+    "dist/tests/hook-e2e.test.js"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source/supervisor",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:04:12.907879+00:00",
+  "duration_seconds": 0.396,
+  "timeout_seconds": 30,
+  "timed_out": false,
+  "exit_code": 1,
+  "log": "evidence/supervisor-http-diagnostic.log"
+}

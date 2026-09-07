@@ -1,0 +1,21 @@
+{
+  "id": "local-operations-tests",
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "scripts",
+    "-p",
+    "test_local_operations.py"
+  ],
+  "cwd": "/tmp/agentic-kit-audit-2026-09-07/work/source",
+  "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+  "started_utc": "2026-09-07T11:00:38.816830+00:00",
+  "duration_seconds": 0.318,
+  "timeout_seconds": 60,
+  "timed_out": false,
+  "exit_code": 0,
+  "log": "evidence/local-operations-tests.log"
+}

@@ -1,0 +1,61 @@
+{
+  "candidate": "/tmp/agentic-kit-audit-2026-09-07/fixtures/comparison/starter",
+  "passed": 6,
+  "total": 12,
+  "results": [
+    {
+      "id": "legacy-add-list",
+      "pass": true
+    },
+    {
+      "id": "restart-persistence",
+      "pass": true
+    },
+    {
+      "id": "complete",
+      "pass": true
+    },
+    {
+      "id": "stable-ids",
+      "pass": true
+    },
+    {
+      "id": "reject-blank",
+      "pass": false,
+      "error": "AssertionError"
+    },
+    {
+      "id": "trim-title",
+      "pass": false,
+      "error": "AssertionError"
+    },
+    {
+      "id": "completed-count",
+      "pass": false,
+      "error": "AssertionError"
+    },
+    {
+      "id": "empty-stats",
+      "pass": true
+    },
+    {
+      "id": "filter-open",
+      "pass": false,
+      "error": "TypeError"
+    },
+    {
+      "id": "filter-done",
+      "pass": false,
+      "error": "TypeError"
+    },
+    {
+      "id": "csv-preserve-title",
+      "pass": false,
+      "error": "AttributeError"
+    },
+    {
+      "id": "missing-id-no-mutation",
+      "pass": true
+    }
+  ]
+}
