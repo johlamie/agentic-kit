@@ -211,10 +211,14 @@ réponse et non la session.
 
 #### Phase 7.5 — intégration locale
 
-Après les PASS reviewer, QA et Supervisor, Claude intègre la branche dans le
-`main` local. Si le projet est marqué en production, le garde demande une
-validation humaine avant le merge. En cas de défaut tardif, la branche reste
-isolée et `main` garde son état connu comme sain.
+Après les PASS reviewer, QA et Supervisor vérifiés sur le candidat courant,
+Claude intègre la branche dans le `main` local seulement si ce merge fait partie
+du workflow Git autorisé par l'utilisateur. Les PASS et l'absence de statut live
+ne créent pas cette autorisation ; une autorisation existante pour cette action
+et cette cible reste valable, sous réserve des restrictions du runtime.
+En cas de défaut tardif, conserver la branche sans modifier `main`. Une branche
+seule n'isole pas une application qui sert déjà les fichiers du même checkout :
+utiliser une copie de développement physiquement séparée.
 
 #### Phase 8 — pré-déploiement et G4
 

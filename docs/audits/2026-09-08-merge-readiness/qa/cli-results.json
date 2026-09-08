@@ -1,0 +1,345 @@
+{
+  "tool": "codex",
+  "role": "qa",
+  "source": "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+  "source_sha256": "10a6dd758eb95c48135fda32582738eccd0e6d5ed76af0854f2f8e1151496e14",
+  "fixture_root": "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382",
+  "environment_keys": [
+    "CLAUDE_CONFIG_DIR",
+    "CODEX_HOME",
+    "GIT_CONFIG_GLOBAL",
+    "GIT_CONFIG_NOSYSTEM",
+    "GIT_CONFIG_SYSTEM",
+    "GIT_TEMPLATE_DIR",
+    "HOME",
+    "LC_ALL",
+    "PATH",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME"
+  ],
+  "commands": [
+    {
+      "command": [
+        "git",
+        "init",
+        "-q",
+        "-b",
+        "feature/synthetic-qa",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.0062,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.2281,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "init",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "Nouveau projet initialis\u00e9 : /tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces\nSauvegarde v\u00e9rifi\u00e9e : /tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces/.git/agentic-backups/init-vc00f_hs\n",
+      "stderr": "",
+      "duration_seconds": 0.2043,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.1422,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "checkpoint",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces",
+        "--tool",
+        "codex",
+        "--agent",
+        "qa",
+        "--summary",
+        "Synthetic first verified step",
+        "--next",
+        "Independent synthetic review",
+        "--test",
+        "Synthetic acceptance scenario",
+        "--file",
+        "synthetic.txt"
+      ],
+      "exit": 0,
+      "stdout": "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces/.agentic/events/20260908T205207.016241Z-b0391b1b20cb4bdb8e66132ec4e4ae10.json\n",
+      "stderr": "",
+      "duration_seconds": 0.1581,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "checkpoint",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces",
+        "--tool",
+        "codex",
+        "--agent",
+        "qa",
+        "--summary",
+        "Synthetic resumed next step",
+        "--next",
+        "Independent synthetic review",
+        "--test",
+        "Synthetic acceptance scenario",
+        "--file",
+        "synthetic.txt"
+      ],
+      "exit": 0,
+      "stdout": "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces/.agentic/events/20260908T205207.301007Z-d8a1b65a0d5c46008456d2e80136031e.json\n",
+      "stderr": "",
+      "duration_seconds": 0.2929,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.016241Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-4c9ea556a48e4ba584e082e6315f1002\",\n  \"summary\": \"Synthetic first verified step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.301007Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-d28e31ba56554a4a9998921b695878a2\",\n  \"summary\": \"Synthetic resumed next step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n",
+      "stderr": "",
+      "duration_seconds": 0.2045,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.016241Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-4c9ea556a48e4ba584e082e6315f1002\",\n  \"summary\": \"Synthetic first verified step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.301007Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-d28e31ba56554a4a9998921b695878a2\",\n  \"summary\": \"Synthetic resumed next step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n",
+      "stderr": "",
+      "duration_seconds": 0.1785,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.016241Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-4c9ea556a48e4ba584e082e6315f1002\",\n  \"summary\": \"Synthetic first verified step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.301007Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-d28e31ba56554a4a9998921b695878a2\",\n  \"summary\": \"Synthetic resumed next step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n",
+      "stderr": "",
+      "duration_seconds": 0.2507,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "ERROR: Cannot safely open event file: 000-untrusted.json\n",
+      "duration_seconds": 0.2423,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "ERROR: Event path must contain real directories: events\n",
+      "duration_seconds": 0.1713,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "ERROR: Event path must contain real directories: .agentic\n",
+      "duration_seconds": 0.183,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "ERROR: Event must be a regular file: 000-fifo.json\n",
+      "duration_seconds": 0.237,
+      "timeout": false
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/agentic-kit-merge-2026-09-08/candidate/scripts/agentic.py",
+        "log",
+        "--project",
+        "/tmp/agentic-kit-merge-2026-09-08/qa/cli-fixtures-1788900726302718382/fresh project with spaces"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.016241Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-4c9ea556a48e4ba584e082e6315f1002\",\n  \"summary\": \"Synthetic first verified step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n{\n  \"version\": 1,\n  \"timestamp\": \"20260908T205207.301007Z\",\n  \"kind\": \"checkpoint\",\n  \"tool\": \"codex\",\n  \"agent\": \"qa\",\n  \"session\": \"manual-d28e31ba56554a4a9998921b695878a2\",\n  \"summary\": \"Synthetic resumed next step\",\n  \"next_steps\": \"Independent synthetic review\",\n  \"tests\": [\n    \"Synthetic acceptance scenario\"\n  ],\n  \"files\": [\n    \"synthetic.txt\"\n  ],\n  \"observed\": {\n    \"head\": null,\n    \"branch\": \"feature/synthetic-qa\",\n    \"dirty_paths\": [\n      \"?? .agentic/\",\n      \"?? .claude/\",\n      \"?? .gitignore\",\n      \"?? AGENTS.md\",\n      \"?? CLAUDE.md\"\n    ]\n  }\n}\n",
+      "stderr": "",
+      "duration_seconds": 0.1306,
+      "timeout": false
+    }
+  ],
+  "checks": [
+    {
+      "name": "Uninitialized project log returns empty without error",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Real init creates contract and local legacy memory links",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Initialized project empty log",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Two real checkpoints persist explicit codex/qa attribution and next action",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Log returns real checkpoint files in filename order",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Fresh CLI process resumes exact persisted log",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Non-JSON file does not alter log",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "External event symlink refused without canary leak",
+      "passed": true,
+      "detail": "Return code 1, explicit refusal, no canary disclosure, no timeout."
+    },
+    {
+      "name": "External events-directory symlink refused",
+      "passed": true,
+      "detail": "Return code 1, explicit refusal, no canary disclosure, no timeout."
+    },
+    {
+      "name": "External .agentic-directory symlink refused",
+      "passed": true,
+      "detail": "Return code 1, explicit refusal, no canary disclosure, no timeout."
+    },
+    {
+      "name": "FIFO event refused promptly rather than blocking",
+      "passed": true,
+      "detail": "Return code 1, explicit refusal, no canary disclosure, no timeout."
+    },
+    {
+      "name": "Normal persisted log recovers after removing hostile fixtures",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "External synthetic canary unchanged",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Audited CLI content unchanged",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": 14,
+  "total": 14
+}

@@ -156,7 +156,7 @@ cet ordre par Claude Code :
 | Étage | Contenu | Comportement |
 |---|---|---|
 | **`deny`** | ce qui met le serveur en PLS : `ufw`, arrêt de SSH, `mkfs`, `dd`, `apt purge`, `sudo rm`, reboot, `rm -rf /`, plus `.env`/`.ssh` et les règles de l'agent | **jamais**, par personne — même un hook qui répond « allow » ne peut pas débloquer |
-| **`ask`** | irréversible mais légitime : désinstaller une lib ou une app, montées de version en masse, migration de schéma en prod, suppression d'un projet cloud, publication sur un store | **on te demande, à chaque fois** — accepter / refuser / « non, fais plutôt ça » |
+| **`ask`** | règles explicites : migration de schéma en prod, suppression d'un projet cloud, publication sur un store ; contrôles contextuels : suppressions globales, mises à jour larges ou cibles ambiguës | **on te demande** quand une règle ou un contrôle l'exige — accepter / refuser / « non, fais plutôt ça » |
 | **le juge** | tout le reste | il évalue au moment de l'appel et décide |
 
 Le juge n'est pas un script maison : c'est le **mode auto** de Claude Code, un
@@ -169,29 +169,32 @@ claude auto-mode config      # les règles réellement appliquées
 claude auto-mode critique    # une IA relit tes règles et signale les ambiguës
 ```
 
-**`classifyAllShell: true`** fait passer *toute* commande shell par le juge, même
-celles couvertes par une règle d'autorisation étroite. C'est ce qui ferme
-structurellement le trou du wrapper : `npm run deploy` est désormais jugé sur ce
-qu'il **fait**, plus sur la façon dont il est **écrit**.
+**`classifyAllShell: true`** demande au runtime de soumettre les commandes shell
+au juge, y compris celles couvertes par une règle d'autorisation étroite.
+Le kit n'inspecte pas lui-même tous les scripts derrière `npm run deploy` : la
+décision finale dépend aussi du runtime et du modèle. Ce réglage ne constitue
+pas une sandbox. Les opérations locales nommées, comme `npm uninstall lodash`,
+passent les contrôles contextuels avant de revenir au juge.
 
 ### Le gardien — ce que les patterns ne savent pas dire
 
 `global/hooks/agent-guard.sh` (aucun appel LLM) ajoute quatre
 choses impossibles à exprimer en motifs texte :
 
-- **Deux étages d'agents.** Les 8 agents gardent exactement leurs restrictions
-  d'avant : un `builder` ne peut toujours pas toucher nginx ni pousser. Seul
-  l'orchestrateur passe par le juge. Le hook les distingue via le champ
-  `agent_type`, présent uniquement dans un sous-agent.
+- **Deux étages d'agents.** Le hook refuse aux sous-agents certaines commandes
+  reconnues, dont les formes ordinaires de `git push` et de gestion nginx.
+  Il les distingue via le champ `agent_type`. Les commandes sans décision du
+  hook restent soumises aux autres contrôles du runtime.
 - **`rm` conscient du chemin.** `Bash(rm -rf:*)` en deny bloquait aussi bien un
   `node_modules` qu'un `/etc`. Ici la cible est analysée : dans un projet →
   routine ; le dossier entier d'un projet → on te demande ; ailleurs → refusé.
 - **Les projets en production.** « Déjà en ligne » est un fait, pas un motif.
-  Tout projet nommé dans `~/.claude/production-projects` voit ses commandes
-  modifiantes remontées vers toi.
-- **La portée Write/Edit.** Les outils de fichiers respectent le projet courant,
-  la liste de production et les emplacements protégés ; Bash ne peut pas
-  contourner les interdictions de lecture évidentes avec `cat .env`.
+  Le hook demande confirmation pour les mutations qu'il reconnaît sur les
+  projets nommés dans `~/.claude/production-projects`.
+- **La portée Write/Edit.** Le hook contrôle les chemins des outils de fichiers
+  et certaines lectures shell évidentes, comme `cat .env`. Les alias par symlink
+  et variantes shell ont une couverture incomplète ; voir l'audit indépendant
+  dans `docs/audits/2026-09-07/AUDIT_REPORT.md`.
 
 ```bash
 ./global/hooks/agent-guard.sh --self-test   # table de décision complète
@@ -200,9 +203,10 @@ choses impossibles à exprimer en motifs texte :
 ### Marquer un projet comme « en production » — à faire au premier déploiement
 
 `~/.claude/production-projects` liste les apps qui ont de vrais utilisateurs.
-**Tant qu'un projet n'y figure pas, le juge le traite comme un bac à sable** et
-déploiera dessus sans rien te demander. C'est voulu — mais ça veut dire que
-cette ligne est ta seule protection sur une app en ligne.
+**L'absence d'un projet dans cette liste ne prouve pas qu'il est jetable et
+n'autorise aucun déploiement.** L'agent doit vérifier la cible et respecter la
+mission autorisée ainsi que G4. Cette liste est une protection complémentaire,
+déclarative ; elle ne découvre pas les applications en ligne.
 
 **Au premier déploiement réussi d'un projet (G4), ajoute-le :**
 
@@ -213,10 +217,11 @@ echo "mon-projet" >> ~/.claude/production-projects
 Une ligne par projet, le **nom du dossier** sous `~/projects/`, sans chemin. Les
 lignes vides et celles commençant par `#` sont ignorées.
 
-À partir de là, toute commande qui modifie ce projet — déploiement, `pm2`,
-migration, merge, suppression de fichier — s'arrête et te demande. Y compris
-quand elle vient d'ailleurs : si tu travailles sur le projet A et qu'une
-commande touche un fichier du projet B marqué en production, c'est B qui décide.
+À partir de là, les formes reconnues de déploiement, `pm2`, migration, merge et
+suppression de fichier demandent confirmation. Certains chemins explicites vers
+un autre projet sont également contrôlés. Les wrappers, alias et cibles distantes
+ne sont pas tous couverts : utiliser un checkout et des données de développement
+physiquement séparés pour travailler sans affecter une application en ligne.
 
 Le fichier est en `deny` pour l'agent **volontairement** : toi seul y ajoutes un
 projet, pour qu'il ne puisse jamais s'en retirer discrètement. L'agent te
@@ -267,14 +272,17 @@ via `CLAUDE_PROJECTS_ROOT`, et n'a aucun chemin en dur.
 ### Git & branches
 
 Tout dev de feature ou d'évolution se fait sur `feature/<slug>`, créée hors de
-`main` en Phase 0. Quand reviewer + qa sont PASS, l'orchestrateur intègre :
+`main` en Phase 0. Quand reviewer + qa sont PASS sur le candidat courant et que
+les audits requis sont résolus, l'orchestrateur peut intégrer **si le workflow
+Git autorisé par l'utilisateur comprend ce merge** :
 
 ```bash
 git checkout main && git merge feature/<slug> && git branch -d feature/<slug>
 ```
 
-Autonome pour un projet pas encore en ligne. Pour un projet listé en production,
-le gardien remonte le merge vers toi. Aucun GitHub requis : tout est local.
+Un PASS ou l'absence de statut live ne vaut pas autorisation de merge. Une
+autorisation déjà donnée pour cette action et cette cible reste valable, sous
+réserve des restrictions du runtime. Aucun GitHub requis : tout est local.
 
 ## Organisation
 

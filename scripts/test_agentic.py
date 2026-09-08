@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import tarfile
 import unittest
@@ -29,6 +30,77 @@ class SharedKitTests(unittest.TestCase):
 
     def events(self):
         return [json.loads(p.read_text()) for p in sorted((self.project / ".agentic/events").glob("*.json"))]
+
+    def run_log(self):
+        return subprocess.run([sys.executable, str(Path(kit.__file__)), "log", "--project",
+                               str(self.project)], capture_output=True, text=True, timeout=5)
+
+    def test_log_preserves_sorted_events_and_empty_directories(self):
+        result = self.run_log()
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        events = self.project / ".agentic/events"
+        events.mkdir(parents=True)
+        result = self.run_log()
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        (events / "002.json").write_text('  {"event": 2}\n')
+        (events / "001.json").write_text('{"event": 1}\n')
+        (events / "ignored.txt").write_text("not an event")
+        result = self.run_log()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, '{"event": 1}\n{"event": 2}\n')
+
+    def test_log_rejects_symlinked_event_files(self):
+        events = self.project / ".agentic/events"
+        events.mkdir(parents=True)
+        outside = self.root / "synthetic-private.txt"
+        inside = self.project / "synthetic-private.txt"
+        for target in (outside, inside):
+            target.write_text("SYNTHETIC_EVENT_SECRET_DO_NOT_PRINT")
+        link = events / "001.json"
+        for target in (outside, inside, events / "missing", link):
+            with self.subTest(target=target.name):
+                link.symlink_to(target)
+                result = self.run_log()
+                link.unlink()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("ERROR: Cannot safely open event file", result.stderr)
+                self.assertNotIn("SYNTHETIC_EVENT_SECRET", result.stdout + result.stderr)
+
+    def test_log_rejects_symlinked_event_directories(self):
+        for component in (".agentic", ".agentic/events"):
+            with self.subTest(component=component):
+                target = self.project / "relocated-events"
+                target.mkdir()
+                (target / "001.json").write_text("SYNTHETIC_DIRECTORY_SECRET")
+                if component == ".agentic":
+                    (target / "events").mkdir()
+                    (target / "events/001.json").write_text("SYNTHETIC_DIRECTORY_SECRET")
+                link = self.project / component
+                link.parent.mkdir(exist_ok=True)
+                link.symlink_to(target, target_is_directory=True)
+                result = self.run_log()
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("Event path must contain real directories", result.stderr)
+                self.assertNotIn("SYNTHETIC_DIRECTORY_SECRET", result.stdout + result.stderr)
+                link.unlink()
+                for child in sorted(target.rglob("*"), reverse=True):
+                    child.rmdir() if child.is_dir() else child.unlink()
+                target.rmdir()
+
+    def test_log_rejects_nonregular_entries_without_blocking(self):
+        events = self.project / ".agentic/events"
+        events.mkdir(parents=True)
+        entry = events / "001.json"
+        os.mkfifo(entry)
+        result = self.run_log()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Event must be a regular file", result.stderr)
+        entry.unlink()
+        entry.mkdir()
+        result = self.run_log()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Event must be a regular file", result.stderr)
+        self.assertEqual(result.stdout, "")
 
     def test_legacy_migration_preserves_content_and_is_idempotent(self):
         old = self.project / ".claude/memory"

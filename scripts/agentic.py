@@ -2,7 +2,7 @@
 """Shared project memory and explicit Claude/Codex handoffs. Python 3.10+, POSIX."""
 
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -80,6 +81,35 @@ def ensure_local(project, relative):
     if not target.resolve().is_relative_to(project):
         raise KitError(f"Path escapes project: {target}")
     return target
+
+
+def log_events(project):
+    """Read regular event files through pinned directories, without following links."""
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    with ExitStack() as stack:
+        directory = os.open(project, directory_flags)
+        stack.callback(os.close, directory)
+        for component in (".agentic", "events"):
+            try:
+                directory = os.open(component, directory_flags, dir_fd=directory)
+            except FileNotFoundError:
+                return
+            except OSError as exc:
+                raise KitError(f"Event path must contain real directories: {component}") from exc
+            stack.callback(os.close, directory)
+        for name in sorted(os.listdir(directory)):
+            if not name.endswith(".json"):
+                continue
+            try:
+                descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                                     dir_fd=directory)
+            except OSError as exc:
+                raise KitError(f"Cannot safely open event file: {name}") from exc
+            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                os.close(descriptor)
+                raise KitError(f"Event must be a regular file: {name}")
+            with os.fdopen(descriptor, "r", encoding="utf-8") as stream:
+                print(stream.read().strip())
 
 
 @contextmanager
@@ -443,8 +473,7 @@ def main(argv=None):
         if state.exists():
             print(state.read_text())
     elif args.command == "log":
-        for path in sorted(ensure_local(project, ".agentic/events").glob("*.json")):
-            print(path.read_text().strip())
+        log_events(project)
     else:
         actor = identity(args)
         if args.command == "checkpoint":

@@ -1,0 +1,514 @@
+
+> @agentic-kit/codex-supervisor@1.1.0 test
+> npm run build && node --test dist/tests/*.test.js
+
+
+> @agentic-kit/codex-supervisor@1.1.0 build
+> tsc -p tsconfig.json
+
+TAP version 13
+# (node:872962) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mocked BRVM research challenges an unsupported scraping assumption
+ok 1 - mocked BRVM research challenges an unsupported scraping assumption
+  ---
+  duration_ms: 34.420133
+  type: 'test'
+  ...
+# Subtest: bad authorization code blocks the slice even when Claude reviewer says PASS
+ok 2 - bad authorization code blocks the slice even when Claude reviewer says PASS
+  ---
+  duration_ms: 182.38381
+  type: 'test'
+  ...
+# Subtest: paid/login-only evidence becomes HUMAN_REQUIRED without account action
+ok 3 - paid/login-only evidence becomes HUMAN_REQUIRED without account action
+  ---
+  duration_ms: 27.511504
+  type: 'test'
+  ...
+# Subtest: mocked weak and severe rendered frontends produce CHALLENGE and BLOCK
+ok 4 - mocked weak and severe rendered frontends produce CHALLENGE and BLOCK
+  ---
+  duration_ms: 191.78721
+  type: 'test'
+  ...
+# Subtest: redesign proposal remains isolated and never overwrites the active frontend
+ok 5 - redesign proposal remains isolated and never overwrites the active frontend
+  ---
+  duration_ms: 22.623981
+  type: 'test'
+  ...
+# Subtest: artifact storage refuses a symlinked project control directory
+ok 6 - artifact storage refuses a symlinked project control directory
+  ---
+  duration_ms: 16.541987
+  type: 'test'
+  ...
+# Subtest: prompt-injection text stays untrusted and forbidden secret paths are recognized
+ok 7 - prompt-injection text stays untrusted and forbidden secret paths are recognized
+  ---
+  duration_ms: 15.499485
+  type: 'test'
+  ...
+# (node:872983) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: serves one local activity view and releases its SSE resources at SessionEnd
+ok 8 - serves one local activity view and releases its SSE resources at SessionEnd
+  ---
+  duration_ms: 187.857024
+  type: 'test'
+  ...
+# Subtest: tracks 1000 active projects without allocating per-project live resources
+ok 9 - tracks 1000 active projects without allocating per-project live resources
+  ---
+  duration_ms: 489.316842
+  type: 'test'
+  ...
+# Subtest: renders complete French sentences when hook metadata is missing
+ok 10 - renders complete French sentences when hook metadata is missing
+  ---
+  duration_ms: 21.84163
+  type: 'test'
+  ...
+# Subtest: translates Claude session end reasons instead of leaking raw identifiers
+ok 11 - translates Claude session end reasons instead of leaking raw identifiers
+  ---
+  duration_ms: 7.742699
+  type: 'test'
+  ...
+# Subtest: reports remote OAuth servers as pending until authenticated
+ok 12 - reports remote OAuth servers as pending until authenticated
+  ---
+  duration_ms: 2.962209
+  type: 'test'
+  ...
+# Subtest: does not claim success when remote authentication cannot be verified
+ok 13 - does not claim success when remote authentication cannot be verified
+  ---
+  duration_ms: 0.443561
+  type: 'test'
+  ...
+# Subtest: distinguishes authenticated GitHub repositories from GitHub Actions
+ok 14 - distinguishes authenticated GitHub repositories from GitHub Actions
+  ---
+  duration_ms: 0.356534
+  type: 'test'
+  ...
+# Subtest: requires the configured GitHub bearer environment at runtime
+ok 15 - requires the configured GitHub bearer environment at runtime
+  ---
+  duration_ms: 2.765849
+  type: 'test'
+  ...
+# Subtest: loads a private env file while environment overrides remain authoritative
+ok 16 - loads a private env file while environment overrides remain authoritative
+  ---
+  duration_ms: 16.20051
+  type: 'test'
+  ...
+# Subtest: refuses non-loopback binding and unsafe UI configuration
+ok 17 - refuses non-loopback binding and unsafe UI configuration
+  ---
+  duration_ms: 11.124471
+  type: 'test'
+  ...
+# Subtest: an attention row states its action once and keeps the blocking impact separate
+ok 18 - an attention row states its action once and keeps the blocking impact separate
+  ---
+  duration_ms: 47.487512
+  type: 'test'
+  ...
+# Subtest: states the real open request total when the attention page is capped
+ok 19 - states the real open request total when the attention page is capped
+  ---
+  duration_ms: 42.56213
+  type: 'test'
+  ...
+# Subtest: the client renders the truncation note only when the daemon declares one
+ok 20 - the client renders the truncation note only when the daemon declares one
+  ---
+  duration_ms: 43.933737
+  type: 'test'
+  ...
+# (node:873014) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: serves the control center to a browser and keeps the health JSON for tooling
+ok 21 - serves the control center to a browser and keeps the health JSON for tooling
+  ---
+  duration_ms: 141.009377
+  type: 'test'
+  ...
+# Subtest: debounces global nudges, shares the stream budget, and releases the subscription
+ok 22 - debounces global nudges, shares the stream budget, and releases the subscription
+  ---
+  duration_ms: 5870.313598
+  type: 'test'
+  ...
+# Subtest: disables the whole control center when SUPERVISOR_CONTROL_UI is off
+ok 23 - disables the whole control center when SUPERVISOR_CONTROL_UI is off
+  ---
+  duration_ms: 40.25348
+  type: 'test'
+  ...
+# Subtest: bounds the snapshot and aggregates per-project values when a thousand projects exist
+ok 24 - bounds the snapshot and aggregates per-project values when a thousand projects exist
+  ---
+  duration_ms: 1940.879887
+  type: 'test'
+  ...
+# Subtest: declares the true open request total when the attention list is capped
+ok 25 - declares the true open request total when the attention list is capped
+  ---
+  duration_ms: 78.599293
+  type: 'test'
+  ...
+# Subtest: keeps a flat SQL budget per control snapshot whatever the project count
+ok 26 - keeps a flat SQL budget per control snapshot whatever the project count
+  ---
+  duration_ms: 833.843475
+  type: 'test'
+  ...
+# Subtest: serves every control batch aggregate from an index instead of a table scan
+ok 27 - serves every control batch aggregate from an index instead of a table scan
+  ---
+  duration_ms: 134.177225
+  type: 'test'
+  ...
+# Subtest: adds the human request index to a database created before the migration
+ok 28 - adds the human request index to a database created before the migration
+  ---
+  duration_ms: 28.345273
+  type: 'test'
+  ...
+# Subtest: resolves queue, request and audit aggregates for a batch of projects in one pass
+ok 29 - resolves queue, request and audit aggregates for a batch of projects in one pass
+  ---
+  duration_ms: 14.754898
+  type: 'test'
+  ...
+# Subtest: masks project names carrying a secret in either case form and drops their links
+ok 30 - masks project names carrying a secret in either case form and drops their links
+  ---
+  duration_ms: 41.239043
+  type: 'test'
+  ...
+# Subtest: scopes the origin guard to UI paths so other routes stay reachable
+ok 31 - scopes the origin guard to UI paths so other routes stay reachable
+  ---
+  duration_ms: 48.648301
+  type: 'test'
+  ...
+# Subtest: serves the control assets without touching the prototype activity assets
+ok 32 - serves the control assets without touching the prototype activity assets
+  ---
+  duration_ms: 42.757199
+  type: 'test'
+  ...
+# (node:873030) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: persists events and audits across database restart
+ok 33 - persists events and audits across database restart
+  ---
+  duration_ms: 29.220256
+  type: 'test'
+  ...
+# Subtest: migrates a version-1 database in place without reviving old stopping sessions
+ok 34 - migrates a version-1 database in place without reviving old stopping sessions
+  ---
+  duration_ms: 35.357068
+  type: 'test'
+  ...
+# Subtest: activates one virtual project route per SessionStart and removes it after the final SessionEnd
+ok 35 - activates one virtual project route per SessionStart and removes it after the final SessionEnd
+  ---
+  duration_ms: 33.653895
+  type: 'test'
+  ...
+# Subtest: uses stable collision-safe project slugs and expires abandoned sessions
+ok 36 - uses stable collision-safe project slugs and expires abandoned sessions
+  ---
+  duration_ms: 8.482945
+  type: 'test'
+  ...
+# Subtest: deduplicates event audits and coalesces related evidence
+ok 37 - deduplicates event audits and coalesces related evidence
+  ---
+  duration_ms: 6.28155
+  type: 'test'
+  ...
+# Subtest: recovers interrupted queue jobs after restart and fails exhausted jobs
+ok 38 - recovers interrupted queue jobs after restart and fails exhausted jobs
+  ---
+  duration_ms: 22.905704
+  type: 'test'
+  ...
+# Subtest: maps gate decisions to stable exit codes
+ok 39 - maps gate decisions to stable exit codes
+  ---
+  duration_ms: 24.728863
+  type: 'test'
+  ...
+# Subtest: phase gate cannot hide an unresolved audit behind a newer PASS of another type
+ok 40 - phase gate cannot hide an unresolved audit behind a newer PASS of another type
+  ---
+  duration_ms: 9.249802
+  type: 'test'
+  ...
+# Subtest: an open human request survives a newer PASS until explicitly resolved
+ok 41 - an open human request survives a newer PASS until explicitly resolved
+  ---
+  duration_ms: 10.961494
+  type: 'test'
+  ...
+# (node:873039) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: manual audits preserve producer and never coalesce Claude with Codex
+ok 42 - manual audits preserve producer and never coalesce Claude with Codex
+  ---
+  duration_ms: 10.082855
+  type: 'test'
+  ...
+# Subtest: routes meaningful subagent milestones without auditing each tool call
+ok 43 - routes meaningful subagent milestones without auditing each tool call
+  ---
+  duration_ms: 13.941647
+  type: 'test'
+  ...
+# Subtest: coalesces reviewer/QA evidence into a slice audit and schedules one rendered UI audit
+ok 44 - coalesces reviewer/QA evidence into a slice audit and schedules one rendered UI audit
+  ---
+  duration_ms: 11.635524
+  type: 'test'
+  ...
+# Subtest: schedules final audit only for a meaningful non-recursive Stop
+ok 45 - schedules final audit only for a meaningful non-recursive Stop
+  ---
+  duration_ms: 7.728145
+  type: 'test'
+  ...
+# Subtest: off and light levels enforce cost-control routing
+ok 46 - off and light levels enforce cost-control routing
+  ---
+  duration_ms: 5.936805
+  type: 'test'
+  ...
+# (node:873046) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mocked Claude hook flows through persistence, Codex queue, gate, and Stop feedback
+ok 47 - mocked Claude hook flows through persistence, Codex queue, gate, and Stop feedback
+  ---
+  duration_ms: 165.537494
+  type: 'test'
+  ...
+# Subtest: hook launcher resolves the repository when invoked through the installed symlink
+ok 48 - hook launcher resolves the repository when invoked through the installed symlink
+  ---
+  duration_ms: 26.852416
+  type: 'test'
+  ...
+# Subtest: normalizes every configured Claude lifecycle event
+ok 49 - normalizes every configured Claude lifecycle event
+  ---
+  duration_ms: 7.657339
+  type: 'test'
+  ...
+# Subtest: keeps only bounded, redacted PostToolUse metadata
+ok 50 - keeps only bounded, redacted PostToolUse metadata
+  ---
+  duration_ms: 1.205279
+  type: 'test'
+  ...
+# Subtest: keeps precise human-interaction details while redacting credentials
+ok 51 - keeps precise human-interaction details while redacting credentials
+  ---
+  duration_ms: 4.834628
+  type: 'test'
+  ...
+# Subtest: rejects malformed and unsupported hook events
+ok 52 - rejects malformed and unsupported hook events
+  ---
+  duration_ms: 1.08543
+  type: 'test'
+  ...
+# Subtest: parses every Supervisor decision
+ok 53 - parses every Supervisor decision
+  ---
+  duration_ms: 4.951364
+  type: 'test'
+  ...
+# Subtest: rejects malformed JSON and schema violations
+ok 54 - rejects malformed JSON and schema violations
+  ---
+  duration_ms: 1.308292
+  type: 'test'
+  ...
+# Subtest: enforces security and design decision floors
+ok 55 - enforces security and design decision floors
+  ---
+  duration_ms: 1.400843
+  type: 'test'
+  ...
+# Subtest: promotes any human request and separates infrastructure errors
+ok 56 - promotes any human request and separates infrastructure errors
+  ---
+  duration_ms: 0.749164
+  type: 'test'
+  ...
+# {"timestamp":"2026-09-08T20:51:57.098Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-merge-2026-09-08/tmp/agentic-supervisor-project-e6zt8P","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"a3c39d90-5c2c-4a1c-b70e-c679ea708dd2","audit_type":"code","codex_run_id":"1c2be21b-8938-4cb1-9e50-53dbcd85c23d","retrying":false,"error":"Codex audit timed out"}
+# (node:873084) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: keeps routine audit decisions internal and notifies only human escalation
+ok 57 - keeps routine audit decisions internal and notifies only human escalation
+  ---
+  duration_ms: 259.833759
+  type: 'test'
+  ...
+# Subtest: processes an audit asynchronously and writes concise project artifacts
+ok 58 - processes an audit asynchronously and writes concise project artifacts
+  ---
+  duration_ms: 31.102788
+  type: 'test'
+  ...
+# Subtest: bounded queue failure becomes ERROR and never PASS
+ok 59 - bounded queue failure becomes ERROR and never PASS
+  ---
+  duration_ms: 38.276338
+  type: 'test'
+  ...
+# {"timestamp":"2026-09-08T20:51:57.248Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-merge-2026-09-08/tmp/agentic-supervisor-project-nkcDPR","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"db4d98d3-b2a6-4441-bf15-02bc46d12db8","audit_type":"visual_ux_audit","codex_run_id":"fadaec2f-ebc9-4d0d-a743-857fd13fb9e5","retrying":false,"error":"Codex Playwright MCP is not configured"}
+# Subtest: visual audit distinguishes missing Playwright from product quality
+ok 60 - visual audit distinguishes missing Playwright from product quality
+  ---
+  duration_ms: 135.092638
+  type: 'test'
+  ...
+# {"timestamp":"2026-09-08T20:51:57.425Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-merge-2026-09-08/tmp/agentic-supervisor-project-N6xhU5","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"831c9ec8-ee1f-496f-9673-389bfb3a4a9c","audit_type":"visual_ux_audit","codex_run_id":"278999de-0f3a-4b73-b505-60c4efc582a1","retrying":false,"error":"Visual audit host is not allowlisted: unapproved.example"}
+# {"timestamp":"2026-09-08T20:51:57.456Z","level":"error","message":"audit.failed","project":"/tmp/agentic-kit-merge-2026-09-08/tmp/agentic-supervisor-project-JHo6IN","claude_session_id":null,"agent_type":null,"producer":"claude","candidate_id":null,"audit_target":null,"event_id":null,"audit_id":"373ff96c-0682-44da-ae77-06bdc82409db","audit_type":"visual_ux_audit","codex_run_id":"5b6a1b42-2655-4d32-9ce4-af7e2ab007c4","retrying":false,"error":"Visual audit target must be an HTTP(S) URL without embedded credentials"}
+# Subtest: visual audit runs when target and browser capability are available
+ok 61 - visual audit runs when target and browser capability are available
+  ---
+  duration_ms: 157.75163
+  type: 'test'
+  ...
+# Subtest: visual audit refuses non-allowlisted hosts and embedded credentials
+ok 62 - visual audit refuses non-allowlisted hosts and embedded credentials
+  ---
+  duration_ms: 47.984888
+  type: 'test'
+  ...
+# Subtest: preserves Claude G1-G4 and the original permission tiers
+ok 63 - preserves Claude G1-G4 and the original permission tiers
+  ---
+  duration_ms: 5.627226
+  type: 'test'
+  ...
+# Subtest: all schemas, prompts, protocols, and skill references are complete
+ok 64 - all schemas, prompts, protocols, and skill references are complete
+  ---
+  duration_ms: 3.926014
+  type: 'test'
+  ...
+# Subtest: operator documentation covers human setup and both project entry paths
+ok 65 - operator documentation covers human setup and both project entry paths
+  ---
+  duration_ms: 1.187874
+  type: 'test'
+  ...
+# Subtest: executable Supervisor core has no Kimi or Grok integration
+ok 66 - executable Supervisor core has no Kimi or Grok integration
+  ---
+  duration_ms: 11.195519
+  type: 'test'
+  ...
+# (node:873147) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: invokes Codex with read-only ephemeral arguments and a restricted environment
+ok 67 - invokes Codex with read-only ephemeral arguments and a restricted environment
+  ---
+  duration_ms: 236.50942
+  type: 'test'
+  ...
+# Subtest: does not inherit an ambient GitHub token when Supervisor configuration omits it
+ok 68 - does not inherit an ambient GitHub token when Supervisor configuration omits it
+  ---
+  duration_ms: 182.862083
+  type: 'test'
+  ...
+# Subtest: reports malformed Codex output
+ok 69 - reports malformed Codex output
+  ---
+  duration_ms: 161.587218
+  type: 'test'
+  ...
+# Subtest: reports Codex timeout without returning PASS
+ok 70 - reports Codex timeout without returning PASS
+  ---
+  duration_ms: 112.888142
+  type: 'test'
+  ...
+# Subtest: reports unavailable and failing Codex executables
+ok 71 - reports unavailable and failing Codex executables
+  ---
+  duration_ms: 227.779606
+  type: 'test'
+  ...
+# (node:873190) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Telegram sends only a redacted bounded body and never puts the bot token in headers
+ok 72 - Telegram sends only a redacted bounded body and never puts the bot token in headers
+  ---
+  duration_ms: 8.668155
+  type: 'test'
+  ...
+# Subtest: Telegram errors redact bot URLs
+ok 73 - Telegram errors redact bot URLs
+  ---
+  duration_ms: 1.321842
+  type: 'test'
+  ...
+# Subtest: detailed permission events are persisted and sent by the Supervisor while generic notifications stay silent
+ok 74 - detailed permission events are persisted and sent by the Supervisor while generic notifications stay silent
+  ---
+  duration_ms: 130.462338
+  type: 'test'
+  ...
+# Subtest: human-attention notification carries structured detail and no remote command channel
+ok 75 - human-attention notification carries structured detail and no remote command channel
+  ---
+  duration_ms: 0.759107
+  type: 'test'
+  ...
+# Subtest: AskUserQuestion notification includes the actual question and choices
+ok 76 - AskUserQuestion notification includes the actual question and choices
+  ---
+  duration_ms: 0.775879
+  type: 'test'
+  ...
+# Subtest: AskUserQuestion and MCP elicitation reach Telegram through Supervisor-owned structured events
+ok 77 - AskUserQuestion and MCP elicitation reach Telegram through Supervisor-owned structured events
+  ---
+  duration_ms: 69.430731
+  type: 'test'
+  ...
+# Subtest: graceful shutdown waits for an in-flight Supervisor notification
+ok 78 - graceful shutdown waits for an in-flight Supervisor notification
+  ---
+  duration_ms: 73.036309
+  type: 'test'
+  ...
+# Subtest: Stop hook blocks on unresolved audit outcomes and honors recursion protection
+ok 79 - Stop hook blocks on unresolved audit outcomes and honors recursion protection
+  ---
+  duration_ms: 4.091961
+  type: 'test'
+  ...
+1..79
+# tests 79
+# suites 0
+# pass 79
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16121.525558

@@ -1,0 +1,18 @@
+PASS  config/mcp.example.json is valid JSON
+PASS  config/permissions.toml is valid with well-formed rules
+PASS  setup/bootstrap-vps.sh has valid Bash syntax
+PASS  setup/link-kit.sh has valid Bash syntax
+PASS  setup/mcp-setup.sh has valid Bash syntax
+PASS  scripts/smoke-install.sh has valid Bash syntax
+PASS  scripts/validate-kit.sh has valid Bash syntax
+PASS  required skill manifests were inspected
+PASS  memory template exists: PROJECT_STATE.md
+PASS  memory template exists: DECISIONS.md
+PASS  memory template exists: LESSONS.md
+PASS  memory template exists: CAPABILITY_GAPS.md
+PASS  critical deny rule present: Bash(git push*)
+PASS  critical deny rule present: Read(./.env)
+PASS  critical deny rule present: Write(~/.kimi-code/AGENTS.md)
+PASS  no stray .claude references in converted files
+
+All offline validations passed.

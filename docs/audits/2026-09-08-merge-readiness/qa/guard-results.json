@@ -1,0 +1,222 @@
+{
+  "tool": "codex",
+  "role": "qa",
+  "scope": "PreToolUse Bash JSON decisions only; command strings never executed",
+  "fixture_root": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630",
+  "project_root_is_text_only": "/home/agentic-merge-synthetic/projects",
+  "source_sha256": {
+    "global/hooks/agent-guard.sh": "a0ae60908e58b0f7370386c04e2b665d23bd719fc3a36d599ae140403c1c77fa",
+    "global/hooks/local-operations.py": "91db899bb255189ac96b48f6da2a483744b5eb7219eb52630ca9bcff011c9fb5"
+  },
+  "source_unchanged": true,
+  "subprocess_command": [
+    "/bin/bash",
+    "/tmp/agentic-kit-merge-2026-09-08/candidate/global/hooks/agent-guard.sh"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "HOME": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/home",
+    "TMPDIR": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/tmp",
+    "CODEX_HOME": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/codex",
+    "CLAUDE_CONFIG_DIR": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/home/.claude",
+    "XDG_CONFIG_HOME": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/xdg-config",
+    "XDG_CACHE_HOME": "/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/xdg-cache",
+    "CLAUDE_PROJECTS_ROOT": "/home/agentic-merge-synthetic/projects",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "results": [
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/live-app",
+        "tool_input": {
+          "command": "npm run deploy:prod"
+        }
+      },
+      "expected": "ask",
+      "decision": "ask",
+      "exit": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"'live-app' is listed as running in production (/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/home/.claude/production-projects). This command changes it. Confirm, refuse, or say what to do instead.\"}}\n",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.3172
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/live-app",
+        "tool_input": {
+          "command": "npm run migrate:prod"
+        }
+      },
+      "expected": "ask",
+      "decision": "ask",
+      "exit": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"'live-app' is listed as running in production (/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/home/.claude/production-projects). This command changes it. Confirm, refuse, or say what to do instead.\"}}\n",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.3203
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/live-app",
+        "tool_input": {
+          "command": "./deploy.sh"
+        }
+      },
+      "expected": "ask",
+      "decision": "ask",
+      "exit": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"'live-app' is listed as running in production (/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/home/.claude/production-projects). This command changes it. Confirm, refuse, or say what to do instead.\"}}\n",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.2952
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/live-app",
+        "tool_input": {
+          "command": "bash ./scripts/migrate.sh"
+        }
+      },
+      "expected": "ask",
+      "decision": "ask",
+      "exit": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"'live-app' is listed as running in production (/tmp/agentic-kit-merge-2026-09-08/qa/guard-fixtures-1788900846551430630/home/.claude/production-projects). This command changes it. Confirm, refuse, or say what to do instead.\"}}\n",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.3084
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/live-app",
+        "tool_input": {
+          "command": "git diff ./deploy.sh"
+        }
+      },
+      "expected": "NO_OPINION",
+      "decision": "NO_OPINION",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.2509
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/live-app",
+        "tool_input": {
+          "command": "echo ./deploy.sh"
+        }
+      },
+      "expected": "NO_OPINION",
+      "decision": "NO_OPINION",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.3119
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/scratch-app",
+        "tool_input": {
+          "command": "npm run deploy:prod"
+        }
+      },
+      "expected": "NO_OPINION",
+      "decision": "NO_OPINION",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.2866
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/scratch-app",
+        "tool_input": {
+          "command": "npm run migrate:prod"
+        }
+      },
+      "expected": "NO_OPINION",
+      "decision": "NO_OPINION",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.2574
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/scratch-app",
+        "tool_input": {
+          "command": "./deploy.sh"
+        }
+      },
+      "expected": "NO_OPINION",
+      "decision": "NO_OPINION",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.2598
+    },
+    {
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "agent_type": "",
+        "cwd": "/home/agentic-merge-synthetic/projects/scratch-app",
+        "tool_input": {
+          "command": "bash ./scripts/migrate.sh"
+        }
+      },
+      "expected": "NO_OPINION",
+      "decision": "NO_OPINION",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout": false,
+      "passed": true,
+      "duration_seconds": 0.2616
+    }
+  ],
+  "passed": 10,
+  "total": 10
+}

@@ -1,0 +1,5 @@
+npm error code EAI_AGAIN
+npm error syscall getaddrinfo
+npm error errno EAI_AGAIN
+npm error request to https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+npm error A complete log of this run can be found in: /tmp/agentic-kit-merge-2026-09-08/npm-cache/_logs/2026-09-08T20_46_21_509Z-debug-0.log

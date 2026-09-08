@@ -1,0 +1,138 @@
+
+> @agentic-kit/codex-supervisor@1.1.0 test
+> npm run build && node --test dist/tests/*.test.js
+
+
+> @agentic-kit/codex-supervisor@1.1.0 build
+> tsc -p tsconfig.json
+
+TAP version 13
+# Subtest: dist/tests/acceptance.test.js
+ok 1 - dist/tests/acceptance.test.js
+  ---
+  duration_ms: 659.951965
+  type: 'test'
+  ...
+# Subtest: dist/tests/activity-server.test.js
+not ok 2 - dist/tests/activity-server.test.js
+  ---
+  duration_ms: 659.856356
+  type: 'test'
+  location: '/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor/dist/tests/activity-server.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: dist/tests/capabilities.test.js
+ok 3 - dist/tests/capabilities.test.js
+  ---
+  duration_ms: 112.328065
+  type: 'test'
+  ...
+# Subtest: dist/tests/config.test.js
+ok 4 - dist/tests/config.test.js
+  ---
+  duration_ms: 108.468481
+  type: 'test'
+  ...
+# Subtest: dist/tests/control-client.test.js
+ok 5 - dist/tests/control-client.test.js
+  ---
+  duration_ms: 266.403031
+  type: 'test'
+  ...
+# Subtest: dist/tests/control-server.test.js
+not ok 6 - dist/tests/control-server.test.js
+  ---
+  duration_ms: 3609.706961
+  type: 'test'
+  location: '/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor/dist/tests/control-server.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: dist/tests/database.test.js
+ok 7 - dist/tests/database.test.js
+  ---
+  duration_ms: 306.828085
+  type: 'test'
+  ...
+# Subtest: dist/tests/dispatcher.test.js
+ok 8 - dist/tests/dispatcher.test.js
+  ---
+  duration_ms: 281.584272
+  type: 'test'
+  ...
+# Subtest: dist/tests/hook-e2e.test.js
+not ok 9 - dist/tests/hook-e2e.test.js
+  ---
+  duration_ms: 330.599749
+  type: 'test'
+  location: '/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor/dist/tests/hook-e2e.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: dist/tests/hook-launcher.test.js
+ok 10 - dist/tests/hook-launcher.test.js
+  ---
+  duration_ms: 152.687234
+  type: 'test'
+  ...
+# Subtest: dist/tests/normalize.test.js
+ok 11 - dist/tests/normalize.test.js
+  ---
+  duration_ms: 141.288408
+  type: 'test'
+  ...
+# Subtest: dist/tests/parser.test.js
+ok 12 - dist/tests/parser.test.js
+  ---
+  duration_ms: 337.152717
+  type: 'test'
+  ...
+# Subtest: dist/tests/queue.test.js
+ok 13 - dist/tests/queue.test.js
+  ---
+  duration_ms: 783.763748
+  type: 'test'
+  ...
+# Subtest: dist/tests/repository-contract.test.js
+ok 14 - dist/tests/repository-contract.test.js
+  ---
+  duration_ms: 137.567905
+  type: 'test'
+  ...
+# Subtest: dist/tests/runner.test.js
+ok 15 - dist/tests/runner.test.js
+  ---
+  duration_ms: 1208.651886
+  type: 'test'
+  ...
+# Subtest: dist/tests/telegram-server.test.js
+not ok 16 - dist/tests/telegram-server.test.js
+  ---
+  duration_ms: 292.568746
+  type: 'test'
+  location: '/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor/dist/tests/telegram-server.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 12
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9422.217663

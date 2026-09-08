@@ -1,0 +1,37 @@
+
+======================================================================
+FAIL: test_log_rejects_symlinked_event_files (test_agentic.SharedKitTests) (target='synthetic-private.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agentic-wf01-regression-2lmpxh6p/test_agentic.py", line 65, in test_log_rejects_symlinked_event_files
+    self.assertEqual(result.returncode, 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_log_rejects_symlinked_event_files (test_agentic.SharedKitTests) (target='synthetic-private.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agentic-wf01-regression-2lmpxh6p/test_agentic.py", line 65, in test_log_rejects_symlinked_event_files
+    self.assertEqual(result.returncode, 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_log_rejects_symlinked_event_files (test_agentic.SharedKitTests) (target='missing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agentic-wf01-regression-2lmpxh6p/test_agentic.py", line 66, in test_log_rejects_symlinked_event_files
+    self.assertIn("ERROR: Cannot safely open event file", result.stderr)
+AssertionError: 'ERROR: Cannot safely open event file' not found in "ERROR: [Errno 2] No such file or directory: '/tmp/agentic-test-aev0yx51/project with spaces/.agentic/events/001.json'\n"
+
+======================================================================
+FAIL: test_log_rejects_symlinked_event_files (test_agentic.SharedKitTests) (target='001.json')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/agentic-wf01-regression-2lmpxh6p/test_agentic.py", line 66, in test_log_rejects_symlinked_event_files
+    self.assertIn("ERROR: Cannot safely open event file", result.stderr)
+AssertionError: 'ERROR: Cannot safely open event file' not found in "ERROR: [Errno 40] Too many levels of symbolic links: '/tmp/agentic-test-aev0yx51/project with spaces/.agentic/events/001.json'\n"
+
+----------------------------------------------------------------------
+Ran 1 test in 0.597s
+
+FAILED (failures=4)

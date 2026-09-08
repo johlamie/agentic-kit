@@ -44,6 +44,9 @@ ORCHESTRATOR_ONLY='(^|[;&|[:space:]])(sudo|nginx|certbot|systemctl|ufw|dropdb)([
 # Commands that change a running system. Harmless on a scratch project, worth a
 # prompt on one that is already serving users.
 MUTATING='(^|[;&|[:space:]])(rm|nginx|certbot|systemctl|sudo)([[:space:]]|$)|pm2[[:space:]]+(restart|reload|stop|delete|start)([[:space:]]|$)|git[[:space:]]+(push|merge)([[:space:]]|$)|(^|[;&|[:space:]])(deploy|migrate)([[:space:]]|$)|db[[:space:]]+(push|reset)([[:space:]]|$)|eas[[:space:]]+(submit|update)([[:space:]]|$)'
+# Common release script invocations, anchored at a command boundary so a diff
+# or message naming deploy.sh stays read-only. This is not a shell parser.
+RELEASE_SCRIPT="(^|[;&|])[[:space:]]*((sh|bash|zsh|dash)[[:space:]]+(-c[[:space:]]+)?[\"']?)?((npm[[:space:]]+run|yarn([[:space:]]+run)?|pnpm([[:space:]]+run)?)[[:space:]]+|(\./|\.\./|/)([^[:space:]/;&|]+/)*)(deploy|migrate)([:._-][[:alnum:]_.:-]+)?([[:space:]\"';&|]|$)"
 
 emit() { # emit <allow|deny|ask> <reason>
   jq -cn --arg d "$1" --arg r "$2" \
@@ -268,7 +271,7 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
 
   # -- 3. Projects that are already live — the working directory's and any the
   # command reaches into.
-  if printf '%s' "$scan" | grep -Eq "$MUTATING"; then
+  if printf '%s' "$scan" | grep -Eq "$MUTATING|$RELEASE_SCRIPT"; then
     local project
     for project in $(projects_touched "$cmd" | sort -u); do
       if is_production "$project"; then
@@ -330,6 +333,18 @@ self_test() {
   check "mutating a live project asks" ask   ""        "pm2 restart live-app"        "$P/live-app"
   check "diff deploy documentation is read-only" none "" "git diff -- docs/deploy.md" "$P/live-app"
   check "actual live deploy asks" ask "" "firebase deploy" "$P/live-app"
+  check "live npm deploy suffix asks" ask "" "npm run deploy:prod" "$P/live-app"
+  check "live npm migration suffix asks" ask "" "npm run migrate:prod" "$P/live-app"
+  check "live pnpm deploy suffix asks" ask "" "pnpm run deploy:prod" "$P/live-app"
+  check "live yarn deploy suffix asks" ask "" "yarn deploy:prod" "$P/live-app"
+  check "live local deployment script asks" ask "" "./deploy.sh" "$P/live-app"
+  check "live composed deployment script asks" ask "" "npm test && ./scripts/deploy.sh" "$P/live-app"
+  check "live shell migration script asks" ask "" "bash ./scripts/migrate.sh" "$P/live-app"
+  check "live shell command deployment asks" ask "" "bash -c './deploy.sh'" "$P/live-app"
+  check "diff deployment script is read-only" none "" "git diff ./deploy.sh" "$P/live-app"
+  check "echo deployment script is read-only" none "" "echo ./deploy.sh" "$P/live-app"
+  check "quoted deployment message is read-only" none "" "echo 'npm run deploy:prod'" "$P/live-app"
+  check "scratch deployment script defers" none "" "./deploy.sh" "$P/demo"
   check "reading a live project is ok" none  ""        "npm test"                    "$P/live-app"
   check "mutating a scratch project"   none  ""        "pm2 restart demo"            "$P/demo"
   # Reaching into another project from the one you are sitting in. The working

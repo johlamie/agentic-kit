@@ -1,0 +1,298 @@
+[
+  {
+    "id": "shared-kit",
+    "command": [
+      "python3",
+      "scripts/test_agentic.py"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:49:17.102241+00:00",
+    "duration_seconds": 2.828,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/shared-kit.log"
+  },
+  {
+    "id": "permissions",
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "scripts",
+      "-p",
+      "test_*operations.py"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:46:41.190602+00:00",
+    "duration_seconds": 0.294,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/permissions.log"
+  },
+  {
+    "id": "file-scope",
+    "command": [
+      "python3",
+      "scripts/test_file_scope.py"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:46:41.622481+00:00",
+    "duration_seconds": 0.146,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/file-scope.log"
+  },
+  {
+    "id": "final-offline",
+    "command": [
+      "./scripts/validate-kit.sh"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:51:20.950521+00:00",
+    "duration_seconds": 7.972,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/final-offline.log"
+  },
+  {
+    "id": "final-guard",
+    "command": [
+      "./global/hooks/agent-guard.sh",
+      "--self-test"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:51:29.016999+00:00",
+    "duration_seconds": 6.268,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/final-guard.log"
+  },
+  {
+    "id": "final-shellcheck",
+    "command": [
+      "bash",
+      "-c",
+      "shellcheck setup/*.sh scripts/*.sh global/hooks/*.sh supervisor/bin/* supervisor/scripts/*.sh kimi/setup/*.sh kimi/scripts/*.sh"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:51:35.444723+00:00",
+    "duration_seconds": 1.633,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/final-shellcheck.log"
+  },
+  {
+    "id": "smoke",
+    "command": [
+      "./scripts/smoke-install.sh"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:49:20.020965+00:00",
+    "duration_seconds": 0.275,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/smoke.log"
+  },
+  {
+    "id": "kimi-validation",
+    "command": [
+      "./kimi/scripts/validate-kit.sh"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:49:20.371870+00:00",
+    "duration_seconds": 0.383,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/kimi-validation.log"
+  },
+  {
+    "id": "kimi-smoke",
+    "command": [
+      "./kimi/scripts/smoke-install.sh"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:49:20.823739+00:00",
+    "duration_seconds": 0.052,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/kimi-smoke.log"
+  },
+  {
+    "id": "patched-npm-ci",
+    "command": [
+      "npm",
+      "ci"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:50:53.436266+00:00",
+    "duration_seconds": 1.897,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/patched-npm-ci.log"
+  },
+  {
+    "id": "patched-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:50:55.400563+00:00",
+    "duration_seconds": 7.957,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/patched-typecheck.log"
+  },
+  {
+    "id": "patched-supervisor-tests",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:51:33.628585+00:00",
+    "duration_seconds": 25.674,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/patched-supervisor-tests.log"
+  },
+  {
+    "id": "patched-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:51:59.382507+00:00",
+    "duration_seconds": 10.008,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/patched-build.log"
+  },
+  {
+    "id": "patched-dependency-audit",
+    "command": [
+      "npm",
+      "audit",
+      "--omit=dev",
+      "--audit-level=high"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:50:57.949939+00:00",
+    "duration_seconds": 1.674,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/patched-dependency-audit.log"
+  },
+  {
+    "id": "dependency-audit",
+    "command": [
+      "npm",
+      "audit",
+      "--omit=dev",
+      "--audit-level=high"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:48:46.198058+00:00",
+    "duration_seconds": 2.316,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 1,
+    "log": "evidence/dependency-audit.log"
+  },
+  {
+    "id": "npm-download",
+    "command": [
+      "npm",
+      "ci",
+      "--ignore-scripts"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:46:21.343911+00:00",
+    "duration_seconds": 0.985,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 1,
+    "log": "evidence/npm-download.log"
+  },
+  {
+    "id": "npm-download-network",
+    "command": [
+      "npm",
+      "ci",
+      "--ignore-scripts"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:46:52.313194+00:00",
+    "duration_seconds": 2.251,
+    "timeout_seconds": 60,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/npm-download-network.log"
+  },
+  {
+    "id": "supervisor-tests-restricted",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:48:49.588501+00:00",
+    "duration_seconds": 17.358,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 1,
+    "log": "evidence/supervisor-tests-restricted.log"
+  },
+  {
+    "id": "supervisor-tests-localhost",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "cwd": "/tmp/agentic-kit-merge-2026-09-08/candidate/supervisor",
+    "env_policy": "clean allowlist; synthetic HOME/TMPDIR/CODEX_HOME; no inherited credentials; real model/notification CLIs blocked by PATH shims",
+    "started_utc": "2026-09-08T20:49:43.624860+00:00",
+    "duration_seconds": 26.278,
+    "timeout_seconds": 120,
+    "timed_out": false,
+    "exit_code": 0,
+    "log": "evidence/supervisor-tests-localhost.log"
+  }
+]

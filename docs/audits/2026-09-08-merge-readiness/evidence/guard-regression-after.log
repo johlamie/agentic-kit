@@ -1,0 +1,55 @@
+PASS  rm inside a project                                  -> none
+PASS  rm of a whole project                                -> ask
+PASS  rm outside the projects root                         -> deny
+PASS  rm traversal out of a project                        -> deny
+PASS  rm in /tmp                                           -> none
+PASS  builder cannot reload nginx                          -> deny
+PASS  builder cannot push                                  -> deny
+PASS  builder can run tests                                -> none
+PASS  orchestrator may reload nginx                        -> none
+PASS  devops database diagnostic defers to classifier      -> none
+PASS  devops cannot deploy alone                           -> deny
+PASS  commit message naming a sensitive command            -> none
+PASS  grep for a sensitive command                         -> none
+PASS  echo describing a deploy                             -> none
+PASS  rm mentioned in a commit msg                         -> none
+PASS  sh -c hiding a server command                        -> deny
+PASS  bash -c hiding a push                                -> deny
+PASS  git merge-base is read-only                          -> none
+PASS  git push is still caught                             -> deny
+PASS  git merge is still caught                            -> deny
+PASS  mutating a live project asks                         -> ask
+PASS  diff deploy documentation is read-only               -> none
+PASS  actual live deploy asks                              -> ask
+PASS  live npm deploy suffix asks                          -> ask
+PASS  live npm migration suffix asks                       -> ask
+PASS  live pnpm deploy suffix asks                         -> ask
+PASS  live yarn deploy suffix asks                         -> ask
+PASS  live local deployment script asks                    -> ask
+PASS  live composed deployment script asks                 -> ask
+PASS  live shell migration script asks                     -> ask
+PASS  live shell command deployment asks                   -> ask
+PASS  diff deployment script is read-only                  -> none
+PASS  echo deployment script is read-only                  -> none
+PASS  quoted deployment message is read-only               -> none
+PASS  scratch deployment script defers                     -> none
+PASS  reading a live project is ok                         -> none
+PASS  mutating a scratch project                           -> none
+PASS  deleting into a live project                         -> ask
+PASS  deleting into a scratch one                          -> none
+PASS  reading a live project file                          -> none
+PASS  write inside current project                         -> none
+PASS  edit live project asks                               -> ask
+PASS  cross-project edit asks                              -> ask
+PASS  write outside project denied                         -> deny
+PASS  shared role memory is writable                       -> none
+PASS  non-memory config remains denied                     -> deny
+PASS  self-modifying agent rules denied                    -> deny
+PASS  environment secret write asks                        -> ask
+PASS  Bash cannot read .env                                -> deny
+PASS  Bash can read env template                           -> none
+PASS  Bash cannot read SSH keys                            -> deny
+PASS  Bash cannot read Supervisor env                      -> deny
+PASS  Supervisor token write denied                        -> deny
+
+agent-guard: all self-tests passed.
