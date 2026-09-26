@@ -360,7 +360,8 @@ def install(home, codex_dir):
         if not exists(path):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.symlink_to(source, target_is_directory=source.is_dir())
-    print(f"Installed 8 Codex agents, 3 skills and {home / '.local/bin/agentic'}")
+    skills = sum(1 for path in links if path.parent.name == "skills")
+    print(f"Installed 8 Codex agents, {skills} skills and {home / '.local/bin/agentic'}")
     print("Existing config.toml, models, MCP credentials and Claude settings preserved.")
 
 
@@ -421,6 +422,23 @@ def run_session(project, tool, arguments):
         return result
 
 
+def design_init(project):
+    """Copy the designer's deliverable templates into design/ without replacing work."""
+    source = ROOT / "global/templates/design"
+    design = project / "design"
+    for directory in (design, design / "refs", design / "mocks"):
+        if directory.is_symlink() or (exists(directory) and not directory.is_dir()):
+            raise KitError(f"Expected a real directory: {directory}")
+    created = []
+    for template in sorted(source.rglob("*")):
+        target = design / template.relative_to(source)
+        if template.is_dir() or exists(target):
+            continue
+        atomic_write(target, template.read_text(), replace=False)
+        created.append(target.relative_to(project).as_posix())
+    return created
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -429,7 +447,7 @@ def main(argv=None):
     setup.add_argument("--codex-dir", type=Path)
     role = commands.add_parser("role", help="Print a shared role for runtimes using generic delegation")
     role.add_argument("name", choices=ROLES)
-    for command in ("init", "status", "log", "checkpoint", "commit", "run"):
+    for command in ("init", "status", "log", "checkpoint", "commit", "run", "design-init", "design-lint"):
         sub = commands.add_parser(command)
         sub.add_argument("--project", default=".", type=Path)
         if command in ("checkpoint", "commit"):
@@ -442,6 +460,9 @@ def main(argv=None):
                 sub.add_argument("--file", action="append", default=[])
             else:
                 sub.add_argument("--message", "-m", required=True)
+        elif command == "design-lint":
+            sub.add_argument("--spec", action="store_true", help="check only the designer's deliverable")
+            sub.add_argument("--json", action="store_true")
         elif command == "run":
             sub.add_argument("tool", choices=("claude", "codex"))
             sub.add_argument("arguments", nargs=argparse.REMAINDER)
@@ -474,6 +495,14 @@ def main(argv=None):
             print(state.read_text())
     elif args.command == "log":
         log_events(project)
+    elif args.command == "design-init":
+        created = design_init(project)
+        print("\n".join(f"created {path}" for path in created) or "design/ already complete — nothing replaced")
+    elif args.command == "design-lint":
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import design_lint
+        return design_lint.main([*(["--spec"] if args.spec else []), *(["--json"] if args.json else [])],
+                                project=project)
     else:
         actor = identity(args)
         if args.command == "checkpoint":

@@ -78,7 +78,7 @@ for name in "${required_agents[@]}"; do
 done
 pass "required agent manifests were inspected"
 
-required_skills=(adopt-project delivery-pipeline retrospective)
+required_skills=(adopt-project delivery-pipeline retrospective design-system ui-kit design-conformance frontend-design)
 for name in "${required_skills[@]}"; do
   file="global/skills/$name/SKILL.md"
   if [[ ! -f "$file" ]]; then
@@ -98,6 +98,39 @@ for file in PROJECT_STATE.md DECISIONS.md LESSONS.md CAPABILITY_GAPS.md; do
     pass "memory template exists: $file"
   else
     fail "missing or empty memory template: $file"
+  fi
+done
+
+# The designer's deliverable is enforced by `agentic design-lint`; its templates
+# must stay complete and must keep failing until the designer fills them.
+for file in DESIGN.md tokens.md components.md layout.md anti-patterns.md system.json refs/README.md mocks/README.md; do
+  if [[ -s "global/templates/design/$file" ]]; then
+    pass "design template exists: $file"
+  else
+    fail "missing or empty design template: $file"
+  fi
+done
+if jq -e '.schema_version == 1 and (.anti_patterns | length > 0) and (._todo | test("TODO\\(designer\\)"))' \
+     global/templates/design/system.json >/dev/null 2>&1; then
+  pass "design system template is valid JSON and still requires the designer"
+else
+  fail "global/templates/design/system.json is invalid or no longer marked TODO(designer)"
+fi
+if [[ -s global/templates/qa/ui-checks.spec.ts ]]; then
+  pass "QA UI floor template exists"
+else
+  fail "missing global/templates/qa/ui-checks.spec.ts"
+fi
+if [[ -s global/skills/frontend-design/LICENSE.txt && -s global/skills/frontend-design/SOURCE.md ]]; then
+  pass "vendored frontend-design skill keeps its license and provenance"
+else
+  fail "vendored frontend-design skill lacks LICENSE.txt or SOURCE.md"
+fi
+for name in design-system ui-kit design-conformance frontend-design; do
+  if [[ -L "codex/skills/$name" && "$(readlink "codex/skills/$name")" == "../../global/skills/$name" ]]; then
+    pass "Codex shares the design skill: $name"
+  else
+    fail "codex/skills/$name must link to ../../global/skills/$name"
   fi
 done
 

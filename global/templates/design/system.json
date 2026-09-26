@@ -1,0 +1,27 @@
+{
+  "_todo": "TODO(designer): replace every example value with this project's decisions from tokens.md, then delete this key.",
+  "schema_version": 1,
+  "grid": 4,
+  "sources": ["src", "app", "components"],
+  "exclude": [],
+  "token_files": ["src/styles/tokens.css", "tailwind.config.ts"],
+  "ui_kit_dirs": ["src/components/ui", "components/ui"],
+  "primitive_elements": ["button", "input", "select", "textarea"],
+  "scales": {
+    "spacing": ["0", "px", "1", "2", "3", "4", "6", "8", "12"],
+    "spacing_px": [0, 1, 4, 8, 12, 16, 24, 32, 48],
+    "radius": ["none", "sm", "lg", "full"],
+    "radius_px": [0, 8, 16, 9999],
+    "font_size": ["sm", "base", "xl", "3xl"],
+    "font_weight": ["normal", "semibold"]
+  },
+  "color_names": ["primary", "surface", "ink", "muted", "border", "danger", "success"],
+  "icons": { "packages": ["lucide-react"], "sizes": [20, 24] },
+  "tailwind": { "allow_arbitrary_prefixes": [] },
+  "anti_patterns": [
+    { "id": "decorative-gradient", "pattern": "bg-gradient-to-|linear-gradient\\(|radial-gradient\\(", "message": "decorative gradient: see design/anti-patterns.md" },
+    { "id": "glassmorphism", "pattern": "backdrop-blur", "message": "glass surface is not in the system" },
+    { "id": "heavy-shadow", "pattern": "(?<![\\w-])shadow-(xl|2xl)(?![\\w-])", "message": "shadow outside the elevation tokens" },
+    { "id": "caps-eyebrow", "pattern": "(?<![\\w-])uppercase(?![\\w-])|text-transform:\\s*uppercase", "message": "ALL-CAPS labels are a generated-UI tell; use the type scale" }
+  ]
+}

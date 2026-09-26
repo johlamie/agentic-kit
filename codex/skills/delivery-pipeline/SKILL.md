@@ -18,11 +18,18 @@ apply. Preserve the user's approvals across Claude/Codex handoffs.
 2. Delegate SPEC.md to `product-manager`; G1 approves scope.
 3. Delegate sourced RESEARCH.md to `researcher`, then TECH.md and
    ARCHITECTURE.md to `architect`; G2 approves stack and budget.
-4. For UI, delegate two grounded directions to `designer`; G3 selects one,
-   then complete design/DESIGN.md, tokens and states.
+4. For UI, the `designer` follows `design-system`: Mobbin references (missing
+   Mobbin is a BLOCK unless the user accepts a fallback), two directions with
+   rendered mocks; G3 selects on screenshots; then the numbered system in
+   design/ until `agentic design-lint --spec` passes.
 5. Delegate provisioning preparation to `devops` and implementation slices to
-   `builder`. Run independent slices in parallel only with disjoint files.
-6. `reviewer` checks each slice, then `qa` exercises real flows. Failed checks
+   `builder`. For UI, slice 0 is the `ui-kit`; no business slice before it is
+   done; a `KIT_GAP` goes to the designer, then a ui-kit slice. Run independent
+   slices in parallel only with disjoint files.
+6. `reviewer` checks each slice (UI: `design-conformance`, `agentic design-lint`),
+   then `qa` exercises real flows (UI: `ui-checks` floor, design match). A UI
+   slice is done only with a recorded visual audit PASS; systemic visual
+   findings go to the designer and the kit, not to the slice. Failed checks
    go back to the responsible role. After three failed repair cycles stop the
    repeated approach, record a diagnosis and pursue a bounded alternative; ask
    only if a user decision or unavailable access blocks progress. For web UI, inspect 390, 768, 1440

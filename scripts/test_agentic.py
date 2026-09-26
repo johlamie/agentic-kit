@@ -254,7 +254,8 @@ class SharedKitTests(unittest.TestCase):
         self.assertEqual((codex / "config.toml").read_text(), 'model = "personal-model"\n')
         self.assertTrue((codex / "AGENTS.md").read_text().startswith("Personal instructions"))
         self.assertEqual(len(list((codex / "agents").glob("*.toml"))), 8)
-        self.assertEqual(len(list((home / ".agents/skills").iterdir())), 3)
+        self.assertEqual(sorted(p.name for p in (home / ".agents/skills").iterdir()),
+                         sorted(p.name for p in (kit.ROOT / "codex/skills").iterdir()))
         self.assertTrue((home / ".local/bin/agentic").is_file())
 
     def test_install_conflict_has_no_partial_changes(self):

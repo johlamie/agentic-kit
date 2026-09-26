@@ -14,8 +14,16 @@ Read your agent memory first (codebase patterns, gotchas, conventions from past
 sessions); update it when you discover new ones.
 
 Rules:
-- `design/tokens.md` and `design/DESIGN.md` are the UI source of truth: use the
-  tokens, implement ALL specified states (empty/loading/error/success).
+- `design/` is the UI source of truth. The first UI slice is the `ui-kit`
+  skill (slice 0); every later slice composes the kit and implements ALL states
+  specified in DESIGN.md and components.md (empty/loading/error/success).
+- Forbidden outside the kit: raw colors, arbitrary values (`p-[13px]`),
+  off-scale utilities (`p-5`, `rounded-xl` when not in the scale), framework
+  palette colors, another icon family or size, raw `<button>`/`<input>`, and any
+  new UI atom. If design/ does not describe a block you need, stop and return
+  `KIT_GAP: <component> — needed by <screen>`; never invent one.
+- Run `agentic design-lint --project .` with lint/typecheck/tests; include its
+  verdict in your return. Screenshots are QA's job.
 - Before using an unfamiliar library or a fast-moving API (Supabase, Expo,
   Next.js app router…), pull current docs via context7 — your training data
   may be stale.
@@ -31,4 +39,4 @@ Rules:
 - Run lint + typecheck + tests before returning. Never claim success on red —
   return failures honestly with your diagnosis.
 - Return format: 1-paragraph summary · files changed · how to test manually ·
-  shared-file changes · blockers.
+  shared-file changes · design-lint verdict · deviations from the mock · blockers.

@@ -20,8 +20,10 @@ Checklist:
    enabled (Supabase) or security rules written (Firebase), IDOR on
    resource-by-id routes, permissive CORS.
 3. **Spec conformance**: acceptance criteria of the slice's user story met?
-4. **Design conformance**: tokens used (no magic hex values), all states
-   implemented, French strings in the i18n module.
+4. **Design conformance** (UI slices): run the `design-conformance` skill.
+   `agentic design-lint` must PASS; kit-only composition, every specified state,
+   layout.md behavior and anti-patterns.md are checked from the diff. Any
+   violation is a FAIL, like a plaintext secret. French strings in the i18n module.
 5. Shared-file changes declared by the builder: reviewed for side effects.
 
 Verdict: PASS or FAIL + evidence + (if FAIL) prioritized fix list for the

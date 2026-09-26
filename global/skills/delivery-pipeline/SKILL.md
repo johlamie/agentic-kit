@@ -63,39 +63,68 @@ Run the Supervisor architecture/security audit and repair CHALLENGE/BLOCK items.
 does not approve cost, credentials, provisioning, or production action.
 
 ## Phase 4 — Design → `designer` (skip only if no UI, justified in writing)
-SPEC + RESEARCH + architecture summary in; 2 design directions out. Run
+The designer follows the `design-system` skill. SPEC + RESEARCH + architecture
+summary in; decomposed Mobbin references and 2 directions out, each with a
+**rendered** core-screen mock and screenshots at 390 and 1440. Mobbin
+unavailable is a BLOCK: ask the user whether to accept a WebSearch fallback and
+record the answer in DECISIONS.md before continuing. Run
 `design_due_diligence` before G3 so Codex can challenge information architecture,
 flows, references, accessibility intent, generic design patterns, and system
 quality. If justified, it may add an isolated alternative C under
 `.claude/supervisor/proposals/`; it never overwrites the active design.
 
-**GATE G3** remains the user's choice. Present a compact comparison only:
-directions A/B, Codex recommendation and score, material strengths/risks,
-targeted changes, and optional C. Do not flood the user with raw research. After
-the user chooses, designer completes `design/` (DESIGN.md, tokens.md, wireframes).
+**GATE G3** remains the user's choice, made on rendered screens. Present a
+compact comparison only: the A/B screenshots, Codex recommendation and score,
+material strengths/risks, targeted changes, and optional C. A direction without
+a rendered mock is not presented. Do not flood the user with raw research. After
+the user chooses, designer completes `design/` (DESIGN.md, tokens.md,
+components.md, layout.md, anti-patterns.md, system.json, mocks/core.html).
+`agentic design-lint --spec` must PASS before Phase 5.
 
 ## Phase 5 — Provisioning & scaffold → `devops` then orchestrator
 Devops provisions per TECH.md checklist (cloud project, schema, RLS/rules,
 demo account, .env). Orchestrator scaffolds the repo per ARCHITECTURE.md
 (framework init, Prisma/collections, CI basics, i18n module, seed script).
+The scaffold carries no visual decisions: do not customize a framework or
+component-library default theme; the UI kit slice replaces it with design/.
 Commit `chore: scaffold`. For material auth/data/infrastructure deviations,
 request a manual Supervisor architecture or security audit before building.
 
 ## Phase 6 — Build → `builder` ×N
-One slice per builder; parallel only for slices with disjoint files. Each
-prompt: slice goal + schema + paths + conventions + relevant design/ sections.
+**Slice 0 is the UI kit** (products with a UI): one builder runs the `ui-kit`
+skill — tokens wired as the theme (not an extension), every component of
+components.md with its states, a dev-only `/_kit` route. It goes through Phase 7
+like any slice, with the visual audit on `/_kit`. No business slice starts
+before slice 0 is DONE.
+
+Then one slice per builder; parallel only for slices with disjoint files. Each
+prompt: slice goal + schema + paths + conventions + relevant design/ sections
+(screens, components, layout) + "compose the kit; KIT_GAP instead of inventing".
+A `KIT_GAP` return goes to the designer (spec), then a ui-kit slice (code),
+then back to the blocked slice; it counts as one repair cycle.
 
 ## Phase 7 — Verify → `reviewer` then `qa`, per slice
-reviewer (static) PASS → qa (dynamic, local) PASS → Supervisor slice audit. The
+reviewer (static, with `design-conformance` and `agentic design-lint` for UI)
+PASS → qa (dynamic, local, with the `ui-checks` floor and design match) PASS →
+Supervisor slice audit. The
 Supervisor coalesces builder/reviewer/QA evidence and meta-audits false PASS
 risk; it does not run a costly audit after every tool call. For UI slices, run
 `visual_ux_audit` on the real local URL at mobile, tablet, desktop, and large
 desktop viewports. Inspect interactions, responsive behavior, accessibility,
 states, hierarchy, consistency, trust, and perceived quality—not source alone.
 
-Claude reviewer + qa PASS and Supervisor PASS are required for slice DONE.
-FAIL/CHALLENGE/BLOCK returns to the responsible builder/designer with the concise
-report. Three failed repair cycles → stop that approach, record a diagnosis
+Claude reviewer + qa PASS and Supervisor PASS are required for slice DONE. For
+a UI slice, record the `visual_ux_audit` verdict and its audit id in
+PROJECT_STATE.md; without a recorded PASS the slice is not DONE, and the next
+slice does not start. Route by cause:
+- local defect (one screen off-spec) → the builder of that slice;
+- systemic finding (generic look, weak hierarchy, inconsistent spacing, a
+  missing value/state/component in the system) → designer, then a ui-kit
+  slice. Never patch a systemic finding inside a business slice.
+A Supervisor proposal stays isolated, but you triage it before the next slice:
+adopt it (designer updates design/, recorded in DECISIONS.md) or reject it with
+a reason in DECISIONS.md.
+FAIL/CHALLENGE/BLOCK returns to the responsible role with the concise report. Three failed repair cycles → stop that approach, record a diagnosis
 and try a bounded alternative; escalate when a user decision or access is needed.
 Browser/MCP failure is an audit infrastructure ERROR, not a bad UI
 score and not a PASS.

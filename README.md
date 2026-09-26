@@ -87,6 +87,13 @@ démo seedées · QA PASS sur la cible déployée (mobile 390px + desktop, erreu
 3G lent) · README + guide utilisateur 1 page · limitations connues · commande
 de rollback.
 
+## Design implémentable (UI)
+
+Pour tout produit avec une interface : directions choisies au G3 sur des mocks
+rendus, `design/` chiffré et vérifié par `agentic design-lint --spec`, UI kit en
+slice 0, puis `design-lint` + audit visuel bloquants à chaque slice. Détails :
+[docs/DESIGN_SYSTEM_WORKFLOW.md](docs/DESIGN_SYSTEM_WORKFLOW.md).
+
 ## Installation (VPS neuve Ubuntu 22.04)
 
 ```bash

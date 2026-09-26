@@ -19,12 +19,21 @@ regressions. Update it after every run.
 2. Execute via Playwright MCP (or `npx playwright test` for committed specs):
    - The full Must-flow, as a new user (fresh session).
    - Error paths: wrong input, double submit, direct URL access without auth.
-   - Viewports: 390×844, 768×1024, 1440×900, and 1920×1080 for web; all must be usable.
+   - Viewports: 390×844, 768×1024, 1440×900, and 1920×1080 for web.
+   - UI floor (UI slices): copy `~/.claude/templates/qa/ui-checks.spec.ts`
+     (kit path `global/templates/qa/`) to `e2e/` once, set `UI_ROUTES` to the
+     slice routes plus `/_kit`, and run it. Horizontal overflow at any viewport
+     = FAIL. Touch target < 44px at 390/768 = FAIL.
+   - Design match: compare the screenshots with `design/layout.md` (what
+     stacks, hides, max-width) and `design/mocks/core.html`. Force empty and
+     error states: a state that is missing or not the one designed = FAIL.
+     "Usable" is not the standard; "as specified" is.
    - Seeded demo account: log in, verify demo data renders.
 3. **Post-deploy runs target the PUBLIC URL** — same script, plus: SSL valid,
    no mixed content, first-load under ~5s on simulated slow 3G (West-African
    network reality), console free of errors.
-4. Evidence: screenshots of each key step saved to `qa/evidence/<date>/`.
+4. Evidence: screenshots of each key step saved to `qa/evidence/<date>/`, and
+   the four-viewport UI screenshots in `qa/evidence/ui/`.
 
 Verdict: PASS / FAIL + the script with per-step ✓/✗ + screenshots paths +
 (if FAIL) reproduction steps for the builder. Include the exact audited local or
