@@ -303,7 +303,7 @@ pu être enregistré.
 | Context7 MCP | Recommandé pour la documentation technique actuelle | `./setup/codex-mcp-setup.sh --context7` |
 | Chrome DevTools MCP | Optionnel pour réseau/performance | `./setup/codex-mcp-setup.sh --chrome-devtools` |
 | Figma | Optionnel, authentification humaine séparée | Ne configurer que pour un projet qui en dépend |
-| Mobbin | Requis pour la phase Design (sinon BLOCK ; fallback seulement sur accord écrit), plan Pro/Team/Enterprise et OAuth humain | `./setup/codex-mcp-setup.sh --mobbin` |
+| Mobbin | Optionnel, source d'inspiration du designer ; plan Pro/Team/Enterprise et OAuth humain | `./setup/codex-mcp-setup.sh --mobbin` |
 | GitHub MCP | Optionnel, dépôts/PR et Actions en lecture seule | `./setup/codex-mcp-setup.sh --github-readonly` |
 
 Vérification :

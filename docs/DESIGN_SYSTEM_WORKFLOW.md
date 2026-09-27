@@ -1,10 +1,26 @@
-# Design implémentable — du Mobbin au code conforme
+# Design implémentable — des principes au code conforme
 
 Un front « générique IA » vient rarement du builder seul : le design arrivait
 trop flou, le scaffold gardait le thème par défaut et personne ne pouvait faire
 échouer un écran laid. La chaîne ci-dessous rend le système visuel obéissable
 par le builder et vérifiable par une machine ; le goût reste jugé par l'audit
 visuel du Supervisor et par vous au G3.
+
+## La boussole : les principes de design
+
+`global/skills/design-system/PRINCIPLES.md` fixe tes goûts, confirmés sur des
+rendus réels : vue épurée et calme, structure adaptée à l'audience (jamais
+d'allure back-office côté public), disposition choisie selon le contenu du
+projet (colonnes seulement si le contenu s'y prête), surfaces sobres, typographie
+porteuse de personnalité, un seul élément signature lié au domaine, états
+conçus, mobile d'abord. Designer, reviewer et Supervisor s'y réfèrent.
+
+`examples/sceau/` (à côté) montre ces principes appliqués : c'est le niveau de
+qualité attendu, pas un style à copier. Son vert, Fraunces, le sceau et ses deux
+colonnes appartiennent à Sceau.
+
+Les références (Mobbin, blocks shadcn, sites existants) restent de l'inspiration :
+leur absence ne bloque jamais la phase Design.
 
 ## Base commune, originalité structurelle
 
@@ -35,7 +51,8 @@ axes, pas seulement sur la couleur. Laisser le thème shadcn par défaut intact
 ```text
 SPEC + RESEARCH
   → designer (skill design-system)
-      refs Mobbin décomposées en px → 2 directions RENDUES en Tailwind + shadcn
+      PRINCIPLES.md + exemple Sceau + inspirations (Mobbin optionnel)
+      → 2 directions RENDUES en Tailwind + shadcn, même audience
       (même base, structures différentes ; captures 390/1440)
   → G3 : vous choisissez sur des écrans, pas sur de l'ASCII
   → designer : design/ complet + system.json      ── agentic design-lint --spec = PASS
@@ -102,9 +119,11 @@ lit chaque raison. Un projet sans `system.json` ou sans fichier UI donne
 
 ## Ce qui reste humain
 
-- Mobbin (abonnement + OAuth) : requis pour la phase Design. S'il manque, la
-  phase est bloquée ; un fallback WebSearch n'est possible qu'avec votre accord
-  écrit dans DECISIONS.md.
+- Mobbin (abonnement + OAuth) : optionnel, simple source d'inspiration.
+- Tes goûts confirmés vivent dans `~/.claude/agent-memory/designer/MEMORY.md`,
+  amorcée par `setup/seed-user-memory.sh` (lancé par `link-kit.sh`). Une mémoire
+  existante n'est jamais écrasée : si tu en as déjà une, recopie à la main les
+  lignes de `global/templates/user-memory/designer.md` qui t'intéressent.
 - Le choix G3, sur captures.
 - Figma / V0 : optionnels. Le kit n'en dépend pas, le mock HTML rendu
   (Tailwind + shadcn) suffit et se transpose directement en code.

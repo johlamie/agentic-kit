@@ -20,9 +20,9 @@ apply. Preserve the user's approvals across Claude/Codex handoffs.
    ARCHITECTURE.md to `architect`; G2 approves stack and budget.
 4. For UI, the baseline is shadcn/ui + Tailwind v4 (Expo: NativeWind + React
    Native Reusables); originality is structural. The `designer` follows
-   `design-system`: Mobbin references (missing
-   Mobbin is a BLOCK unless the user accepts a fallback), two directions with
-   rendered mocks; G3 selects on screenshots; then the numbered system in
+   `design-system` and its PRINCIPLES.md (references, Mobbin included, are
+   optional inspiration), two directions for the same audience with rendered
+   mocks; G3 selects on screenshots; then the numbered system in
    design/ until `agentic design-lint --spec` passes.
 5. Delegate provisioning preparation to `devops` and implementation slices to
    `builder`. For UI, slice 0 is the `ui-kit`; no business slice before it is

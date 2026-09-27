@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "baseline": "shadcn-tailwind",
+  "grid": 4,
+  "sources": ["src", "app", "components"],
+  "exclude": [],
+  "token_files": ["src/app/globals.css", "app/globals.css"],
+  "ui_kit_dirs": ["src/components/ui", "components/ui"],
+  "primitive_elements": ["button", "input", "select", "textarea"],
+  "scales": {
+    "spacing": ["0", "px", "0.5", "1", "2", "3", "4", "6", "8", "12", "24"],
+    "spacing_px": [0, 1, 4, 8, 12, 16, 24, 32, 48, 96],
+    "radius": ["none", "sm", "md", "lg", "xl", "full"],
+    "radius_px": [0, 4, 6, 8, 10, 9999],
+    "font_size": ["xs", "sm", "base", "lg", "2xl", "4xl"],
+    "font_weight": ["normal", "medium"]
+  },
+  "color_names": ["background", "foreground", "card", "popover", "primary", "secondary", "muted", "accent", "destructive", "warning", "border", "input", "ring"],
+  "icons": { "packages": ["lucide-react"], "sizes": [14, 16, 20] },
+  "tailwind": { "allow_arbitrary_prefixes": ["grid-cols", "transition"] },
+  "anti_patterns": [
+    { "id": "decorative-gradient", "pattern": "bg-gradient-to-|bg-linear-to-|linear-gradient\\(|radial-gradient\\(", "message": "decorative gradient: see design/anti-patterns.md" },
+    { "id": "heavy-shadow", "pattern": "(?<![\\w-])shadow-(md|lg|xl|2xl)(?![\\w-])", "message": "Sceau uses borders, not shadows, on surfaces" },
+    { "id": "caps-eyebrow", "pattern": "(?<![\\w-])uppercase(?![\\w-])|text-transform:\\s*uppercase", "message": "ALL-CAPS labels are a generated-UI tell; use the type scale" },
+    { "id": "inline-style", "pattern": "style=\\{\\{", "message": "inline style objects bypass the tokens; use Tailwind classes" },
+    { "id": "admin-structure", "pattern": "<Sidebar|<Table(?=[\\s>])|<DataTable", "message": "public pages have no back-office structures (see anti-patterns.md)" },
+    { "id": "verdict-banner", "pattern": "bg-(primary|destructive|warning)(?![\\w/-])[^\"']*(?<![\\w-])p-(6|8)", "message": "no full colour verdict banner; the seal and badge carry the verdict" }
+  ]
+}

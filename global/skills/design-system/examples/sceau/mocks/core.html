@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sceau — écran cœur (direction A retenue)</title>
+<!-- États : core.html?state=home | loading | valid | revoked | notfound -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  /* Final tokens — identical to design/tokens.md and the future globals.css */
+  :root {
+    --radius: 0.375rem;
+    --background: oklch(0.985 0.004 165);
+    --foreground: oklch(0.22 0.02 170);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.02 170);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.02 170);
+    --primary: oklch(0.42 0.085 168);
+    --primary-foreground: oklch(0.985 0.005 165);
+    --secondary: oklch(0.955 0.012 165);
+    --secondary-foreground: oklch(0.26 0.03 170);
+    --muted: oklch(0.96 0.008 165);
+    --muted-foreground: oklch(0.5 0.02 170);
+    --accent: oklch(0.95 0.02 165);
+    --accent-foreground: oklch(0.26 0.03 170);
+    --destructive: oklch(0.55 0.19 27);
+    --warning: oklch(0.62 0.13 70);
+    --border: oklch(0.91 0.012 165);
+    --input: oklch(0.91 0.012 165);
+    --ring: oklch(0.42 0.085 168);
+  }
+  .dark {
+    --background: oklch(0.17 0.012 170);
+    --foreground: oklch(0.95 0.008 165);
+    --card: oklch(0.21 0.014 170);
+    --card-foreground: oklch(0.95 0.008 165);
+    --popover: oklch(0.21 0.014 170);
+    --popover-foreground: oklch(0.95 0.008 165);
+    --primary: oklch(0.72 0.1 165);
+    --primary-foreground: oklch(0.2 0.03 170);
+    --secondary: oklch(0.26 0.015 170);
+    --secondary-foreground: oklch(0.95 0.008 165);
+    --muted: oklch(0.26 0.015 170);
+    --muted-foreground: oklch(0.7 0.015 170);
+    --accent: oklch(0.28 0.02 168);
+    --accent-foreground: oklch(0.95 0.008 165);
+    --destructive: oklch(0.68 0.17 25);
+    --warning: oklch(0.78 0.12 75);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.72 0.1 165);
+  }
+  @theme inline {
+    --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces", ui-serif, Georgia, serif;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-warning: var(--warning);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --radius-sm: calc(var(--radius) - 2px);
+    --radius-md: var(--radius);
+    --radius-lg: calc(var(--radius) + 2px);
+    --radius-xl: calc(var(--radius) + 4px);
+  }
+  @layer base {
+    * { @apply border-border outline-ring/50; }
+    body { @apply bg-background text-foreground font-sans antialiased; }
+  }
+</style>
+</head>
+<body>
+  <!-- SiteHeader -->
+  <header class="border-b bg-card">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 lg:px-8">
+      <a href="?state=home" class="flex h-11 items-center gap-2">
+        <span class="font-display text-lg font-medium">Sceau</span>
+        <span class="hidden text-sm text-muted-foreground sm:inline">Registre des diplômes</span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="#" class="hidden h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-accent sm:inline-flex">Établissements</a>
+        <a href="?state=home" data-hide-on="home" class="inline-flex size-11 items-center justify-center gap-2 rounded-md border bg-background text-sm font-medium shadow-xs hover:bg-accent sm:h-9 sm:w-auto sm:px-3" aria-label="Vérifier un autre diplôme">
+          <i data-icon="search" class="size-4"></i><span class="hidden sm:inline">Vérifier un autre diplôme</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============ HOME : saisir un code ou scanner ============ -->
+  <main data-state="home" class="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pt-12 pb-24 lg:grid-cols-[1fr_22rem] lg:px-8 lg:pt-24">
+    <section class="flex max-w-xl flex-col gap-8">
+      <div class="flex flex-col gap-4">
+        <svg data-seal="idle" viewBox="0 0 120 120" class="size-16 text-primary sm:size-24" aria-hidden="true"></svg>
+        <h1 class="font-display text-4xl leading-tight font-medium">Vérifiez l'authenticité d'un diplôme</h1>
+        <p class="text-lg text-muted-foreground">Saisissez le code imprimé au dos du diplôme, ou scannez son QR code. La réponse vient directement du registre de l'établissement.</p>
+      </div>
+      <form class="flex flex-col gap-3" action="?">
+        <input type="hidden" name="state" value="valid">
+        <label for="home-code" class="text-sm font-medium">Code de vérification</label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input id="home-code" placeholder="Ex. 7K4Q-92MD" autocomplete="off" class="h-11 w-full min-w-0 rounded-md border sm:flex-1 bg-card px-3 text-base tracking-wide shadow-xs sm:h-10">
+          <button class="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:h-10">Vérifier</button>
+        </div>
+        <button type="button" class="inline-flex h-11 w-fit items-center gap-2 rounded-md px-3 text-sm font-medium text-primary hover:bg-accent sm:h-9"><i data-icon="qr-code" class="size-4"></i>Scanner le QR code</button>
+      </form>
+    </section>
+    <aside class="flex flex-col gap-6">
+      <div class="rounded-lg border bg-card p-6">
+        <h2 class="font-medium">Où trouver le code ?</h2>
+        <p class="mt-2 text-sm text-muted-foreground">Il figure sous le QR code, au dos du diplôme ou de l'attestation de réussite. Il comporte 8 caractères, par exemple 7K4Q-92MD.</p>
+      </div>
+      <div class="rounded-lg border bg-card p-6">
+        <h2 class="font-medium">Ce que vous obtenez</h2>
+        <ul class="mt-4 flex flex-col gap-3 text-sm">
+          <li class="flex gap-3"><i data-icon="check" class="mt-0.5 size-4 shrink-0 text-primary"></i>L'identité du titulaire et l'intitulé exact du diplôme</li>
+          <li class="flex gap-3"><i data-icon="check" class="mt-0.5 size-4 shrink-0 text-primary"></i>Qui l'a émis, signé et inscrit au registre, et quand</li>
+          <li class="flex gap-3"><i data-icon="check" class="mt-0.5 size-4 shrink-0 text-primary"></i>Une attestation téléchargeable à joindre à un dossier</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============ LOADING : Skeleton ============ -->
+  <main data-state="loading" class="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pt-8 pb-24 lg:grid-cols-[1fr_22rem] lg:px-8 lg:pt-12" aria-busy="true">
+    <section class="flex flex-col gap-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
+        <div class="size-16 shrink-0 animate-pulse rounded-full bg-muted sm:size-24 lg:size-32"></div>
+        <div class="flex flex-1 flex-col gap-3">
+          <div class="h-5 w-24 animate-pulse rounded-sm bg-muted"></div>
+          <div class="h-10 w-3/4 animate-pulse rounded-md bg-muted"></div>
+          <div class="h-6 w-2/3 animate-pulse rounded-md bg-muted"></div>
+          <p class="text-sm text-muted-foreground">Consultation du registre de l'établissement…</p>
+        </div>
+      </div>
+      <div class="h-64 animate-pulse rounded-lg border bg-card"></div>
+    </section>
+    <aside class="h-80 animate-pulse rounded-lg border bg-card"></aside>
+  </main>
+
+  <!-- ============ VALID : authentique ============ -->
+  <main data-state="valid" class="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pt-8 pb-24 lg:grid-cols-[1fr_22rem] lg:px-8 lg:pt-12">
+    <section class="flex flex-col gap-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <svg data-seal="valid" viewBox="0 0 120 120" class="size-16 shrink-0 text-primary sm:size-24 lg:size-32" role="img" aria-label="Sceau : diplôme authentique"></svg>
+        <div class="flex flex-col gap-3">
+          <span class="inline-flex w-fit items-center gap-1 rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"><i data-icon="check" class="size-3.5"></i>Authentique</span>
+          <h1 class="font-display text-4xl leading-tight font-medium">Aïssatou Diallo</h1>
+          <p class="text-lg text-muted-foreground">Master Finance et Comptabilité, mention Très bien</p>
+          <p class="max-w-prose text-sm text-muted-foreground">Ce diplôme figure au registre de l'Université Atlantique de Dakar. Sa signature électronique est valide et n'a pas été révoquée.</p>
+        </div>
+      </div>
+      <div class="rounded-lg border bg-card">
+        <dl class="grid sm:grid-cols-2">
+          <div class="flex flex-col gap-1 border-b p-4 sm:border-r sm:p-6"><dt class="text-sm text-muted-foreground">Établissement</dt><dd class="font-medium">Université Atlantique de Dakar</dd></div>
+          <div class="flex flex-col gap-1 border-b p-4 sm:p-6"><dt class="text-sm text-muted-foreground">Diplôme</dt><dd class="font-medium">Master Finance et Comptabilité</dd></div>
+          <div class="flex flex-col gap-1 border-b p-4 sm:border-r sm:p-6"><dt class="text-sm text-muted-foreground">Promotion</dt><dd class="font-medium">2024</dd></div>
+          <div class="flex flex-col gap-1 border-b p-4 sm:p-6"><dt class="text-sm text-muted-foreground">Délivré le</dt><dd class="font-medium">12 juillet 2024</dd></div>
+          <div class="flex flex-col gap-1 p-4 sm:col-span-2 sm:p-6"><dt class="text-sm text-muted-foreground">Numéro du diplôme</dt><dd class="font-medium tabular-nums">UAD-2024-MFC-00417</dd></div>
+        </dl>
+      </div>
+      <div class="hidden gap-3 sm:flex">
+        <button class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90"><i data-icon="download" class="size-4"></i>Télécharger l'attestation</button>
+        <button class="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-6 text-sm font-medium shadow-xs hover:bg-accent"><i data-icon="copy" class="size-4"></i>Copier le lien de preuve</button>
+      </div>
+    </section>
+    <aside class="flex flex-col gap-6">
+      <div class="rounded-lg border bg-card p-6">
+        <h2 class="font-medium">Traçabilité</h2>
+        <ol class="mt-6 flex flex-col gap-6">
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary"><i data-icon="file-text" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium">Émis par la scolarité</span><span class="text-sm text-muted-foreground">12 juillet 2024</span></div></li>
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary"><i data-icon="pen-line" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium">Signé par le Rectorat</span><span class="text-sm text-muted-foreground">15 juillet 2024</span></div></li>
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary"><i data-icon="database" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium">Inscrit au registre</span><span class="text-sm text-muted-foreground">15 juillet 2024</span></div></li>
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><i data-icon="eye" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium">Vérifié aujourd'hui à 10 h 42</span><span class="text-sm text-muted-foreground">14ᵉ vérification de ce diplôme</span></div></li>
+        </ol>
+      </div>
+    </aside>
+    <div class="fixed inset-x-0 bottom-0 flex gap-2 border-t bg-card p-4 sm:hidden">
+      <button class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-primary-foreground"><i data-icon="download" class="size-4"></i>Télécharger l'attestation</button>
+      <button class="inline-flex size-12 items-center justify-center rounded-md border bg-background" aria-label="Copier le lien de preuve"><i data-icon="copy" class="size-5"></i></button>
+    </div>
+  </main>
+
+  <!-- ============ REVOKED : même structure, preuve retirée ============ -->
+  <main data-state="revoked" class="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pt-8 pb-24 lg:grid-cols-[1fr_22rem] lg:px-8 lg:pt-12">
+    <section class="flex flex-col gap-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <svg data-seal="revoked" viewBox="0 0 120 120" class="size-16 shrink-0 text-destructive sm:size-24 lg:size-32" role="img" aria-label="Sceau barré : diplôme révoqué"></svg>
+        <div class="flex flex-col gap-3">
+          <span class="inline-flex w-fit items-center gap-1 rounded-sm bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive"><i data-icon="ban" class="size-3.5"></i>Révoqué</span>
+          <h1 class="font-display text-4xl leading-tight font-medium">Fatou Sarr</h1>
+          <p class="text-lg text-muted-foreground">BTS Commerce International</p>
+          <div class="flex max-w-prose gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
+            <i data-icon="circle-alert" class="mt-0.5 size-4 shrink-0 text-destructive"></i>
+            <p>Ce diplôme <strong class="font-medium">n'est plus valide</strong>. L'Institut Supérieur de Management l'a révoqué le 3 mars 2025. Il ne doit pas être accepté comme justificatif.</p>
+          </div>
+        </div>
+      </div>
+      <div class="rounded-lg border bg-card">
+        <dl class="grid sm:grid-cols-2">
+          <div class="flex flex-col gap-1 border-b p-4 sm:border-r sm:p-6"><dt class="text-sm text-muted-foreground">Établissement</dt><dd class="font-medium">Institut Supérieur de Management</dd></div>
+          <div class="flex flex-col gap-1 border-b p-4 sm:p-6"><dt class="text-sm text-muted-foreground">Diplôme</dt><dd class="font-medium">BTS Commerce International</dd></div>
+          <div class="flex flex-col gap-1 border-b p-4 sm:border-r sm:p-6"><dt class="text-sm text-muted-foreground">Délivré le</dt><dd class="font-medium text-muted-foreground line-through">20 juin 2023</dd></div>
+          <div class="flex flex-col gap-1 border-b p-4 sm:p-6"><dt class="text-sm text-muted-foreground">Révoqué le</dt><dd class="font-medium text-destructive">3 mars 2025</dd></div>
+          <div class="flex flex-col gap-1 p-4 sm:col-span-2 sm:p-6"><dt class="text-sm text-muted-foreground">Numéro du diplôme</dt><dd class="font-medium tabular-nums">ISM-2023-BTS-01288</dd></div>
+        </dl>
+      </div>
+      <div class="flex gap-3">
+        <button class="inline-flex h-11 items-center gap-2 rounded-md border bg-background px-6 text-sm font-medium shadow-xs hover:bg-accent sm:h-10"><i data-icon="mail" class="size-4"></i>Contacter l'établissement</button>
+      </div>
+    </section>
+    <aside class="flex flex-col gap-6">
+      <div class="rounded-lg border bg-card p-6">
+        <h2 class="font-medium">Traçabilité</h2>
+        <ol class="mt-6 flex flex-col gap-6">
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary"><i data-icon="file-text" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium">Émis par la scolarité</span><span class="text-sm text-muted-foreground">20 juin 2023</span></div></li>
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary"><i data-icon="database" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium">Inscrit au registre</span><span class="text-sm text-muted-foreground">22 juin 2023</span></div></li>
+          <li class="flex gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive text-white"><i data-icon="ban" class="size-4"></i></span><div class="flex flex-col"><span class="text-sm font-medium text-destructive">Révoqué par l'établissement</span><span class="text-sm text-muted-foreground">3 mars 2025</span></div></li>
+        </ol>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============ NOT FOUND : aucune correspondance ============ -->
+  <main data-state="notfound" class="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pt-8 pb-24 lg:grid-cols-[1fr_22rem] lg:px-8 lg:pt-12">
+    <section class="flex max-w-xl flex-col gap-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <svg data-seal="unknown" viewBox="0 0 120 120" class="size-16 shrink-0 text-muted-foreground sm:size-24 lg:size-32" role="img" aria-label="Sceau vide : aucun diplôme trouvé"></svg>
+        <div class="flex flex-col gap-3">
+          <span class="inline-flex w-fit items-center gap-1 rounded-sm bg-warning/15 px-2 py-0.5 text-xs font-medium text-foreground"><i data-icon="info" class="size-3.5"></i>Introuvable</span>
+          <h1 class="font-display text-2xl leading-tight font-medium">Aucun diplôme ne correspond au code 7K4Q-92ME</h1>
+          <p class="text-muted-foreground">Cela ne signifie pas forcément une fraude. Le plus souvent, un caractère a été mal recopié.</p>
+        </div>
+      </div>
+      <form class="flex flex-col gap-3 rounded-lg border bg-card p-6" action="?">
+        <input type="hidden" name="state" value="valid">
+        <label for="retry-code" class="text-sm font-medium">Corriger le code</label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input id="retry-code" value="7K4Q-92ME" class="h-11 w-full min-w-0 rounded-md border sm:flex-1 border-warning bg-card px-3 text-base tracking-wide shadow-xs sm:h-10" aria-describedby="retry-help">
+          <button class="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:h-10">Vérifier à nouveau</button>
+        </div>
+        <p id="retry-help" class="text-sm text-muted-foreground">Attention aux confusions entre O et 0, I et 1, B et 8.</p>
+      </form>
+    </section>
+    <aside class="flex flex-col gap-6">
+      <div class="rounded-lg border bg-card p-6">
+        <h2 class="font-medium">Si le code est correct</h2>
+        <ul class="mt-4 flex flex-col gap-3 text-sm">
+          <li class="flex gap-3"><i data-icon="qr-code" class="mt-0.5 size-4 shrink-0 text-muted-foreground"></i>Scannez le QR code plutôt que de recopier le code.</li>
+          <li class="flex gap-3"><i data-icon="building-2" class="mt-0.5 size-4 shrink-0 text-muted-foreground"></i>Vérifiez que l'établissement figure parmi ceux inscrits au registre.</li>
+          <li class="flex gap-3"><i data-icon="mail" class="mt-0.5 size-4 shrink-0 text-muted-foreground"></i>Contactez sa scolarité, qui peut confirmer ou corriger l'inscription.</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+<script src="icons.js"></script>
+<script>
+  // State switch for the mock only (the app renders one state per route).
+  const state = new URLSearchParams(location.search).get("state") || "valid";
+  document.querySelectorAll("main[data-state]").forEach((m) => { if (m.dataset.state !== state) m.remove(); });
+  document.querySelectorAll(`[data-hide-on="${state}"]`).forEach((el) => el.remove());
+
+  // Seal component: guilloche rosette + text ring; the centre mark carries the verdict.
+  const CENTRE = {
+    valid: '<circle cx="60" cy="60" r="14" fill="currentColor"/><path d="m53.5 60 4.5 4.5 8.5-9" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    revoked: '<circle cx="60" cy="60" r="14" fill="currentColor"/><path d="m54.5 54.5 11 11m0-11-11 11" stroke="white" stroke-width="2.4" stroke-linecap="round"/><path d="M14 106 106 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>',
+    unknown: '<circle cx="60" cy="60" r="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M60 54v7m0 5v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+    idle: '<circle cx="60" cy="60" r="14" fill="currentColor" fill-opacity=".12"/><path d="m53.5 60 4.5 4.5 8.5-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  };
+  document.querySelectorAll("svg[data-seal]").forEach((seal, n) => {
+    const kind = seal.dataset.seal, dashed = kind === "unknown";
+    let rosette = "";
+    if (!dashed) for (let i = 0; i < 18; i++) rosette += `<ellipse cx="60" cy="60" rx="30" ry="12" transform="rotate(${i * 10} 60 60)" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width=".6"/>`;
+    seal.innerHTML = `
+      <defs><path id="ring-${n}" d="M60,60 m-47,0 a47,47 0 1,1 94,0 a47,47 0 1,1 -94,0"/></defs>
+      <circle cx="60" cy="60" r="58" fill="none" stroke="currentColor" stroke-width="1.5" ${dashed ? 'stroke-dasharray="4 4"' : ""}/>
+      <circle cx="60" cy="60" r="38" fill="none" stroke="currentColor" stroke-width=".8" ${dashed ? 'stroke-dasharray="2 3"' : ""}/>
+      ${dashed ? "" : `<text font-size="8.2" letter-spacing="1.6" fill="currentColor" font-family="Instrument Sans, sans-serif" font-weight="600"><textPath href="#ring-${n}">REGISTRE OFFICIEL DES DIPLÔMES — SCEAU —</textPath></text>`}
+      ${rosette}${CENTRE[kind]}`;
+  });
+</script>
+</body>
+</html>

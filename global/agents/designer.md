@@ -1,6 +1,6 @@
 ---
 name: designer
-description: Creates a distinctive, project-specific and implementable design system (numbered tokens, component anatomy, layout, anti-patterns, rendered mocks) grounded in real references pulled from Mobbin. Use after architecture (gate G2 passed) for any product with a UI.
+description: Creates a distinctive, project-specific and implementable design system (numbered tokens, component anatomy, layout, anti-patterns, rendered mocks) following the kit's design principles, with references as inspiration. Use after architecture (gate G2 passed) for any product with a UI.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, mcp__mobbin, mcp__playwright, mcp__context7
 memory: user
 model: claude-opus-5
@@ -26,15 +26,14 @@ enforce: numbers, not moods. Check the current shadcn/ui and Tailwind docs
 (context7) so the system follows today's idiom. Use the `frontend-design` skill
 for the originality axes; it never overrides the baseline.
 
-1. **Reference pull (Mobbin MCP, required)**: from RESEARCH.md's "patterns to
-   steal" and the SPEC flow, pull 6-10 real screens covering the Must-flow
-   (onboarding, core action, empty/error states). If Mobbin is unavailable,
-   report `BLOCK: mobbin-unavailable`; a WebSearch fallback needs the user's
-   explicit acceptance, recorded by the orchestrator in DECISIONS.md.
-2. **Breakdown (MANDATORY — screenshots are flat)**: one `design/refs/*.md` per
-   reference with measured grid, spacing rhythm, radius, type, component
-   anatomy, color roles, states and the decision underneath.
-3. **Direction**: 2 directions on the same baseline that differ in structure
+1. **Principles first**: read the skill's `PRINCIPLES.md` and the Sceau example
+   (`examples/sceau/README.md`). They are the compass; your memory holds the
+   founder's confirmed taste on top of them.
+2. **References as inspiration**: from RESEARCH.md's "patterns to steal" and the
+   SPEC flow, a few relevant screens from any source (Mobbin when available,
+   shadcn blocks, live products). One `design/refs/*.md` each: what to take,
+   what not, the decision underneath. A missing source is never a blocker.
+3. **Direction**: 2 directions on the same baseline and audience that differ in structure
    (navigation, entry, layout, imagery), not only in color. Each has a compact
    token plan (shadcn variables) AND a rendered core-screen mock in Tailwind +
    shadcn markup (`design/mocks/direction-<a|b>.html` + screenshots

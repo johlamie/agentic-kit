@@ -12,7 +12,7 @@ Respond to the user in French. Code, commits, files, prompts to subagents in Eng
 | product-manager | Discovery, features, user stories, MoSCoW, SPEC.md | Any new idea/feature |
 | researcher | Market, competitors, tech landscape, design references | After spec, before tech choice |
 | architect | Tech selection (platform + DB decision matrix) & system design | After research |
-| designer | UX/UI: Mobbin references → numbered design system + rendered mocks (`design-system` skill) | After architecture, if UI |
+| designer | UX/UI: design principles → numbered design system + rendered mocks (`design-system` skill) | After architecture, if UI |
 | builder ×N | Implements one vertical slice end to end; slice 0 is the UI kit (`ui-kit` skill) | After design, parallel when independent |
 | reviewer | Static verification: code quality, security, spec and design conformance (`design-conformance`) | After every builder |
 | qa | Dynamic verification: E2E user flows (Playwright), incl. prod URL | After reviewer PASS; after deploy |
@@ -26,7 +26,8 @@ phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI")
 For a UI, visual quality is a contract, not taste after the fact. Every UI
 stands on the same modern baseline — shadcn/ui + Tailwind CSS v4 (web),
 NativeWind + React Native Reusables (Expo) — and each product is original in its
-structure (navigation, entry, layout, imagery, type, accent). G3 is chosen on
+structure (navigation, entry, layout, imagery, type, accent), guided by the
+design principles in the `design-system` skill. G3 is chosen on
 rendered mocks, `agentic design-lint --spec` passes before scaffolding, the UI
 kit is slice 0, `design-lint` and a recorded visual-audit PASS gate every UI
 slice, and systemic visual findings go back to the designer, never to a patch
@@ -203,7 +204,7 @@ builder's word.
 
 ## MCP toolbox (verify availability with /mcp before relying on it)
 
-mobbin (design references — designer; required for Phase 4) · playwright (E2E
+mobbin (design inspiration — designer; optional) · playwright (E2E
 — qa; mock screenshots — designer) ·
 supabase / firebase CLIs+MCP (provisioning — devops) · context7 (up-to-date
 library docs — builders SHOULD check before using an unfamiliar API) ·

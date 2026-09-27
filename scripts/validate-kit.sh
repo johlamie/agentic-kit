@@ -116,6 +116,20 @@ if jq -e '.schema_version == 1 and .baseline == "shadcn-tailwind" and (.anti_pat
 else
   fail "global/templates/design/system.json is invalid or no longer marked TODO(designer)"
 fi
+for file in global/skills/design-system/PRINCIPLES.md global/skills/design-system/examples/sceau/README.md \
+            global/skills/design-system/examples/sceau/system.json global/skills/design-system/examples/sceau/mocks/core.html \
+            global/templates/user-memory/designer.md; do
+  if [[ -s "$file" ]]; then pass "design compass file exists: $file"; else fail "missing design compass file: $file"; fi
+done
+# The reference example must itself pass the designer's deliverable check.
+example_project="$(mktemp -d)"
+cp -R global/skills/design-system/examples/sceau "$example_project/design"
+if python3 scripts/design_lint.py --spec --project "$example_project" >/dev/null 2>&1; then
+  pass "Sceau example passes design-lint --spec"
+else
+  fail "global/skills/design-system/examples/sceau no longer passes design-lint --spec"
+fi
+rm -rf "$example_project"
 if [[ -s global/templates/qa/ui-checks.spec.ts ]]; then
   pass "QA UI floor template exists"
 else

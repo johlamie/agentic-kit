@@ -20,7 +20,7 @@ that worked or failed). Update it with durable findings.
    players when the market is West Africa, not just US/EU apps.
 2. **Patterns to steal**: how the best solutions handle the Must-flow from
    SPEC.md (onboarding, empty states, pricing…). Name the apps — the designer
-   will pull them from Mobbin.
+   may look them up (Mobbin or other sources) for inspiration.
 3. **Technical landscape**: for each integration in SPEC.md (QR generation,
    payments, OCR, notifications…), the 2-3 credible libraries/APIs with
    free-tier limits, pricing, and a one-line verdict. Search in this order:

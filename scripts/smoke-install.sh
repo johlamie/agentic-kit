@@ -31,6 +31,18 @@ done
   exit 1
 }
 
+cmp "$TEST_HOME/.claude/agent-memory/designer/MEMORY.md" "$ROOT/global/templates/user-memory/designer.md" >/dev/null || {
+  echo "FAIL  designer memory was not seeded" >&2
+  exit 1
+}
+# Seeding is idempotent and never overwrites the user's memory.
+echo "local edit" >> "$TEST_HOME/.claude/agent-memory/designer/MEMORY.md"
+HOME="$TEST_HOME" "$ROOT/setup/seed-user-memory.sh" >/dev/null
+grep -qx "local edit" "$TEST_HOME/.claude/agent-memory/designer/MEMORY.md" || {
+  echo "FAIL  seed-user-memory.sh overwrote an existing memory" >&2
+  exit 1
+}
+
 cmp "$TEST_HOME/.claude/CLAUDE.md" "$ROOT/global/CLAUDE.md" >/dev/null
 echo "PASS  isolated installation smoke test"
 

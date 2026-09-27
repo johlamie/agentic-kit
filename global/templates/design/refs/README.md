@@ -1,8 +1,8 @@
 # Reference breakdowns
-One file per real screen (`<app>-<screen>.md`), from Mobbin. A screenshot you
-have not decomposed is not a reference. Template:
+One file per real screen (`<app>-<screen>.md`), from any source (Mobbin, shadcn
+blocks, a live product, a search). References inspire; `PRINCIPLES.md` decides. Template:
 
-- Source: Mobbin link (app, screen, flow) — no copied assets.
+- Source: where it comes from (link or "from memory") — no copied assets.
 - Why it matters for our SPEC step: …
 - Grid: base unit, columns, gutters, content max-width (measured, in px).
 - Spacing rhythm: the 3–5 distinct gaps you can see, in px.

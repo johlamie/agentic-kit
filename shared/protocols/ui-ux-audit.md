@@ -6,6 +6,12 @@ consistency, responsiveness, accessibility, interaction, density, distinction,
 and credibility. Inspect the real rendered product for post-build audits at
 390x844, 768x1024, 1440x900, and 1920x1080 unless configuration says otherwise.
 
+Judge against the kit's design principles (`global/skills/design-system/PRINCIPLES.md`
+in the kit): calm and uncluttered, structure matching the audience (no
+back-office look on public screens), layout chosen for the content, quiet
+surfaces, typography carrying the personality, at most one meaningful signature
+element, designed states, mobile-first. A clear breach is a CHALLENGE.
+
 When the project has `design/`, audit against it: `layout.md` breakpoint
 behavior, `components.md` states, `anti-patterns.md`, and `mocks/core.html` as
 the intended rendering. Classify each material finding as `local` (one screen

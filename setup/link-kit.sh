@@ -42,6 +42,8 @@ fi
 #   ~/.claude/agent-memory/   (user-scope agent memories: server map, preferences)
 #   ~/.claude/settings.local.json  (personal overrides, not versioned)
 mkdir -p "$CLAUDE_DIR/agent-memory"
+# Seed confirmed preferences (e.g. the designer's taste) without overwriting.
+"$REPO/setup/seed-user-memory.sh"
 
 cat << 'EOF'
 

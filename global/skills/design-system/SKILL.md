@@ -21,25 +21,28 @@ essay. Numbers, not moods.
   that reads as a template. Never replace a shadcn component with a custom one
   unless components.md says why.
 
+## The compass: `PRINCIPLES.md`
+Read `PRINCIPLES.md` (next to this skill) before anything else, then the example
+in `examples/sceau/` (its README first). The principles decide; references only
+inspire. The example shows the quality bar — its colors, typeface, seal and
+two-column split are Sceau's own choices, not defaults.
+
 ## 0. Preconditions
 - SPEC.md, RESEARCH.md ("patterns to steal") and the architecture summary exist.
 - Run `agentic design-init --project .` — it copies the templates into `design/`
   and never replaces existing files.
-- **Mobbin is required.** If the Mobbin MCP is unavailable, stop and report
-  `BLOCK: mobbin-unavailable` to the orchestrator. Continue with WebSearch
-  references only if the user explicitly accepts that fallback; the orchestrator
-  records the acceptance in DECISIONS.md and the gap in CAPABILITY_GAPS.md.
-  Either way, every reference is decomposed with numbers.
+- References are optional inspiration, never a gate: Mobbin if available,
+  shadcn blocks, live products, WebSearch. A missing source is not a blocker.
 
 ## 1. References → `design/refs/`
-6–10 real screens covering the Must-flow (onboarding, core action, empty and
-error states). One `refs/<app>-<screen>.md` per screen, following
-`refs/README.md`: grid, spacing rhythm, radius, type, component anatomy, color
-roles, states, and the decision underneath, **measured in px**.
+A few real screens relevant to the Must-flow, from any source. One
+`refs/<app>-<screen>.md` per screen, following `refs/README.md`: what is worth
+taking, what is not, and the decision underneath, with numbers when they matter.
+State where each reference comes from; a reference never overrides the principles.
 
 ## 2. Two directions, rendered → G3
-Both directions share the baseline and differ on several structure axes
-(navigation, entry, layout, imagery), not just on color. Both serve the **same
+Both directions share the baseline, follow PRINCIPLES.md, and differ on
+several structure axes (navigation, entry, layout, imagery), not just on color. Both serve the **same
 audience** as the core screen: a public or visitor screen gets public
 structures (document, editorial, focused task), never back-office ones
 (sidebar + list, dense status banners, tables), which belong to operator and

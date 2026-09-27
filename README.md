@@ -34,16 +34,16 @@ l'installation, les commits attribués, les MCP et les limites du Supervisor.
 | product-manager | opus | user | — |
 | researcher | sonnet | user | websearch |
 | architect | opus | project | — |
-| designer | opus | user | **mobbin** |
+| designer | opus | user | playwright, context7, mobbin (optionnel) |
 | builder ×N | sonnet | project | context7 |
 | reviewer | sonnet | project | — |
 | qa | sonnet | project | **playwright** |
 | devops | sonnet | user | supabase, firebase |
 
 Mémoire `user` = apprend à travers TOUS tes projets (le PM connaît ton marché,
-le devops tient la carte du serveur, le designer tes contraintes — pas tes
-palettes : chaque projet a sa propre identité visuelle, tirée de références
-Mobbin décomposées). Mémoire `project` = patterns propres au codebase.
+le devops tient la carte du serveur, le designer tes goûts et contraintes — pas
+tes palettes : chaque projet a sa propre identité visuelle, guidée par les
+principes de design du kit).  Mémoire `project` = patterns propres au codebase.
 
 ## Les 4 portes (tout le reste est autonome)
 
@@ -319,8 +319,8 @@ mkdir -p ~/projects/diploma-qr && cd ~/projects/diploma-qr && claude
    signature), librairies QR + signature (ex: JWS), risques → RESEARCH.md
 3. **Architect** : matrice → probable Next.js + Supabase (relationnel : écoles/
    diplômes/vérifications, RLS, pas de temps réel) ; coût : free tier → **G2**
-4. **Designer** : références Mobbin (flows de vérification, scanners), décomposition,
-   2 directions → **G3** → design/
+4. **Designer** : principes de design + inspirations (Mobbin optionnel),
+   2 directions rendues → **G3** → design/
 5. **Devops** : projet Supabase créé, schéma + RLS, compte démo, .env
 6. **Builders** (parallèle) : slice émission / slice vérification par scan / slice admin
 7. **Reviewer + QA** par slice (Playwright : émettre → scanner → verdict ✓)

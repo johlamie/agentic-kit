@@ -29,6 +29,9 @@ Run `agentic design-lint --project .` (add `--json` for the report).
   and each component the states in components.md. Missing = FAIL.
 - **Layout.** Breakpoint behavior matches layout.md (what stacks, hides or
   moves); content max-width and gutters come from layout primitives.
+- **Principles** (`design-system/PRINCIPLES.md`): a public screen with a
+  back-office structure, a second decorative "signature", or success visuals on
+  an error state is a FAIL; route systemic ones to the designer.
 - **Anti-patterns.md prose items** (card wall, one radius everywhere, numbered
   markers on non-sequences, decorative motion): present = FAIL.
 - **Mock parity.** For the core screen, hierarchy and composition follow

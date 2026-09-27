@@ -66,11 +66,11 @@ does not approve cost, credentials, provisioning, or production action.
 
 ## Phase 4 — Design → `designer` (skip only if no UI, justified in writing)
 The designer follows the `design-system` skill. SPEC + RESEARCH + architecture
-summary in; decomposed Mobbin references and 2 directions out on the shared
-shadcn/Tailwind baseline, differing in structure (navigation, entry, layout,
-imagery), each with a **rendered** core-screen mock and screenshots at 390 and 1440. Mobbin
-unavailable is a BLOCK: ask the user whether to accept a WebSearch fallback and
-record the answer in DECISIONS.md before continuing. Run
+summary in; 2 directions out on the shared shadcn/Tailwind baseline, following
+the design principles (`design-system/PRINCIPLES.md`), serving the same audience
+and differing in structure (navigation, entry, layout, imagery), each with a
+**rendered** core-screen mock and screenshots at 390 and 1440. References (Mobbin
+or others) are optional inspiration, never a blocker. Run
 `design_due_diligence` before G3 so Codex can challenge information architecture,
 flows, references, accessibility intent, generic design patterns, and system
 quality. If justified, it may add an isolated alternative C under
