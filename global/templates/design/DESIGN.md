@@ -12,6 +12,7 @@ Originality lives here, chosen for this product's type and users:
 | Axis | Decision (and the reference that inspired it) |
 |---|---|
 | Product type | TODO(designer) — landing / SaaS app / e-commerce / editorial / portfolio / mobile utility / … |
+| Audience per screen | TODO(designer) — public visitor · signed-in user · operator/admin; the structure follows the audience |
 | Navigation model | top bar · sidebar · bottom tabs · floating dock · command palette · mega menu · … |
 | Entry / hero | what the first screen shows first, in what form (headline, product shot, live demo, search, data) |
 | Page structure | split · bento · editorial columns · list-detail · canvas · feed · single focused task |
@@ -29,6 +30,7 @@ TODO(designer): pattern (tabs / stack / sheet / sidebar), items, what is always 
 One block per screen. Orphan screens (no SPEC step) are scope creep: flag them.
 
 ### <screen-name> — SPEC step <n>
+- Audience: TODO(designer) — public visitor, signed-in user or operator/admin.
 - Job: TODO(designer) — what the user comes here to do, in one sentence.
 - Hierarchy: TODO(designer) — primary / secondary / tertiary, in reading order.
 - Components: TODO(designer) — names from components.md only.

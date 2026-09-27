@@ -39,7 +39,11 @@ roles, states, and the decision underneath, **measured in px**.
 
 ## 2. Two directions, rendered → G3
 Both directions share the baseline and differ on several structure axes
-(navigation, entry, layout, imagery), not just on color. For each direction:
+(navigation, entry, layout, imagery), not just on color. Both serve the **same
+audience** as the core screen: a public or visitor screen gets public
+structures (document, editorial, focused task), never back-office ones
+(sidebar + list, dense status banners, tables), which belong to operator and
+admin screens. A direction that changes the audience is not an alternative. For each direction:
 - a compact plan: structure axes, shadcn variables (accent, neutrals' tint,
   ring, `--radius`), typefaces and roles, reviewed against the brief: revise
   anything you would have produced for any similar product;
