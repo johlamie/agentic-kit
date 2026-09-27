@@ -12,6 +12,7 @@ when one matches a screen, then adapt it to the structure chosen in DESIGN.md.
 ## Project deviations (only what differs from shadcn)
 | Component | Change | Why |
 |---|---|---|
+| Button, Input, Select, icon buttons | `h-11 sm:h-9` / `size-11 sm:size-9` | shadcn defaults are 36px, under the 44px touch minimum |
 | TODO(designer) | e.g. Button: add `size="xl"` h-12 px-8 for the hero CTA | the core action must dominate on 390 |
 
 ## Composed product components

@@ -27,6 +27,10 @@ flags and file layout change between versions.
    untouched default theme is not acceptable.
 3. **Deviations.** Apply only the deviations listed in components.md, inside the
    kit (a cva variant, a size), never through overrides at call sites.
+   Touch floor: shadcn's default controls are 36px (`h-9`, `size-9`), under the
+   44px mobile minimum. Give Button, Input, Select and icon buttons a responsive
+   size in the kit (e.g. `h-11 sm:h-9`, `size-11 sm:size-9`) so every call site
+   inherits it; QA's ui-checks fail at 390 otherwise.
 4. **Composed product components** from components.md, built from shadcn parts,
    in the kit, with every state. Layout primitives (`Page`, `Section`, `Stack`)
    encode layout.md's frame and rhythm.
