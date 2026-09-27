@@ -17,6 +17,10 @@ import sys
 PACKAGE = re.compile(r"(?:@[a-zA-Z0-9_.-]+/)?[a-zA-Z0-9][a-zA-Z0-9_.-]*\Z")
 PIP_PACKAGE = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]*\Z")
 SEPARATORS = {";", "&&", "||", "|", "&", "(", ")", "<", ">", ">>", "<<"}
+# Tools this helper classifies. A command that cannot be tokenized (typically a
+# heredoc commit message containing an apostrophe) only needs approval when it
+# mentions one of them; otherwise it is left to the native classifier.
+RELEVANT_TOOL = re.compile(r"(?<![\w-])(npm|npx|yarn|pnpm|pip3?|ncu|npm-check-updates|supabase)(?![\w-])")
 
 
 def is_package(value):
@@ -163,6 +167,8 @@ def approval_reason(command, cwd):
         lexer.commenters = ""
         tokens = list(lexer)
     except ValueError:
+        if not RELEVANT_TOOL.search(command):
+            return ""
         return "Malformed shell command needs approval before dependency or database mutations can be assessed."
     segments = [[]]
     composed = "\n" in command

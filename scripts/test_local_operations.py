@@ -152,6 +152,17 @@ class LocalOperationsTests(unittest.TestCase):
                         'prisma migrate reset', 'dropdb example']:
             self.assertEqual(self.reason(command), '', command)
 
+    def test_unparsable_text_without_relevant_tools_defers(self):
+        # A French apostrophe in a heredoc commit message used to block routine commits.
+        commit = ("git add -A && git commit -q -F - <<'EOF'\nLESSONS : cadenas UI \u2260 contr\u00f4le d'acc\u00e8s.\nEOF\n"
+                  "git push -u origin feature/courses 2>&1 | tail -3")
+        self.assertEqual(self.reason(commit), '')
+        self.assertEqual(self.reason("echo 'unterminated"), '')
+        for command in ["echo 'x && npm uninstall -g lodash", "cat <<'EOF'\nl'app\nEOF\nsupabase db reset",
+                        "bash -c 'pnpm remove x", ".venv/bin/pip install 'x"]:
+            with self.subTest(command=command):
+                self.assertIn("Malformed", self.reason(command))
+
     def test_cli_never_executes_supplied_shell(self):
         marker = self.root / 'must-not-exist'
         result = subprocess.run([sys.executable, str(HELPER),
