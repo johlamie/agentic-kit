@@ -110,7 +110,7 @@ for file in DESIGN.md tokens.md components.md layout.md anti-patterns.md system.
     fail "missing or empty design template: $file"
   fi
 done
-if jq -e '.schema_version == 1 and (.anti_patterns | length > 0) and (._todo | test("TODO\\(designer\\)"))' \
+if jq -e '.schema_version == 1 and .baseline == "shadcn-tailwind" and (.anti_patterns | length > 0) and (._todo | test("TODO\\(designer\\)"))' \
      global/templates/design/system.json >/dev/null 2>&1; then
   pass "design system template is valid JSON and still requires the designer"
 else

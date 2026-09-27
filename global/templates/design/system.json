@@ -1,27 +1,28 @@
 {
-  "_todo": "TODO(designer): replace every example value with this project's decisions from tokens.md, then delete this key.",
+  "_todo": "TODO(designer): adjust the example values to this project's decisions from tokens.md, then delete this key. Keep the shadcn/ui + Tailwind baseline unless DECISIONS.md records why not.",
   "schema_version": 1,
+  "baseline": "shadcn-tailwind",
   "grid": 4,
   "sources": ["src", "app", "components"],
   "exclude": [],
-  "token_files": ["src/styles/tokens.css", "tailwind.config.ts"],
+  "token_files": ["src/app/globals.css", "app/globals.css", "src/styles/globals.css"],
   "ui_kit_dirs": ["src/components/ui", "components/ui"],
   "primitive_elements": ["button", "input", "select", "textarea"],
   "scales": {
-    "spacing": ["0", "px", "1", "2", "3", "4", "6", "8", "12"],
-    "spacing_px": [0, 1, 4, 8, 12, 16, 24, 32, 48],
-    "radius": ["none", "sm", "lg", "full"],
-    "radius_px": [0, 8, 16, 9999],
-    "font_size": ["sm", "base", "xl", "3xl"],
-    "font_weight": ["normal", "semibold"]
+    "spacing": ["0", "px", "0.5", "1", "1.5", "2", "3", "4", "6", "8", "12", "16", "24"],
+    "spacing_px": [0, 1, 4, 8, 12, 16, 24, 32, 48, 64, 96],
+    "radius": ["none", "sm", "md", "lg", "xl", "full"],
+    "radius_px": [0, 6, 8, 10, 14, 9999],
+    "font_size": ["xs", "sm", "base", "lg", "2xl", "4xl"],
+    "font_weight": ["normal", "medium", "semibold"]
   },
-  "color_names": ["primary", "surface", "ink", "muted", "border", "danger", "success"],
-  "icons": { "packages": ["lucide-react"], "sizes": [20, 24] },
-  "tailwind": { "allow_arbitrary_prefixes": [] },
+  "color_names": ["background", "foreground", "card", "popover", "primary", "secondary", "muted", "accent", "destructive", "border", "input", "ring", "chart", "sidebar"],
+  "icons": { "packages": ["lucide-react"], "sizes": [16, 20, 24] },
+  "tailwind": { "allow_arbitrary_prefixes": ["transition", "grid-cols", "grid-rows", "auto-rows", "auto-cols", "aspect"] },
   "anti_patterns": [
-    { "id": "decorative-gradient", "pattern": "bg-gradient-to-|linear-gradient\\(|radial-gradient\\(", "message": "decorative gradient: see design/anti-patterns.md" },
-    { "id": "glassmorphism", "pattern": "backdrop-blur", "message": "glass surface is not in the system" },
+    { "id": "decorative-gradient", "pattern": "bg-gradient-to-|bg-linear-to-|linear-gradient\\(|radial-gradient\\(", "message": "decorative gradient: see design/anti-patterns.md" },
     { "id": "heavy-shadow", "pattern": "(?<![\\w-])shadow-(xl|2xl)(?![\\w-])", "message": "shadow outside the elevation tokens" },
-    { "id": "caps-eyebrow", "pattern": "(?<![\\w-])uppercase(?![\\w-])|text-transform:\\s*uppercase", "message": "ALL-CAPS labels are a generated-UI tell; use the type scale" }
+    { "id": "caps-eyebrow", "pattern": "(?<![\\w-])uppercase(?![\\w-])|text-transform:\\s*uppercase", "message": "ALL-CAPS labels are a generated-UI tell; use the type scale" },
+    { "id": "inline-style", "pattern": "style=\\{\\{", "message": "inline style objects bypass the tokens; use Tailwind classes" }
   ]
 }

@@ -6,7 +6,11 @@
 
 ## Defaults (keep unless the brief explicitly calls for them)
 - (lint) Decorative gradients (`bg-gradient-*`, `linear-gradient`) — decoration, not information.
-- (lint) Glassmorphism (`backdrop-blur`) as a default surface.
+- (lint) Inline style objects (`style={{…}}`) instead of Tailwind classes.
+- Glass/blur on content surfaces (a blurred sticky header is idiomatic; blurred cards are not).
+- Untouched shadcn defaults: neutral theme, default radius and no accent — the
+  baseline without a decision reads as a template.
+- Restyling shadcn internals from business code (long `className` overrides).
 - (lint) Heavy shadows (`shadow-xl`, `shadow-2xl`) and the same soft shadow under every block.
 - (lint) ALL-CAPS eyebrow labels (`uppercase`) above headings.
 - (lint) Framework default palette classes (`bg-violet-500`…) — only named tokens.

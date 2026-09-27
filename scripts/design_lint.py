@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Mechanical design-system conformance for agentic projects. Python 3.10+, stdlib only.
 
-`design/system.json` declares the project's closed scales (spacing, radius, type,
-colors, icons) and anti-patterns. Two checks read it:
+`design/system.json` declares the UI baseline (shadcn/ui + Tailwind by default),
+the project's closed scales (spacing, radius, type, colors, icons) and
+anti-patterns. Two checks read it:
 
   spec  - the designer's deliverable is complete and has no template placeholders;
-  code  - UI sources use only what the system declares.
+  code  - the baseline is installed and UI sources use only what the system declares.
+
+The UI kit directories hold the baseline's own components (vendored shadcn/ui
+files rely on arbitrary values, attribute selectors and their own sizes). There,
+only the icon family and framework palette colors are checked; the kit answers to
+components.md and the reviewer. Business code gets every rule.
 
 Exit codes: 0 conform, 1 violations, 2 missing or invalid design system. A project
 without a usable system never passes: an empty scan is an error, not a PASS.
@@ -31,6 +37,13 @@ SKIPPED_NAME = re.compile(r"\.(test|spec|stories)\.[a-z]+$")
 COMMENT_PREFIXES = ("//", "/*", "*", "<!--", "{/*")
 ALLOW_MARKER = re.compile(r"design-lint-allow\b(?::\s*(\S.*))?")
 
+# The modern baseline every UI starts from; originality lives in structure, not in
+# re-inventing components. "custom" needs a written reason (also in DECISIONS.md).
+BASELINES = {
+    "shadcn-tailwind": (("components.json", None), ("package.json", "tailwindcss")),
+    "nativewind": (("package.json", "nativewind"),),
+    "custom": (),
+}
 # Limits keep each scale closed and small; the values themselves are per project.
 LIMITS = {"font_size": 6, "font_weight": 3, "radius": 4, "icon_sizes": 3}
 SIDES = {"t", "r", "b", "l", "tl", "tr", "br", "bl", "s", "e", "ss", "se", "es", "ee"}
@@ -46,8 +59,9 @@ PALETTE = ("slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|eme
 PALETTE_UTILITY = re.compile(
     r"(?<![\w-])(?:bg|text|border(?:-[trblxyse])?|ring|ring-offset|fill|stroke|from|via|to|outline|"
     r"divide|placeholder|accent|caret|decoration|shadow)-(" + PALETTE + r")-(50|[1-9]00|950)(?![\w-])")
-# A trailing colon marks a variant such as data-[state=open]:, not a value.
-ARBITRARY_UTILITY = re.compile(r"(?<![\w-])([a-z][a-z0-9-]*)-\[([^\]\s]+)\](?!:)")
+# A trailing colon marks a variant such as data-[state=open]: or a named group
+# variant such as group-has-data-[collapsible=icon]/sidebar-wrapper:, not a value.
+ARBITRARY_UTILITY = re.compile(r"(?<![\w-])([a-z][a-z0-9-]*)-\[([^\]\s]+)\](?!:|/[\w-]+:)")
 HEX_COLOR = re.compile(r"(?<![\w&/#-])#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])")
 COLOR_FUNCTION = re.compile(r"\b(rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(\s*(?!var\()")
 IMPORT_SOURCE = re.compile(r"""(?:\bfrom\s+|\bimport\s*\(\s*|\brequire\s*\(\s*|^\s*import\s+)['"]([^'"]+)['"]""")
@@ -122,6 +136,12 @@ def load_system(project):
         if count > LIMITS[key]:
             raise DesignError(f"system.json: scales.{key} has {count} steps; the maximum is "
                               f"{LIMITS[key]} (a scale that large is not a system)")
+    baseline = data.get("baseline")
+    if baseline not in BASELINES:
+        raise DesignError(f"system.json: baseline must be one of {', '.join(BASELINES)}")
+    if baseline == "custom" and not (isinstance(data.get("baseline_reason"), str)
+                                     and data["baseline_reason"].strip()):
+        raise DesignError("system.json: a custom baseline needs baseline_reason (and a DECISIONS.md entry)")
     icons = data.get("icons")
     if not isinstance(icons, dict):
         raise DesignError("system.json: icons must be an object")
@@ -243,23 +263,31 @@ def lint_text(relative, text, system):
             package = _icon_package(source)
             if package and not (source == icon_family or source.startswith(icon_family + "/")):
                 found.append(("icon-family", f"icons come from {icon_family} only, not {source}"))
-        if not token_file:
+        if not token_file and not in_kit:
             for match in HEX_COLOR.finditer(line):
                 found.append(("raw-color", f"raw color {match.group(0)} outside token files"))
             for match in COLOR_FUNCTION.finditer(line):
                 found.append(("raw-color", f"raw color {match.group(1)}() outside token files"))
-        for match in ARBITRARY_UTILITY.finditer(line):
+        for match in ([] if in_kit else ARBITRARY_UTILITY.finditer(line)):
             if not (allowed_prefixes and match.group(1).startswith(allowed_prefixes)):
                 found.append(("arbitrary-value", f"arbitrary utility {match.group(0)}; use a token"))
         for match in PALETTE_UTILITY.finditer(line):
             if match.group(1) not in allowed_colors:
                 found.append(("default-palette", f"framework palette color {match.group(0)}; "
                               f"use a named token ({', '.join(sorted(allowed_colors))})"))
-        for match in SPACING_UTILITY.finditer(line):
+        if in_kit:
+            # Baseline components keep their own anatomy; components.md and the
+            # reviewer govern them, the scales govern the business code.
+            scale_matches = ((), (), (), ())
+        else:
+            scale_matches = (SPACING_UTILITY.finditer(line), RADIUS_UTILITY.finditer(line),
+                             FONT_SIZE_UTILITY.finditer(line), FONT_WEIGHT_UTILITY.finditer(line))
+        spacing_matches, radius_matches, size_matches, weight_matches = scale_matches
+        for match in spacing_matches:
             if match.group(2) not in scales["spacing"]:
                 found.append(("spacing-scale", f"{match.group(0).lstrip('-')} is off the spacing scale "
                               f"({' '.join(scales['spacing'])})"))
-        for match in RADIUS_UTILITY.finditer(line):
+        for match in radius_matches:
             parts = [p for p in match.group(1).split("-") if p]
             if parts and parts[0] in SIDES:
                 parts = parts[1:]
@@ -267,11 +295,11 @@ def lint_text(relative, text, system):
             if key not in scales["radius"]:
                 found.append(("radius-scale", f"{match.group(0)} is off the radius scale "
                               f"({' '.join(scales['radius'])})"))
-        for match in FONT_SIZE_UTILITY.finditer(line):
+        for match in size_matches:
             if match.group(1) not in scales["font_size"]:
                 found.append(("type-scale", f"{match.group(0)} is off the type scale "
                               f"({' '.join(scales['font_size'])})"))
-        for match in FONT_WEIGHT_UTILITY.finditer(line):
+        for match in weight_matches:
             if match.group(1) not in scales["font_weight"]:
                 found.append(("type-scale", f"{match.group(0)} is not an allowed weight "
                               f"({' '.join(scales['font_weight'])})"))
@@ -285,7 +313,7 @@ def lint_text(relative, text, system):
                 if pattern.search(line):
                     found.append(("kit-bypass", f"raw <{tag}> element outside the "
                                   "UI kit; compose the kit component or report KIT_GAP"))
-        if suffix in STYLE_SUFFIXES and not token_file:
+        if suffix in STYLE_SUFFIXES and not token_file and not in_kit:
             for match in CSS_SPACING.finditer(line):
                 for value in PX_VALUE.findall(match.group(2)):
                     if abs(float(value)) not in {float(v) for v in scales["spacing_px"]}:
@@ -294,7 +322,7 @@ def lint_text(relative, text, system):
                 for value in PX_VALUE.findall(match.group(1)):
                     if float(value) not in {float(v) for v in scales["radius_px"]}:
                         found.append(("radius-scale", f"border-radius {value}px is off the radius scale"))
-        for rule_id, pattern, message in system["_anti_patterns"]:
+        for rule_id, pattern, message in ([] if in_kit else system["_anti_patterns"]):
             if pattern.search(line):
                 found.append((f"anti-pattern:{rule_id}", message))
         violations += [(number, rule, message) for rule, message in found]
@@ -307,6 +335,13 @@ def lint_project(project):
     if not files:
         raise DesignError("No UI source file found under system.json sources; refusing a vacuous PASS.")
     results = []
+    for name, needle in BASELINES[system["baseline"]]:
+        path = project / name
+        text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else None
+        if text is None or (needle and f'"{needle}"' not in text):
+            what = f"{name} declaring {needle}" if needle else name
+            results.append((name, 0, "baseline", f"{system['baseline']} baseline requires {what}; "
+                            "install the baseline in the ui-kit slice"))
     for relative, path in files:
         text = path.read_text(encoding="utf-8", errors="replace")
         results += [(relative, *violation) for violation in lint_text(relative, text, system)]

@@ -2,6 +2,10 @@
 > Owner: designer. How screens are built at each viewport. QA compares
 > screenshots to this file; "usable" is not the standard, "as specified" is.
 
+## Structure archetype
+TODO(designer): the page structure chosen in DESIGN.md (e.g. sidebar app shell,
+editorial landing, list-detail) and the shadcn block it starts from, if any.
+
 ## Frame
 - Content max-width: TODO(designer) px. Page gutters: TODO(designer) at 390 / 768 / 1440 / 1920.
 - Columns: TODO(designer) (e.g. 4 at 390, 8 at 768, 12 at 1440) and gap token.

@@ -18,7 +18,9 @@ apply. Preserve the user's approvals across Claude/Codex handoffs.
 2. Delegate SPEC.md to `product-manager`; G1 approves scope.
 3. Delegate sourced RESEARCH.md to `researcher`, then TECH.md and
    ARCHITECTURE.md to `architect`; G2 approves stack and budget.
-4. For UI, the `designer` follows `design-system`: Mobbin references (missing
+4. For UI, the baseline is shadcn/ui + Tailwind v4 (Expo: NativeWind + React
+   Native Reusables); originality is structural. The `designer` follows
+   `design-system`: Mobbin references (missing
    Mobbin is a BLOCK unless the user accepts a fallback), two directions with
    rendered mocks; G3 selects on screenshots; then the numbered system in
    design/ until `agentic design-lint --spec` passes.

@@ -26,6 +26,10 @@ rationale per score). Decisions to make explicitly:
      residency (BCEAO context when relevant), exit cost.
 3. **Framework**: Next.js / Expo / FastAPI-only / static — simplest thing that
    serves the Must-flow.
+   **UI baseline (not a per-project choice)**: web UIs use **Tailwind CSS v4 +
+   shadcn/ui** with lucide-react icons; Expo UIs use NativeWind + React Native
+   Reusables. Record the versions current at decision time (check context7).
+   Another baseline only with a written reason in DECISIONS.md, presented at G2.
 4. **Services**: per SPEC integration, pick from RESEARCH.md options; list env
    vars and monthly cost (free tier explicit). Require source due-diligence
    evidence for every external data/API dependency; do not accept scraping as

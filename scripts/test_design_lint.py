@@ -48,6 +48,10 @@ class DesignLintTests(unittest.TestCase):
         self.write("design/refs/app-home.md", "Grid 8, radius 12.\n")
         self.write("design/mocks/core.html", "<!doctype html><title>core</title>\n")
 
+    def install_baseline(self):
+        self.write("components.json", "{}\n")
+        self.write("package.json", '{"devDependencies": {"tailwindcss": "^4"}}\n')
+
     def loaded(self, system=None):
         self.deliver_design(system)
         return lint.load_system(self.project)
@@ -95,6 +99,8 @@ class DesignLintTests(unittest.TestCase):
             "no anti-pattern": (None, "anti_patterns", []),
             "bad grid": (None, "grid", 5),
             "bad regex": (None, "anti_patterns", [{"id": "x", "pattern": "(", "message": "m"}]),
+            "unknown baseline": (None, "baseline", "bootstrap"),
+            "custom baseline without reason": (None, "baseline", "custom"),
         }
         for label, (section, key, value) in cases.items():
             with self.subTest(label):
@@ -107,26 +113,26 @@ class DesignLintTests(unittest.TestCase):
     def test_conforming_component_passes(self):
         text = ('import { Check } from "lucide-react";\n'
                 'import { Button } from "@/components/ui/button";\n'
-                'export const Row = () => <div className="flex gap-4 p-6 rounded-lg bg-surface '
-                'text-ink text-base font-semibold"><Check size={20} /><Button>Enregistrer</Button></div>;\n')
+                'export const Row = () => <div className="flex gap-4 p-6 rounded-lg bg-card '
+                'text-foreground text-base font-semibold"><Check size={20} /><Button>Enregistrer</Button></div>;\n')
         self.assertEqual(self.rules(text), [])
 
     def test_off_system_classes_fail(self):
-        text = ('<div className="p-5 rounded-xl text-lg font-bold bg-violet-600 mt-[13px] '
-                'data-[state=open]:bg-surface">\n')
+        text = ('<div className="p-5 rounded-3xl text-3xl font-bold bg-violet-600 mt-[13px] '
+                'data-[state=open]:bg-card group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">\n')
         self.assertEqual(sorted(set(self.rules(text))),
                          ["arbitrary-value", "default-palette", "radius-scale", "spacing-scale", "type-scale"])
 
     def test_raw_colors_only_in_token_files(self):
         system = self.loaded()
         text = ":root { --primary: #1f6f5c; --shadow: rgb(0 0 0 / 0.1); --ink: hsl(var(--x)); }\n"
-        self.assertEqual(self.rules(text, "src/styles/tokens.css", system), [])
+        self.assertEqual(self.rules(text, "src/app/globals.css", system), [])
         self.assertEqual(self.rules(text, "src/app/page.css", system), ["raw-color", "raw-color"])
 
     def test_icons_family_and_sizes(self):
         system = self.loaded()
         self.assertEqual(self.rules('import { FaHome } from "react-icons/fa";\n', system=system), ["icon-family"])
-        text = 'import { Home } from "lucide-react";\nconst a = <Home size={16} />;\n'
+        text = 'import { Home } from "lucide-react";\nconst a = <Home size={18} />;\n'
         self.assertEqual(self.rules(text, system=system), ["icon-size"])
 
     def test_primitives_only_inside_the_kit(self):
@@ -136,7 +142,7 @@ class DesignLintTests(unittest.TestCase):
         self.assertEqual(self.rules(text, "src/components/ui/button.tsx", system), [])
 
     def test_css_px_values_follow_scales(self):
-        text = ".a { padding: 16px 13px; border-radius: 6px; margin: 0 auto; }\n"
+        text = ".a { padding: 16px 13px; border-radius: 5px; margin: 0 auto; }\n"
         self.assertEqual(self.rules(text, "src/app/page.css"), ["spacing-scale", "radius-scale"])
 
     def test_anti_patterns_allow_marker_and_comments(self):
@@ -149,8 +155,34 @@ class DesignLintTests(unittest.TestCase):
                                     system=system), [])
         self.assertEqual(self.rules("// rounded corners, p-5 and #fff in a comment\n", system=system), [])
 
+    def test_kit_keeps_the_baseline_anatomy(self):
+        system = self.loaded()
+        shadcn = ('<Comp className="inline-flex gap-2 rounded-md text-sm font-medium focus-visible:ring-[3px] '
+                  'has-[>svg]:px-3 h-9 px-4 py-2 [&_svg]:size-4" style={{ width: 1 }} />\n')
+        self.assertEqual(self.rules(shadcn, "src/components/ui/button.tsx", system), [])
+        self.assertIn("arbitrary-value", self.rules(shadcn, "src/app/page.tsx", system))
+        self.assertIn("anti-pattern:inline-style", self.rules(shadcn, "src/app/page.tsx", system))
+        self.assertEqual(self.rules('import { IconX } from "@tabler/icons-react";\n<div className="bg-violet-500">\n',
+                                    "src/components/ui/x.tsx", system), ["icon-family", "default-palette"])
+
+    def test_baseline_must_be_installed(self):
+        self.deliver_design()
+        self.write("src/app/page.tsx", '<div className="p-4">\n')
+        status, out, _ = self.run_main()
+        self.assertEqual(status, 1)
+        self.assertIn("components.json:0  baseline", out)
+        self.assertIn("package.json:0  baseline", out)
+        self.install_baseline()
+        self.assertEqual(self.run_main()[0], 0)
+        system = filled_system()
+        system.update(baseline="custom", baseline_reason="Astro content site, no React runtime")
+        self.deliver_design(system)
+        (self.project / "components.json").unlink()
+        self.assertEqual(self.run_main()[0], 0)
+
     def test_scan_skips_tests_dependencies_and_symlinks(self):
         self.deliver_design()
+        self.install_baseline()
         self.write("src/app/page.tsx", '<div className="p-5">\n')
         self.write("src/app/page.test.tsx", '<div className="p-5">\n')
         self.write("src/node_modules/lib/index.js", '<div className="p-5">\n')
@@ -158,7 +190,8 @@ class DesignLintTests(unittest.TestCase):
         status, out, _ = self.run_main()
         self.assertEqual(status, 1)
         self.assertEqual(out.strip().splitlines(),
-                         ["src/app/page.tsx:1  spacing-scale  p-5 is off the spacing scale (0 px 1 2 3 4 6 8 12)"])
+                         ["src/app/page.tsx:1  spacing-scale  p-5 is off the spacing scale "
+                          "(0 px 0.5 1 1.5 2 3 4 6 8 12 16 24)"])
         status, out, _ = self.run_main("--json")
         report = json.loads(out)
         self.assertEqual((status, report["verdict"], report["files"]), (1, "FAIL", 1))

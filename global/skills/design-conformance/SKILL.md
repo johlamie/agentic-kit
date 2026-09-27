@@ -10,6 +10,8 @@ A screen that "works" but leaves the system is a FAIL, like a plaintext secret.
 ## 1. Mechanical — no judgment
 Run `agentic design-lint --project .` (add `--json` for the report).
 - Exit 2 (missing or incomplete design system): FAIL, route to designer.
+- `baseline` violation: shadcn/ui + Tailwind (or the recorded baseline) is not
+  installed: FAIL, route to the ui-kit slice.
 - Exit 1: FAIL with the violation list. Rules: `raw-color`, `arbitrary-value`,
   `default-palette`, `spacing-scale`, `radius-scale`, `type-scale`,
   `icon-family`, `icon-size`, `kit-bypass`, `anti-pattern:<id>`,
@@ -17,9 +19,12 @@ Run `agentic design-lint --project .` (add `--json` for the report).
 - Every `design-lint-allow: <reason>` in the diff is read: a weak reason is a FAIL.
 
 ## 2. Read the diff for what the linter cannot see
-- **Kit only.** Every UI element comes from the `ui_kit_dirs`. A new atom,
-  a restyled kit component through `className` overrides, or a local copy of a
-  kit component is a FAIL (`KIT_GAP` is the correct builder response).
+- **Kit only.** Every UI element is a shadcn component or a composed component
+  from the `ui_kit_dirs`. A new atom, a local copy of a kit component, or a
+  long `className` override restyling one is a FAIL (`KIT_GAP` is the correct
+  builder response). Layout classes at call sites (flex, grid, gap, width) are fine.
+- **Kit diffs.** Changes inside `ui_kit_dirs` match the deviations listed in
+  components.md; the linter checks only icons and palette there, so read them.
 - **States.** Each screen implements the states listed for it in DESIGN.md
   and each component the states in components.md. Missing = FAIL.
 - **Layout.** Breakpoint behavior matches layout.md (what stacks, hides or

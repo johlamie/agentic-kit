@@ -89,8 +89,9 @@ de rollback.
 
 ## Design implémentable (UI)
 
-Pour tout produit avec une interface : directions choisies au G3 sur des mocks
-rendus, `design/` chiffré et vérifié par `agentic design-lint --spec`, UI kit en
+Pour tout produit avec une interface : base commune **shadcn/ui + Tailwind v4**,
+originalité dans la structure (navigation, hero, disposition, images),
+directions choisies au G3 sur des mocks rendus, `design/` chiffré et vérifié par `agentic design-lint --spec`, UI kit en
 slice 0, puis `design-lint` + audit visuel bloquants à chaque slice. Détails :
 [docs/DESIGN_SYSTEM_WORKFLOW.md](docs/DESIGN_SYSTEM_WORKFLOW.md).
 

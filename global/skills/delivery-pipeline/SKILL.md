@@ -59,13 +59,16 @@ gate — feeds Phase 3 after PASS or remediation.
 SPEC + RESEARCH in; TECH.md (decision matrix: platform, DB Supabase/Firebase/
 local, services, monthly cost) + ARCHITECTURE.md (schema, API, slice plan) out.
 Run the Supervisor architecture/security audit and repair CHALLENGE/BLOCK items.
-**GATE G2** remains the user's approval of stack and budget; a Supervisor PASS
+The UI baseline is fixed (Tailwind v4 + shadcn/ui on web, NativeWind + React
+Native Reusables on Expo); TECH.md records its versions, and any other baseline
+is a G2 decision with a reason. **GATE G2** remains the user's approval of stack and budget; a Supervisor PASS
 does not approve cost, credentials, provisioning, or production action.
 
 ## Phase 4 — Design → `designer` (skip only if no UI, justified in writing)
 The designer follows the `design-system` skill. SPEC + RESEARCH + architecture
-summary in; decomposed Mobbin references and 2 directions out, each with a
-**rendered** core-screen mock and screenshots at 390 and 1440. Mobbin
+summary in; decomposed Mobbin references and 2 directions out on the shared
+shadcn/Tailwind baseline, differing in structure (navigation, entry, layout,
+imagery), each with a **rendered** core-screen mock and screenshots at 390 and 1440. Mobbin
 unavailable is a BLOCK: ask the user whether to accept a WebSearch fallback and
 record the answer in DECISIONS.md before continuing. Run
 `design_due_diligence` before G3 so Codex can challenge information architecture,
@@ -92,8 +95,9 @@ request a manual Supervisor architecture or security audit before building.
 
 ## Phase 6 — Build → `builder` ×N
 **Slice 0 is the UI kit** (products with a UI): one builder runs the `ui-kit`
-skill — tokens wired as the theme (not an extension), every component of
-components.md with its states, a dev-only `/_kit` route. It goes through Phase 7
+skill — shadcn/ui + Tailwind installed, design/ tokens as the shadcn theme,
+the components and blocks of components.md with their states, a dev-only
+`/_kit` route. It goes through Phase 7
 like any slice, with the visual audit on `/_kit`. No business slice starts
 before slice 0 is DONE.
 

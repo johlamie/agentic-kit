@@ -23,7 +23,10 @@ Respond to the user in French. Code, commits, files, prompts to subagents in Eng
 For any new idea, run the `delivery-pipeline` skill. Never skip phases; mark a
 phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI").
 
-For a UI, visual quality is a contract, not taste after the fact: G3 is chosen on
+For a UI, visual quality is a contract, not taste after the fact. Every UI
+stands on the same modern baseline — shadcn/ui + Tailwind CSS v4 (web),
+NativeWind + React Native Reusables (Expo) — and each product is original in its
+structure (navigation, entry, layout, imagery, type, accent). G3 is chosen on
 rendered mocks, `agentic design-lint --spec` passes before scaffolding, the UI
 kit is slice 0, `design-lint` and a recorded visual-audit PASS gate every UI
 slice, and systemic visual findings go back to the designer, never to a patch

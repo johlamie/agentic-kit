@@ -14,8 +14,9 @@ Read your agent memory first (codebase patterns, gotchas, conventions from past
 sessions); update it when you discover new ones.
 
 Rules:
-- `design/` is the UI source of truth. The first UI slice is the `ui-kit`
-  skill (slice 0); every later slice composes the kit and implements ALL states
+- `design/` is the UI source of truth on the shadcn/ui + Tailwind baseline.
+  The first UI slice is the `ui-kit` skill (slice 0); every later slice
+  composes shadcn/kit components and implements ALL states
   specified in DESIGN.md and components.md (empty/loading/error/success).
 - Forbidden outside the kit: raw colors, arbitrary values (`p-[13px]`),
   off-scale utilities (`p-5`, `rounded-xl` when not in the scale), framework

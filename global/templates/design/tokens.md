@@ -1,36 +1,49 @@
 # TOKENS
 > Owner: designer. Human-readable rationale for `design/system.json`, which is the
 > machine-readable contract enforced by `agentic design-lint`. Both must agree.
-> Numbers, not moods: every value below is a closed list.
 
-## Grid
-Base grid: TODO(designer) 4 or 8 px. Every spacing value is a multiple of it.
+## Baseline (shared by every project)
+- **shadcn/ui on Tailwind CSS v4**, icons **lucide-react**. Tokens are the
+  shadcn CSS variables in `globals.css` (`:root` and `.dark`, OKLCH values,
+  mapped with `@theme inline`). Check the current shadcn and Tailwind docs
+  (context7) before writing values: follow today's idiom, not memory.
+- React Native / Expo: NativeWind + React Native Reusables (the shadcn port).
+- Another baseline only with a written reason in DECISIONS.md (`"baseline": "custom"`).
 
-## Spacing (closed scale)
-| Key | px | Use |
-|---|---|---|
-| TODO(designer) | | e.g. `2`=8 inside controls, `4`=16 card padding, `6`=24 between groups, `12`=48 between sections |
+The baseline gives the clean, current feel. **This file makes it yours**:
+TODO(designer) — in one sentence, what makes this product's surface recognizable
+(accent, typeface, radius personality, imagery), without leaving the baseline.
 
-## Radius (≤4 steps + none/full)
-| Key | px | Use |
-|---|---|---|
-| TODO(designer) | | e.g. `sm`=8 controls, `lg`=16 surfaces, `full` avatars/pills |
+## Color roles (shadcn variables — never framework palette names)
+| Variable | Light (oklch) | Dark (oklch) | Decision |
+|---|---|---|---|
+| `--background` / `--foreground` | TODO(designer) | | pure neutral or tinted toward the accent? |
+| `--primary` / `--primary-foreground` | | | the brand accent; AA on its foreground |
+| `--secondary`, `--muted`, `--accent` (+ `-foreground`) | | | |
+| `--card`, `--popover` | | | same as background or a subtle surface step |
+| `--border`, `--input`, `--ring` | | | |
+| `--destructive` | | | |
+| `--chart-1..5` | | | only if the product shows data |
+Leaving the neutral shadcn defaults untouched is not a design decision: pick at
+least the accent, the neutrals' tint and the ring.
+
+## Radius
+`--radius`: TODO(designer) rem (shadcn derives sm/md/lg/xl from it). 0.375 feels
+sharp and technical, 0.625 is the shadcn default, 1rem+ feels soft and friendly.
 
 ## Type (≤6 sizes, ≤3 weights)
-| Key | size/line-height | weight | Use |
-|---|---|---|---|
-| TODO(designer) | | | e.g. `sm` 14/20 meta, `base` 16/24 body, `xl` 20/28 titles |
-Typefaces: TODO(designer) — family, role, why it fits this subject (not a default).
+| Key | Use |
+|---|---|
+| TODO(designer) | e.g. `xs` badges, `sm` UI/meta, `base` body, `lg` card titles, `2xl` page titles, `4xl` hero |
+Typefaces (loaded with `next/font` or equivalent): TODO(designer) — sans for UI;
+optional display face for headings; why it fits this subject.
 
-## Color roles (named tokens, never framework palette names)
-| Token | Light | Dark | Role | Contrast checked against |
-|---|---|---|---|---|
-| TODO(designer) | | | e.g. `primary`, `surface`, `ink`, `muted`, `border`, `danger`, `success` | |
+## Spacing
+Tailwind's 4px grid. Business code uses the closed subset in system.json
+(e.g. `2`=8 inside groups, `4`=16 in cards, `6`=24 between groups, `12`–`24`
+between sections). Components keep shadcn's own anatomy.
 
-## Elevation, z-index, motion
-- Shadows: TODO(designer) — at most 2 levels, with the exact values.
-- z-index: TODO(designer) — base / sticky / overlay / toast.
-- Motion: TODO(designer) — durations and the one place motion is used on purpose.
-
-## Icons
-Family: TODO(designer) (exactly one package). Sizes: TODO(designer) (e.g. 20 in controls, 24 in navigation).
+## Elevation, motion, icons
+- Shadows: shadcn's `shadow-xs`/`shadow-sm` for controls and cards; TODO(designer) the overlay level.
+- Motion: TODO(designer) — the one intentional moment (page entry, reveal, confirmation).
+- Icons: lucide-react, sizes TODO(designer) (e.g. 16 in buttons, 20 in inputs, 24 in navigation).
