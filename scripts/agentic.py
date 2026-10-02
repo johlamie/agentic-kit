@@ -19,6 +19,8 @@ import tempfile
 import uuid
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+import agentic_mission as mission  # noqa: E402
 ROLES = ("architect", "builder", "designer", "devops", "product-manager", "qa",
          "researcher", "reviewer")
 BEGIN = "<!-- agentic-kit:begin -->"
@@ -246,7 +248,7 @@ def initialize(project):
             writes[memory / template.name] = template.read_text()
     ignore_path = project / ".gitignore"
     ignore = ignore_path.read_text() if ignore_path.exists() else ""
-    additions = [line for line in ("/.agentic/agent-memory/", "/.claude/agent-memory")
+    additions = [line for line in ("/.agentic/agent-memory/", "/.claude/agent-memory", "/.agentic/approvals/")
                  if line not in ignore.splitlines()]
     if additions:
         writes[ignore_path] = ignore.rstrip() + "\n\n# Private per-role memory\n" + "\n".join(additions) + "\n"
@@ -393,16 +395,23 @@ def event(project, actor, kind, **details):
     return path
 
 
-def run_session(project, tool, arguments):
+def run_session(project, tool, arguments, nested_other_project=False):
     if not (project / ".agentic/CONTRACT.md").is_file():
         raise KitError("Run agentic init before starting a shared session.")
-    if os.environ.get("AGENTIC_SESSION_ID"):
+    if os.environ.get("AGENTIC_SESSION_ID") and not (
+            nested_other_project and os.environ.get("AGENTIC_PROJECT") not in (None, str(project))):
         raise KitError("Exit the current agentic session before launching another.")
     if not shutil.which(tool):
         raise KitError(f"{tool} is not installed or not on PATH.")
     actor = {"tool": tool, "agent": "orchestrator", "session": uuid.uuid4().hex}
     environment = dict(os.environ, AGENTIC_TOOL=tool, AGENTIC_AGENT="orchestrator",
-                       AGENTIC_SESSION_ID=actor["session"])
+                       AGENTIC_SESSION_ID=actor["session"], AGENTIC_PROJECT=str(project))
+    # Headless runs have nobody to answer a prompt: the guard queues requests instead.
+    unattended = (tool == "claude" and any(a in ("-p", "--print") for a in arguments)) or (
+        tool == "codex" and arguments[:1] == ["exec"])
+    environment.pop("AGENTIC_UNATTENDED", None)
+    if unattended:
+        environment["AGENTIC_UNATTENDED"] = "1"
     with project_lock(project):
         before = snapshot(project)
         event(project, actor, "session-start", observed=before)
@@ -439,6 +448,47 @@ def design_init(project):
     return created
 
 
+def mission_main(args):
+    if args.command == "grant":
+        line = mission.grant(args.project_name, args.words)
+        print(f"Autorisation enregistrée pour {args.project_name} : {line}")
+    elif args.command == "revoke":
+        removed = mission.revoke(args.project_name, args.words)
+        print(f"Autorisation retirée : {' '.join(args.words)}" if removed else "Aucune autorisation correspondante.")
+    elif args.command == "grants":
+        names = [args.project_name] if args.project_name else (
+            sorted(p.name for p in mission.grants_dir().iterdir() if p.is_file() and not p.name.startswith("."))
+            if mission.grants_dir().is_dir() else [])
+        for name in names:
+            print(f"{name}: {', '.join(mission.read_grants(name)) or '(aucune)'}")
+    elif args.command == "approvals":
+        for item in mission.approvals(project_root(args.project)):
+            print(f"{item['file']}  [{item.get('tool')}] {item.get('reason')}\n    {item.get('detail')}")
+    elif args.mission_command == "start":
+        def initialize_locked(project):
+            with project_lock(project):
+                initialize(project)
+        project = mission.prepare(args.idea, args.name, args.profile, args.root, initialize_locked,
+                                  lambda *a: subprocess.run(["git", *a], check=True))
+        info = mission.status(project)
+        print(f"Mission prête : {project}")
+        print(f"Profil effectif : {info['effective_profile']}")
+        if info["effective_profile"] != args.profile:
+            print(f"Le profil {args.profile} attend ton accord : agentic grant {project.name} profile lab")
+        print(f"Suite : cd {project} && agentic run claude, puis /mission")
+    else:
+        project = project_root(args.project)
+        if args.mission_command == "status":
+            print(json.dumps(mission.status(project), ensure_ascii=False, indent=2))
+        elif args.mission_command == "prompt":
+            print(mission.prompt(project))
+        else:
+            text = mission.prompt(project)
+            arguments = ["-p", text] if args.tool == "claude" else ["exec", text]
+            return run_session(project, args.tool, arguments, nested_other_project=True)
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -466,7 +516,33 @@ def main(argv=None):
         elif command == "run":
             sub.add_argument("tool", choices=("claude", "codex"))
             sub.add_argument("arguments", nargs=argparse.REMAINDER)
+    grant_parsers = {}
+    for command, text in (("grant", "Record a user grant for a project (user only; agents are refused)"),
+                          ("revoke", "Remove a user grant")):
+        sub = commands.add_parser(command, help=text)
+        sub.add_argument("project_name")
+        sub.add_argument("words", nargs="+")
+        grant_parsers[command] = sub
+    grants_cmd = commands.add_parser("grants", help="List user grants")
+    grants_cmd.add_argument("project_name", nargs="?")
+    approvals_cmd = commands.add_parser("approvals", help="List requests queued during unattended runs")
+    approvals_cmd.add_argument("--project", default=".", type=Path)
+    mission_cmd = commands.add_parser("mission", help="Start, inspect or run a mission")
+    mission_sub = mission_cmd.add_subparsers(dest="mission_command", required=True)
+    start = mission_sub.add_parser("start")
+    start.add_argument("--idea", required=True)
+    start.add_argument("--name")
+    start.add_argument("--profile", choices=mission.PROFILES, default="supervised")
+    start.add_argument("--root", type=Path,
+                       default=Path(os.environ.get("CLAUDE_PROJECTS_ROOT") or Path.home() / "projects"))
+    for name in ("status", "prompt", "run"):
+        sub = mission_sub.add_parser(name)
+        sub.add_argument("--project", default=".", type=Path)
+        if name == "run":
+            sub.add_argument("--tool", choices=("claude", "codex"), default="claude")
     args = parser.parse_args(argv)
+    if args.command in ("grant", "revoke", "grants", "approvals", "mission"):
+        return mission_main(args)
     if args.command == "role":
         for line in role_config(args.name).splitlines():
             if line.startswith("developer_instructions = "):
@@ -522,6 +598,6 @@ def main(argv=None):
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (KitError, OSError, ValueError, subprocess.CalledProcessError) as error:
+    except (KitError, mission.MissionError, OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         sys.exit(1)

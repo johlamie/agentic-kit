@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import sys
 
-ROLES = {'architect', 'builder', 'designer', 'devops', 'product-manager', 'qa', 'researcher', 'reviewer'}
+ROLES = {'architect', 'builder', 'designer', 'devops', 'orchestrator', 'product-manager', 'qa', 'researcher', 'reviewer'}
 
 
 def in_scope(kind, target, home):

@@ -16,8 +16,15 @@
 #      deletion (ask), anywhere else is refused.
 #
 #   3. PRODUCTION PROJECTS. "already live" is a fact, not a text pattern. Any
-#      project listed in ~/.claude/production-projects escalates mutating
-#      commands to a prompt, whatever the command happens to be called.
+#      project listed in ~/.claude/production-projects escalates commands that
+#      change what users see: deploys, services, migrations, and pushes or merges
+#      into protected branches. Pushing a work branch does not. Per-project
+#      grants written by the user (`agentic grant`) refine this; agents can
+#      neither write nor run them.
+#
+#   5. UNATTENDED RUNS. With AGENTIC_UNATTENDED=1 (headless `agentic run`), a
+#      confirmation is queued under .agentic/approvals/ and refused, so the run
+#      continues with other work instead of stopping on a prompt nobody sees.
 #
 #   4. FILE-TOOL SCOPE. Write/Edit/NotebookEdit calls are checked against the
 #      current project, production list, agent rules, and protected locations.
@@ -33,6 +40,10 @@ set -uo pipefail
 
 PRODUCTION_LIST="${CLAUDE_PRODUCTION_PROJECTS:-$HOME/.claude/production-projects}"
 PROJECTS_ROOT="${CLAUDE_PROJECTS_ROOT:-$HOME/projects}"
+GRANTS_DIR="${AGENTIC_GRANTS_DIR:-$HOME/.config/agentic-kit/grants}"
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REQ_TOOL="${REQ_TOOL:-Bash}"
+REQ_DETAIL="${REQ_DETAIL:-}"
 
 # Commands reserved to the orchestrator: server surface, publication, and
 # anything that reaches production. Role agents propose these and return them;
@@ -49,9 +60,66 @@ MUTATING='(^|[;&|[:space:]])(rm|nginx|certbot|systemctl|sudo)([[:space:]]|$)|pm2
 RELEASE_SCRIPT="(^|[;&|])[[:space:]]*((sh|bash|zsh|dash)[[:space:]]+(-c[[:space:]]+)?[\"']?)?((npm[[:space:]]+run|yarn([[:space:]]+run)?|pnpm([[:space:]]+run)?)[[:space:]]+|(\./|\.\./|/)([^[:space:]/;&|]+/)*)(deploy|migrate)([:._-][[:alnum:]_.:-]+)?([[:space:]\"';&|]|$)"
 
 emit() { # emit <allow|deny|ask> <reason>
-  jq -cn --arg d "$1" --arg r "$2" \
+  local decision="$1" reason="$2" queued
+  if [ "$decision" = ask ] && [ "${AGENTIC_UNATTENDED:-}" = 1 ]; then
+    # Nobody is there to answer: queue the request and let the run go on.
+    queued="$(queue_approval "$reason")"
+    decision=deny
+    reason="Queued for the user's approval${queued:+ in $queued}: $reason Do not retry or work around it; continue with other work and list it in MISSION.md under 'En attente de toi'."
+  fi
+  jq -cn --arg d "$decision" --arg r "$reason" \
     '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:$d,permissionDecisionReason:$r}}'
   exit 0
+}
+
+queue_approval() { # queue_approval <reason> → prints the record path, if any
+  local root dir file
+  root="$(git -C "${CWD:-$PWD}" rev-parse --show-toplevel 2>/dev/null)" || return 0
+  [ -d "$root/.agentic" ] && [ ! -L "$root/.agentic" ] || return 0
+  dir="$root/.agentic/approvals"
+  [ ! -L "$dir" ] || return 0
+  mkdir -p "$dir" 2>/dev/null || return 0
+  file="$dir/$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
+  jq -n --arg tool "$REQ_TOOL" --arg detail "${REQ_DETAIL:0:2000}" --arg reason "$1" \
+        --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        '{version:1, requested_at:$at, tool:$tool, detail:$detail, reason:$reason, status:"pending"}' \
+        > "$file" 2>/dev/null && printf '.agentic/approvals/%s' "${file##*/}"
+}
+
+# Drop heredoc bodies: lines after `<<WORD` up to the line `WORD`.
+strip_heredocs() {
+  awk '
+    skip { if ($0 ~ "^[[:space:]]*" end "[[:space:]]*$") { skip = 0 } ; next }
+    { print }
+    match($0, /<<-?[[:space:]]*["\047]?[A-Za-z_][A-Za-z0-9_]*["\047]?/) {
+      end = substr($0, RSTART, RLENGTH); gsub(/^<<-?[[:space:]]*["\047]?|["\047]?$/, "", end); skip = 1
+    }'
+}
+
+grants_file() { printf '%s/%s' "$GRANTS_DIR" "$1"; }
+
+has_grant() { # has_grant <project> <grant line>
+  local file; file="$(grants_file "$1")"
+  [ -f "$file" ] && [ ! -L "$file" ] || return 1
+  sed -e 's/#.*//' -e 's/[[:space:]]\+/ /g' -e 's/^ //' -e 's/ $//' "$file" | grep -qxF -- "$2"
+}
+
+# Why a command changes a production project, or nothing when it does not.
+production_reason() { # production_reason <project> <scan>
+  local project="$1" seg verdict
+  while IFS= read -r seg; do
+    printf '%s' "$seg" | grep -Eq "$MUTATING|$RELEASE_SCRIPT" || continue
+    if printf '%s' "$seg" | grep -Eq '(^|[[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(push|merge)([[:space:]]|$)'; then
+      verdict="$(python3 "$HOOK_DIR/branch-scope.py" "$seg" "$CWD" "$(grants_file "$project")")" \
+        || verdict="Branch scope could not be checked; confirm this git operation."
+      [ -z "$verdict" ] || { printf "'%s' is in production: %s" "$project" "$verdict"; return; }
+    elif printf '%s' "$seg" | grep -Eq '^[[:space:]]*rm([[:space:]]|$)' && has_grant "$project" checkout-not-served; then
+      continue
+    else
+      printf "'%s' is listed as running in production (%s). This command changes it. Confirm, refuse, or say what to do instead." "$project" "$PRODUCTION_LIST"
+      return
+    fi
+  done < <(printf '%s\n' "$2" | sed -E 's/(&&|\|\||;|\|)/\n/g')
 }
 
 # Expand ~ and relative paths so the safe-zone test compares real locations.
@@ -191,6 +259,8 @@ evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
   fi
 
   case "$target" in
+    "$GRANTS_DIR"|"$GRANTS_DIR/"*)
+      emit deny "Refused: grants are written by the user with \`agentic grant\`, never by an agent." ;;
     "$HOME/.claude"|"$HOME/.claude/"*|"$HOME/.ssh"|"$HOME/.ssh/"*|"$HOME/.aws"|"$HOME/.aws/"*|"$HOME/.config/gcloud"|"$HOME/.config/gcloud/"*|"$HOME/.config/agentic-kit/supervisor.env"|"$HOME/.config/agentic-kit/supervisor-hook-token"|"$HOME/.codex/auth.json"|"$HOME/.codex/config.toml")
       emit deny "Refused: $tool_name cannot modify protected agent rules or credential locations." ;;
   esac
@@ -205,8 +275,8 @@ evaluate_file() { # evaluate_file <tool_name> <agent_type> <path> <cwd>
     "$PROJECTS_ROOT"/*)
       target_project="${target#"$PROJECTS_ROOT"/}"
       target_project="${target_project%%/*}"
-      if is_production "$target_project"; then
-        emit ask "'$target_project' is listed as running in production ($PRODUCTION_LIST). Confirm this $tool_name change."
+      if is_production "$target_project" && ! has_grant "$target_project" checkout-not-served; then
+        emit ask "'$target_project' is listed as running in production ($PRODUCTION_LIST) and its checkout may be served live. Confirm this $tool_name change, or record \`agentic grant $target_project checkout-not-served\` if production runs elsewhere."
       fi
       if python3 "$(dirname "${BASH_SOURCE[0]}")/file-scope.py" additional "$target" "$HOME"; then
         return 0
@@ -245,6 +315,23 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
     emit deny "Refused: this shell command can disclose or move protected credentials. Use a non-secret fixture or ask the user for a narrow human-assisted step."
   fi
 
+  # -- 0. Grants are the user's keys. An agent never sets them, by command or by
+  # writing the files. A heredoc body (a commit message) is data unless a shell
+  # runs it, so it is ignored here like quoted text.
+  local executable
+  executable="$(printf '%s' "$cmd" | strip_heredocs)"
+  if printf '%s' "$cmd" | grep -Eq '(^|[;&|[:space:]])(sh|bash|zsh|dash|ksh|eval|env|xargs|timeout|nohup)([[:space:]]|$)'; then
+    executable="$cmd"
+  fi
+  if printf '%s' "$executable" | sed -e "s/'[^']*'/''/g" -e 's/"[^"]*"/""/g' \
+     | grep -Eq 'agentic(\.py)?[[:space:]]+(grant|revoke)([[:space:]]|$)'; then
+    emit deny "Refused: only the user records grants (\`agentic grant\`). Tell them the exact grant you need and why."
+  fi
+  if printf '%s' "$executable" | grep -Fq "agentic-kit/grants" \
+     && printf '%s' "$executable" | grep -Eq '>|(^|[;&|[:space:]])(tee|cp|mv|ln|install|truncate|rm|chmod|chown|dd|python3?|perl|node|ruby)([[:space:]]|$)|sed[[:space:]]+-i'; then
+    emit deny "Refused: grants are written by the user with \`agentic grant\`, never by an agent."
+  fi
+
   # -- 1. Path-aware rm, before anything else: the worst outcome on this list.
   # Detected on the stripped text, but targets are read from the real command.
   if printf '%s' "$scan" | grep -Eq '(^|[;&|[:space:]])rm([[:space:]]|$)'; then
@@ -272,10 +359,11 @@ evaluate() { # evaluate <agent_type> <command> <cwd>  → prints decision JSON o
   # -- 3. Projects that are already live — the working directory's and any the
   # command reaches into.
   if printf '%s' "$scan" | grep -Eq "$MUTATING|$RELEASE_SCRIPT"; then
-    local project
+    local project production
     for project in $(projects_touched "$cmd" | sort -u); do
       if is_production "$project"; then
-        emit ask "'$project' is listed as running in production ($PRODUCTION_LIST). This command changes it. Confirm, refuse, or say what to do instead."
+        production="$(production_reason "$project" "$scan")"
+        [ -z "$production" ] || emit ask "$production"
       fi
     done
   fi
@@ -352,6 +440,54 @@ self_test() {
   check "deleting into a live project" ask   ""        "rm $P/live-app/config.ts"    "$P/demo"
   check "deleting into a scratch one"  none  ""        "rm $P/other/config.ts"       "$P/demo"
   check "reading a live project file"  none  ""        "cat $P/live-app/config.ts"   "$P/demo"
+
+  # Branch-aware production policy: a work branch push changes nothing users see.
+  local grants; grants="$(mktemp -d)"; GRANTS_DIR="$grants"
+  check "live push of a work branch"    none  ""        "git push -u origin feature/courses-2026-09" "$P/live-app"
+  check "live push of a work branch with output piping" none "" "git log -1 && git push -u origin feature/x 2>&1 | tail -3" "$P/live-app"
+  check "live push to main asks"        ask   ""        "git push origin main"        "$P/live-app"
+  check "live push HEAD:main asks"      ask   ""        "git push origin HEAD:main"   "$P/live-app"
+  check "live push of all branches asks" ask  ""        "git push --all origin"       "$P/live-app"
+  check "live push of a tag asks"       ask   ""        "git push origin refs/tags/v1" "$P/live-app"
+  check "live push of unknown branch asks" ask ""       "git push"                    "$P/live-app"
+  check "live push to release branch asks" ask ""       "git push origin release/1.2" "$P/live-app"
+  check "live merge in a served checkout asks" ask ""   "git merge feature/x"         "$P/live-app"
+  check "scratch push to main defers"   none  ""        "git push origin main"        "$P/demo"
+  printf 'push main\n# comment\ndeploy-branch stable\ncheckout-not-served\n' > "$grants/live-app"
+  check "granted push to main"          none  ""        "git push origin main"        "$P/live-app"
+  check "declared deploy branch asks"   ask   ""        "git push origin stable"      "$P/live-app"
+  check "rm in a checkout not served"   none  ""        "rm -rf dist"                 "$P/live-app"
+  check "deploy still asks with grants" ask   ""        "firebase deploy"             "$P/live-app"
+  check_file_early() {
+    got="$( evaluate_file "$3" "$4" "$5" "$6" | jq -r '.hookSpecificOutput.permissionDecision // "none"' 2>/dev/null )"
+    [ -n "$got" ] || got=none
+    if [ "$got" = "$2" ]; then printf 'PASS  %-52s -> %s\n' "$1" "$got"
+    else printf 'FAIL  %-52s -> %s (expected %s)\n' "$1" "$got" "$2" >&2; fails=$((fails + 1)); fi
+  }
+  check_file_early "edit in a checkout not served" none Edit "" "$P/live-app/src/app.ts" "$P/live-app"
+  # Grants are the user's: agents can neither run nor write them.
+  check "agent cannot grant itself"     deny  ""        "agentic grant live-app push main" "$P/demo"
+  check "agent cannot grant via script" deny  ""        "python3 ~/agentic-kit/scripts/agentic.py revoke live-app push main" "$P/demo"
+  check "agent cannot write grants"     deny  ""        "echo 'push main' >> ~/.config/agentic-kit/grants/live-app" "$P/demo"
+  check "agent may read grants"         none  ""        "cat ~/.config/agentic-kit/grants/live-app" "$P/demo"
+  check "commit message naming a grant" none  ""        "$(printf 'git commit -q -F - <<'"'"'EOF'"'"'\nUse agentic grant x push main in ~/.config/agentic-kit/grants\nEOF\ngit log -1 2>&1 | tail -1')" "$P/demo"
+  check "shell heredoc granting is caught" deny ""      "$(printf 'bash <<EOF\nagentic grant live-app push main\nEOF')" "$P/demo"
+  check "quoted path write is caught"   deny  ""        "echo 'push main' > \"\$HOME/.config/agentic-kit/grants/live-app\"" "$P/demo"
+  check_file_early "grant file write denied" deny Write "" "$grants/live-app" "$P/demo"
+
+  # Unattended runs queue confirmations instead of stopping on them.
+  local unattended; unattended="$(mktemp -d)"
+  git init -q "$unattended" && mkdir "$unattended/.agentic"
+  AGENTIC_UNATTENDED=1
+  check "unattended confirmation is queued" deny "" "rm -rf $P/demo" "$unattended"
+  if ls "$unattended/.agentic/approvals/"*.json >/dev/null 2>&1; then
+    printf 'PASS  %-52s -> %s\n' "unattended request recorded" "queued"
+  else
+    printf 'FAIL  %-52s\n' "unattended request recorded" >&2; fails=$((fails + 1))
+  fi
+  unset AGENTIC_UNATTENDED
+  rm -rf "$grants" "$unattended"
+  GRANTS_DIR="${AGENTIC_GRANTS_DIR:-$HOME/.config/agentic-kit/grants}"
   rm -f "$tmp"
 
   # File tools use the same scope and production policy as Bash mutations.
@@ -403,8 +539,12 @@ agent_type="$(jq -r '.agent_type // ""' <<<"$payload" 2>/dev/null)"
 cwd="$(jq -r '.cwd // ""' <<<"$payload" 2>/dev/null)"
 case "$tool_name" in
   Bash)
+    REQ_TOOL=Bash
+    REQ_DETAIL="$(jq -r '.tool_input.command // ""' <<<"$payload" 2>/dev/null)"
     evaluate "$agent_type" "$(jq -r '.tool_input.command // ""' <<<"$payload" 2>/dev/null)" "$cwd" ;;
   Write|Edit|NotebookEdit)
+    REQ_TOOL="$tool_name"
+    REQ_DETAIL="$(jq -r '.tool_input.file_path // .tool_input.notebook_path // ""' <<<"$payload" 2>/dev/null)"
     evaluate_file "$tool_name" "$agent_type" "$(jq -r '.tool_input.file_path // .tool_input.notebook_path // ""' <<<"$payload" 2>/dev/null)" "$cwd" ;;
 esac
 exit 0

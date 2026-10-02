@@ -78,7 +78,7 @@ for name in "${required_agents[@]}"; do
 done
 pass "required agent manifests were inspected"
 
-required_skills=(adopt-project delivery-pipeline retrospective design-system ui-kit design-conformance frontend-design)
+required_skills=(adopt-project delivery-pipeline retrospective design-system ui-kit design-conformance frontend-design mission)
 for name in "${required_skills[@]}"; do
   file="global/skills/$name/SKILL.md"
   if [[ ! -f "$file" ]]; then
@@ -93,7 +93,7 @@ for name in "${required_skills[@]}"; do
 done
 pass "required skill manifests were inspected"
 
-for file in PROJECT_STATE.md DECISIONS.md LESSONS.md CAPABILITY_GAPS.md; do
+for file in PROJECT_STATE.md DECISIONS.md LESSONS.md CAPABILITY_GAPS.md MISSION.md ORCHESTRATOR.md; do
   if [[ -s "global/templates/memory/$file" ]]; then
     pass "memory template exists: $file"
   else
@@ -140,7 +140,7 @@ if [[ -s global/skills/frontend-design/LICENSE.txt && -s global/skills/frontend-
 else
   fail "vendored frontend-design skill lacks LICENSE.txt or SOURCE.md"
 fi
-for name in design-system ui-kit design-conformance frontend-design; do
+for name in design-system ui-kit design-conformance frontend-design mission; do
   if [[ -L "codex/skills/$name" && "$(readlink "codex/skills/$name")" == "../../global/skills/$name" ]]; then
     pass "Codex shares the design skill: $name"
   else

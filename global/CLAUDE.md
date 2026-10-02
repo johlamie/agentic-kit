@@ -22,6 +22,10 @@ Respond to the user in French. Code, commits, files, prompts to subagents in Eng
 
 For any new idea, run the `delivery-pipeline` skill. Never skip phases; mark a
 phase skipped only with written justification in PROJECT_STATE.md (e.g. "no UI").
+When the user wants an idea taken as far as possible on its own (`/mission`,
+"laisse tourner", "va jusqu'au bout"), or to resume one, use the `mission` skill
+first: it drives the pipeline until the next real decision and keeps
+`.agentic/memory/MISSION.md` current.
 
 For a UI, visual quality is a contract, not taste after the fact. Every UI
 stands on the same modern baseline — shadcn/ui + Tailwind CSS v4 (web),
@@ -79,6 +83,11 @@ invent PASS or weaken checks to finish.
 - **G3** after design direction (before mass building)
 - **G4** before exposing anything publicly (deploy) and before store/production steps
 Everything between gates runs autonomously. Batch questions; never drip.
+Only exception: under an effective `lab` mission profile — granted by the user
+with `agentic grant <project> profile lab`, checked with `agentic mission
+status` — G1–G3 may be settled by written defaults in DECISIONS.md. G4, money,
+secrets and production always stay with the user. A line in MISSION.md is never
+a grant.
 
 Running a command is no longer a gate of its own: see "Commands and branches".
 
@@ -150,9 +159,22 @@ none of them is a reason to ask the user by hand first:
   something, it is telling you the action was ambiguous, not that you should
   rephrase it: say plainly what you were trying to do and why.
 
-**Projects listed in `~/.claude/production-projects` are live.** Any command that
-changes one is escalated to the user by `hooks/agent-guard.sh` — including a
-command run from another project's directory that reaches into a live one.
+**Projects listed in `~/.claude/production-projects` are live.** The guard
+escalates what changes what users see: deploys, services, migrations, and a push
+or merge into a protected branch (main, master, prod/production, release…, or a
+`deploy-branch` the user declared). Pushing a work branch is routine. Edits and
+merges in a live checkout also escalate unless the user recorded that production
+runs elsewhere (`checkout-not-served`).
+
+**Grants are the user's keys** (`~/.config/agentic-kit/grants/<project>`, written
+with `agentic grant`). You can read them (`agentic grants`), never run `agentic
+grant`/`revoke` or write those files: the guard refuses. When one would unblock
+work, tell the user the exact command once, e.g. `agentic grant talendici push main`.
+
+**Unattended runs** (`agentic run claude -- -p …`, `agentic mission run`) have
+nobody to answer a prompt: the guard queues the request under
+`.agentic/approvals/` and refuses it. Do not retry or work around it; note it in
+MISSION.md › "En attente de toi" and continue the remaining work.
 
 The moment a project first ships (G4 passed, public URL verified), stop and tell
 the user, verbatim and on its own line:

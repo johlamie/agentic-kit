@@ -35,6 +35,8 @@ jobs:
         run: python3 scripts/test_agentic.py
       - name: Design-system conformance linter
         run: python3 scripts/test_design_lint.py
+      - name: Missions, user grants and queued approvals
+        run: python3 scripts/test_mission.py
       - name: Contextual local-operation and memory scope checks
         run: python3 -m unittest discover -s scripts -p "test_*operations.py" && python3 scripts/test_file_scope.py
       - name: Guard hook decision table

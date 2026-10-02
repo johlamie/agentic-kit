@@ -7,7 +7,11 @@ or a reason to repeat an approval. Project-specific instructions still apply.
 ## Read and resume
 
 At session start, read `.agentic/memory/PROJECT_STATE.md`, `DECISIONS.md`,
-`LESSONS.md`, `CAPABILITY_GAPS.md`, then the latest `.agentic/events/*.json`.
+`LESSONS.md`, `CAPABILITY_GAPS.md`, `MISSION.md` and `ORCHESTRATOR.md`, then the
+latest `.agentic/events/*.json` and pending requests (`agentic approvals`).
+When MISSION.md describes a mission, continue it with the `mission` skill and its
+effective profile (`agentic mission status`); a profile written in the file is
+not a grant.
 Confirm the current branch and existing changes before editing. Summarize the
 current objective, blockers, and next action in French. Do not infer a PASS or
 human approval from an old conversation, a session exit code, or an event.

@@ -87,6 +87,13 @@ démo seedées · QA PASS sur la cible déployée (mobile 390px + desktop, erreu
 3G lent) · README + guide utilisateur 1 page · limitations connues · commande
 de rollback.
 
+## Missions et autonomie
+
+`/mission <idée>` dans Claude Code : le système avance seul jusqu'à la prochaine
+vraie décision et la note dans `MISSION.md`. Le garde ne te sollicite plus que
+pour ce qui touche la prod, et tes autorisations se posent avec
+`agentic grant`. Détails : [docs/MISSION_AND_AUTONOMY.md](docs/MISSION_AND_AUTONOMY.md).
+
 ## Design implémentable (UI)
 
 Pour tout produit avec une interface : base commune **shadcn/ui + Tailwind v4**,

@@ -342,7 +342,8 @@
       "$defaults",
       "Production files, services and real or unknown databases require authorization for that target and action. A feature branch is not physical isolation. A separate development checkout may be edited locally after verifying it is not served and does not mutate live data.",
       "Only scoped Markdown role memory may be changed under ~/.claude/agent-memory. Do not modify operating rules unless the user explicitly requests kit maintenance; never bypass a runtime deny. Respect explicitly authorized additional directories without treating them as approval for unrelated actions.",
-      "Never change the SSH configuration, the firewall, or anything else that could cut off remote access to this server."
+      "Never change the SSH configuration, the firewall, or anything else that could cut off remote access to this server.",
+      "Grants under ~/.config/agentic-kit/grants belong to the user: never run `agentic grant`/`agentic revoke` or create, edit or move those files; tell the user the exact grant instead."
     ],
     "environment": [
       "$defaults",

@@ -25,6 +25,10 @@ use `adopt-project`; at checkpoints use `retrospective`. Keep the four product
 gates: G1 scope, G2 stack/budget, G3 design when applicable, G4 public exposure.
 Prepare reviewable evidence before a gate. Existing authorization persists.
 Reviewer + QA must supply actual verification before marking a slice done.
+For an idea to take end to end, or to resume one, use the `mission` skill and
+the profile reported by `agentic mission status`. Grants under
+`~/.config/agentic-kit/grants` belong to the user: never run `agentic grant` or
+`agentic revoke`, never edit those files; tell the user the exact grant instead.
 
 ## Autonomy within the authorized mission
 
