@@ -150,6 +150,15 @@ class MissionTests(unittest.TestCase):
         same = dict(env, AGENTIC_SESSION_ID="parent", AGENTIC_PROJECT=str(project))
         self.assertNotEqual(self.agentic("mission", "run", "--project", str(project), env=same).returncode, 0)
 
+    def test_outside_a_git_project_explains_what_to_do(self):
+        (self.base / "projects").mkdir()
+        result = subprocess.run([sys.executable, str(AGENTIC), "run", "claude"], capture_output=True,
+                                text=True, timeout=30, env=self.env, cwd=self.base / "projects")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("n'est pas un projet Git", result.stderr)
+        self.assertIn("/mission", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_interactive_run_is_not_marked_unattended(self):
         self.start("--idea", "Idée", "--name", "interactive")
         project = self.base / "projects/interactive"

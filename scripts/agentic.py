@@ -38,7 +38,13 @@ def git(project, *args, check=True):
 
 
 def project_root(path):
-    return Path(git(path, "rev-parse", "--show-toplevel")).resolve()
+    try:
+        return Path(git(path, "rev-parse", "--show-toplevel")).resolve()
+    except subprocess.CalledProcessError as error:
+        raise KitError(
+            f"{Path(path).resolve()} n'est pas un projet Git. Lance cette commande dans un projet "
+            "(cd ~/projects/<nom>), ou crée-en un : `claude` puis /mission <idée>, "
+            "ou `agentic mission start --idea \"…\"`.") from error
 
 
 def exists(path):

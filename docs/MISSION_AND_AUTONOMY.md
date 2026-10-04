@@ -5,10 +5,11 @@ et n'être sollicité que pour ce qui touche le monde réel.
 
 ## Lancer et reprendre une mission
 
-Dans Claude Code (ou Codex) :
+Nouvelle mission : le projet n'existe pas encore, donc pas encore de dépôt Git.
+Lance Claude Code directement depuis `~/projects` (`agentic run` exige un projet) :
 
 ```text
-agentic run claude
+cd ~/projects && claude
 > /mission app de vérification de diplômes
 ```
 
