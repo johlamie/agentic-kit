@@ -13,6 +13,8 @@
 - Restyling shadcn internals from business code (long `className` overrides).
 - (lint) Heavy shadows (`shadow-xl`, `shadow-2xl`) and the same soft shadow under every block.
 - (lint) ALL-CAPS eyebrow labels (`uppercase`) above headings.
+- (lint) Colored side accent bars on cards, list items or callouts (`border-l-4`,
+  `border-left: 3px`, `inset 3px 0 0`) — a frame or a tint marks emphasis.
 - (lint) Framework default palette classes (`bg-violet-500`…) — only named tokens.
 - Card wall: content chopped into identical rounded cards regardless of hierarchy.
 - One radius on everything regardless of hierarchy; more than the radius scale allows.

@@ -23,6 +23,7 @@
     { "id": "decorative-gradient", "pattern": "bg-gradient-to-|bg-linear-to-|linear-gradient\\(|radial-gradient\\(", "message": "decorative gradient: see design/anti-patterns.md" },
     { "id": "heavy-shadow", "pattern": "(?<![\\w-])shadow-(xl|2xl)(?![\\w-])", "message": "shadow outside the elevation tokens" },
     { "id": "caps-eyebrow", "pattern": "(?<![\\w-])uppercase(?![\\w-])|text-transform:\\s*uppercase", "message": "ALL-CAPS labels are a generated-UI tell; use the type scale" },
+    { "id": "side-accent-bar", "pattern": "(?<![\\w-])border-[ls]-(2|4|8)(?![\\w-])|border-(left|inline-start):\\s*[2-9]px|inset\\s+[2-9]px\\s+0\\s+0", "message": "colored side bar on a card or callout reads as generated UI; frame or tint the block instead" },
     { "id": "inline-style", "pattern": "style=\\{\\{", "message": "inline style objects bypass the tokens; use Tailwind classes" }
   ]
 }

@@ -17,7 +17,8 @@ compass. References (Mobbin, shadcn blocks, live products) are inspiration only.
    side by side (e.g. subject vs proof in Sceau), not by habit.
 4. **Quiet surfaces.** Hairlines before shadows; neutrals slightly tinted
    toward the accent; one deep accent used sparingly; semantic colors only for
-   states. No decoration that carries no information.
+   states. No decoration that carries no information. Emphasis comes from a frame or
+   a tint, never from a colored bar down the side of a card or callout.
 5. **Typography carries the personality.** When it fits the subject, a
    characterful display face for names and titles, a neutral sans for the UI,
    and a clear contrast of scale between them.
