@@ -34,6 +34,10 @@ export interface SupervisorConfig {
   activityMaxStreams: number;
   controlUi: boolean;
   controlRecentMs: number;
+  /** Mission files are read on demand from projects under this root. */
+  projectsRoot: string;
+  productionList: string;
+  grantsDir: string;
   notifyPass: boolean;
   githubPatToken: string | null;
   telegramBotToken: string | null;
@@ -149,6 +153,9 @@ export function loadConfig(overrides: NodeJS.ProcessEnv = process.env): Supervis
     activityMaxStreams: integer(env.SUPERVISOR_ACTIVITY_MAX_STREAMS, 256, 1, 5_000),
     controlUi: boolean(env.SUPERVISOR_CONTROL_UI, true),
     controlRecentMs: integer(env.SUPERVISOR_CONTROL_RECENT_MS, 604_800_000, 60_000, 7_776_000_000),
+    projectsRoot: expandHome(env.CLAUDE_PROJECTS_ROOT ?? "~/projects"),
+    productionList: expandHome(env.CLAUDE_PRODUCTION_PROJECTS ?? "~/.claude/production-projects"),
+    grantsDir: expandHome(env.AGENTIC_GRANTS_DIR ?? "~/.config/agentic-kit/grants"),
     notifyPass: boolean(env.SUPERVISOR_NOTIFY_PASS, false),
     githubPatToken: optional(env.GITHUB_PAT_TOKEN),
     telegramBotToken: optional(env.TELEGRAM_BOT_TOKEN),

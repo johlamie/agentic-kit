@@ -13,6 +13,33 @@ d'activité par projet (`/<slug>`) sans la remplacer : un seul écran qui répon
 à la question « où en est la supervision, et qu'attend-on de moi ? » pour
 l'ensemble des projets, depuis le tunnel SSH local existant.
 
+## 0. Version 2 — `missionControl` (octobre 2026)
+
+Le snapshot passe en `version: 2` et gagne un bloc `missionControl`
+(`src/mission-control.ts`) : `projects`, `waiting`, `blocked`, `watch`, `runs`,
+`activity`, `audits`, `counts`, `projectsRoot`. Les champs v1 restent.
+
+- **Lecture des projets** (`src/missions.ts`). Le daemon lit, en lecture seule,
+  `.agentic/memory/MISSION.md`, `ORCHESTRATOR.md`, `DECISIONS.md` et
+  `.agentic/approvals/*.json` des projets connus et des dossiers de
+  `CLAUDE_PROJECTS_ROOT` (200 au plus). `readConfined` refuse tout lien
+  symbolique, tout fichier hors de la racine réelle du projet et tout fichier
+  de plus de 256 Ko. Le profil `lab` n'est affiché effectif que si le fichier
+  d'autorisations contient `profile lab`.
+- **Aucun chemin absolu exposé.** La clé d'un projet est un condensat opaque
+  (sha256 tronqué) ; `displayPath` vaut `~/…` seulement sous le dossier
+  personnel et pour un nom non masqué, sinon `null`.
+- **Runs.** `listActiveRuns` (2 requêtes) rend les sessions actives avec leurs
+  120 derniers événements : sous-agents encore ouverts, outil, mode sans
+  surveillance (`metadata.unattended`, transmis par le hook depuis
+  `AGENTIC_UNATTENDED=1`), silence au-delà de 15 min.
+- **Budget de requêtes.** Le snapshot reste à nombre de requêtes constant :
+  13, vérifié par `CONTROL_SNAPSHOT_QUERY_BUDGET`. La migration 5 ajoute les
+  index `events(session_id, created_at)`, `events(created_at)` et
+  `audits(created_at)` ; les plans de requête sont testés.
+- **Toujours en lecture seule.** Les actions sont des commandes à copier ; le
+  daemon n'écrit ni autorisation ni fichier de projet, et reste en loopback.
+
 ## 1. Position par rapport à la spec V2
 
 `CODEX_SUPERVISOR_IMPLEMENTATION_SPEC_V2_UI_UX.md` §3 (l. 131–152) liste
@@ -208,6 +235,9 @@ supervisor/ui/static/
 |---|---|---|
 | `SUPERVISOR_CONTROL_UI` | `true` | active la vue d'ensemble (indépendant de `SUPERVISOR_ACTIVITY_UI`) |
 | `SUPERVISOR_CONTROL_RECENT_MS` | `604800000` (7 j) | fenêtre des projets inactifs affichés |
+| `CLAUDE_PROJECTS_ROOT` | `~/projects` | dossier parcouru pour le portefeuille |
+| `CLAUDE_PRODUCTION_PROJECTS` | `~/.claude/production-projects` | liste des projets en production |
+| `AGENTIC_GRANTS_DIR` | `~/.config/agentic-kit/grants` | autorisations lues pour le profil effectif |
 
 Bornées et validées dans `config.ts` comme les variables existantes.
 

@@ -127,6 +127,7 @@ export interface RawClaudeHookPayload {
   elicitation_id?: unknown;
   requested_schema?: unknown;
   action?: unknown;
+  agentic_unattended?: unknown;
   [key: string]: unknown;
 }
 
@@ -234,7 +235,7 @@ export interface ControlProject {
 }
 
 export interface ControlSnapshot {
-  version: 1;
+  version: 2;
   generatedAt: string;
   daemon: ControlDaemonHealth;
   attention: ControlAttentionItem[];
@@ -247,6 +248,8 @@ export interface ControlSnapshot {
   projectLimit: number;
   /** True when projects exist beyond projectLimit and were left out. */
   projectsTruncated: boolean;
+  /** Missions, runs, portfolio and everything waiting for the user. */
+  missionControl: import("./mission-control.js").MissionControl;
 }
 
 export interface HumanAttention {

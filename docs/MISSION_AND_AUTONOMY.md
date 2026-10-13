@@ -95,5 +95,15 @@ recopiée dans MISSION.md, et l'agent continue le reste. À ton retour :
   les consignes de la mission, pas encore sur le garde.
 - Le garde lit les commandes, pas leur effet réel : un script maison qui
   déploie sous un autre nom n'est reconnu que par le juge natif de Claude Code.
-- Les demandes en file se valident dans une session normale ; il n'y a pas
-  encore de bouton dans l'interface du Supervisor.
+- Les demandes en file se valident dans une session normale. Le centre de
+  contrôle du Supervisor les affiche avec la commande à copier, sans bouton
+  qui agisse.
+
+## Suivre une mission dans le Supervisor
+
+Le centre de contrôle (`http://127.0.0.1:8787/` par le tunnel SSH) lit
+MISSION.md, ORCHESTRATOR.md et les demandes en file de chaque projet : ce qui
+t'attend, les missions bloquées, les runs en cours (avec le mode sans
+surveillance), les portes et le portefeuille. Pour qu'il les lise bien, la
+mission écrit les statuts de porte avec le vocabulaire du skill et garde
+l'en-tête de la table Routing d'ORCHESTRATOR.md.

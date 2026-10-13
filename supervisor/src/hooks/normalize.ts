@@ -127,6 +127,7 @@ function metadataFor(payload: RawClaudeHookPayload, hookEvent: string): Record<s
   const common: Record<string, unknown> = {
     permission_mode: text(payload.permission_mode, 100),
     hook_event_name: hookEvent,
+    unattended: payload.agentic_unattended === true,
   };
   if (hookEvent === "PostToolUse" || hookEvent === "PostToolUseFailure" || hookEvent === "PermissionDenied") {
     return {

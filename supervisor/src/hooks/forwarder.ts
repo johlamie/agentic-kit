@@ -15,6 +15,8 @@ export async function forwardHook(rawInput: string, fetchImplementation: typeof 
   try { parsed = JSON.parse(rawInput); } catch { return null; }
   let payload: RawClaudeHookPayload;
   try { payload = safeHookPayloadForTransport(parsed); } catch { return null; }
+  // Run context set by `agentic run`; the hook inherits Claude's environment.
+  payload.agentic_unattended = process.env.AGENTIC_UNATTENDED === "1";
   const config = loadConfig();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1_500);

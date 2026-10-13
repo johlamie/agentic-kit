@@ -98,8 +98,10 @@ function sleep(ms: number): Promise<void> {
 }
 
 /** Exact SQL cost of one control snapshot: 2 project lists, 3 batch aggregates,
- *  the attention page, the global open request total, the queue totals, the ping. */
-const CONTROL_SNAPSHOT_QUERY_BUDGET = 9;
+ *  the attention page, the global open request total, the queue totals, the ping,
+ *  then mission control: the active run page, their events in one ranked read,
+ *  the recent events and the recent audits. */
+const CONTROL_SNAPSHOT_QUERY_BUDGET = 13;
 
 interface CountableStatement {
   all(...params: unknown[]): unknown;
@@ -209,7 +211,7 @@ test("serves the control center to a browser and keeps the health JSON for tooli
   assert.equal(page.headers.get("cache-control"), "no-store");
   const html = await page.text();
   assert.match(html, /Centre de contrôle/u);
-  assert.match(html, /Intervention attendue/u);
+  assert.match(html, /En attente de toi/u);
   assert.doesNotMatch(html, /Simuler un événement/u);
   // frame-ancestors is only meaningful in the header; in <meta> browsers log an error.
   assert.match(page.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/u);
@@ -575,7 +577,7 @@ test("adds the human request index to a database created before the migration", 
   assert.equal(indexNames(verify).includes("human_requests_status_created_idx"), true);
   const versions = (verify.prepare("SELECT version FROM schema_migrations ORDER BY version").all() as Array<{ version: number }>)
     .map((row) => row.version);
-  assert.deepEqual(versions, [1, 2, 3, 4]);
+  assert.deepEqual(versions, [1, 2, 3, 4, 5]);
   verify.close();
   rmSync(config.dataDir, { recursive: true, force: true });
 });

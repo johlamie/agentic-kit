@@ -49,7 +49,11 @@ exact command (`agentic grant <projet> profile lab`) once. You never run
 
 Run `delivery-pipeline` phase by phase. After every phase:
 - update MISSION.md (phase, gates, journal line) and PROJECT_STATE.md;
-- update ORCHESTRATOR.md (routing, repair-loop counts);
+- update ORCHESTRATOR.md: one Routing row per slice with its Reviewer / QA /
+  Visual verdicts, and the repair-loop attempts;
+- write gate statuses with this vocabulary only, so the Supervisor control
+  center can rank them: `en attente`, `présentée, à toi`, `validée`,
+  `défaut lab`, `bloquée`, `hors profil`;
 - record a checkpoint (`agentic checkpoint`);
 - check the stop conditions below; if none applies, continue immediately.
 

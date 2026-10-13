@@ -3,12 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#050b18">
+    <meta name="theme-color" content="#0b0b0d">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta
-      name="description"
-      content="Vue d’ensemble locale et en lecture seule de la supervision Kriton."
-    >
+    <meta name="description" content="Centre de contrôle local et en lecture seule des missions supervisées par Kriton.">
     <!-- frame-ancestors is ignored in a meta policy and logs a console error;
          the HTTP header from activitySecurityHeaders() enforces it. -->
     <meta
@@ -17,107 +14,68 @@
     >
     <title>Centre de contrôle · Kriton Supervisor</title>
     <link rel="icon" href="/_supervisor/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/_supervisor/assets/shared.css">
     <link rel="stylesheet" href="/_supervisor/assets/control.css">
     <script src="/_supervisor/assets/control.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Aller au contenu</a>
-    <div class="ambient" aria-hidden="true"></div>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navigation du centre de contrôle">
+        <div class="sidebar__top">
+          <a class="brand" href="#/" aria-label="Kriton Supervisor, vue d’ensemble">
+            <span class="brand__mark" aria-hidden="true">K</span>
+            <span>Kriton Supervisor</span>
+          </a>
+          <button class="icon-btn sidebar__close" type="button" data-close-nav aria-label="Fermer la navigation">
+            <span data-icon="x"></span>
+          </button>
+        </div>
 
-    <header class="topbar">
-      <a class="brand" href="/" aria-label="Kriton Supervisor, centre de contrôle">
-        <span class="brand__mark" aria-hidden="true"><span>K</span></span>
-        <span class="brand__copy">
-          <strong>Kriton</strong>
-          <span>Supervisor</span>
-        </span>
-      </a>
+        <nav aria-label="Groupes d’action">
+          <ul class="nav" data-nav-groups>
+            <li><a href="#/" data-route="overview"><span data-icon="layout-dashboard"></span>Vue d’ensemble</a></li>
+            <li><a href="#/attente" data-route="attente"><span data-icon="inbox"></span>En attente de toi<span class="count count--human" data-count="waiting">—</span></a></li>
+            <li><a href="#/bloques" data-route="bloques"><span data-icon="octagon-alert"></span>Bloqués<span class="count count--block" data-count="blocked">—</span></a></li>
+            <li><a href="#/runs" data-route="runs"><span data-icon="activity"></span>Runs en cours<span class="count" data-count="runs">—</span></a></li>
+            <li><a href="#/missions" data-route="missions"><span data-icon="target"></span>Missions<span class="count" data-count="missions">—</span></a></li>
+            <li><a href="#/portes" data-route="portes"><span data-icon="flag"></span>Portes et décisions<span class="count" data-count="gates">—</span></a></li>
+            <li><a href="#/audits" data-route="audits"><span data-icon="shield-check"></span>Audits<span class="count count--block" data-count="audits">—</span></a></li>
+            <li><a href="#/activite" data-route="activite"><span data-icon="history"></span>Activité</a></li>
+          </ul>
+        </nav>
 
-      <dl class="daemon-health" aria-label="Santé du daemon">
-        <div>
-          <dt>Daemon</dt>
-          <dd data-daemon-version>—</dd>
+        <div class="nav-title">
+          <span>Projets</span>
+          <a href="#/projets" data-route="projets">Portefeuille</a>
         </div>
-        <div>
-          <dt>Niveau</dt>
-          <dd data-daemon-level>—</dd>
-        </div>
-        <div>
-          <dt>File</dt>
-          <dd data-daemon-queue>—</dd>
-        </div>
-        <div>
-          <dt>Flux</dt>
-          <dd data-daemon-streams>—</dd>
-        </div>
-        <div>
-          <dt>Telegram</dt>
-          <dd data-daemon-telegram>—</dd>
-        </div>
-      </dl>
-    </header>
+        <ul class="nav nav--projects" data-nav-projects>
+          <li class="nav-empty">Lecture des projets…</li>
+        </ul>
 
-    <main id="main-content" class="page-shell">
-      <div class="page-head">
-        <h1>Centre de contrôle</h1>
-        <p class="page-head__live">
-          <span class="live-dot live-dot--waiting" data-live-dot aria-hidden="true"></span>
-          <span data-live-label>Connexion en cours</span>
-          <span class="page-head__separator" aria-hidden="true">·</span>
-          <span class="page-head__update" data-last-update>Aucune mise à jour</span>
-        </p>
-        <p class="page-head__summary" data-live-summary aria-live="polite" aria-atomic="true">
-          Chargement de l’état de la supervision.
-        </p>
-        <p class="snapshot-error" data-snapshot-error hidden></p>
+        <dl class="sidebar__foot" aria-label="Santé du Supervisor">
+          <div><dt>Daemon</dt><dd data-health="daemon">—</dd></div>
+          <div><dt>File</dt><dd data-health="queue">—</dd></div>
+          <div><dt>Telegram</dt><dd data-health="telegram">—</dd></div>
+        </dl>
+      </aside>
+      <div class="scrim" data-close-nav hidden></div>
+
+      <div class="workspace">
+        <header class="topbar-mobile">
+          <button class="icon-btn" type="button" data-open-nav aria-controls="sidebar" aria-expanded="false" aria-label="Ouvrir la navigation">
+            <span data-icon="menu"></span>
+          </button>
+          <a class="brand" href="#/"><span class="brand__mark" aria-hidden="true">K</span><span>Supervisor</span></a>
+          <span class="topbar-mobile__badges" data-mobile-badges></span>
+        </header>
+
+        <main id="main-content" class="main" tabindex="-1">
+          <div class="page" data-page>
+            <p class="state-note">Lecture de l’état de la supervision…</p>
+          </div>
+          <p class="sr-only" aria-live="polite" aria-atomic="true" data-live-summary></p>
+        </main>
       </div>
-
-      <section class="panel" aria-labelledby="attention-title">
-        <div class="panel__head">
-          <h2 id="attention-title">Intervention attendue</h2>
-          <span class="panel__count" data-attention-count>—</span>
-        </div>
-        <ol class="rows rows--attention" data-attention-list>
-          <li class="row-empty" data-skeleton>Lecture de l’état persisté…</li>
-        </ol>
-        <p class="section-note" data-attention-note hidden></p>
-      </section>
-
-      <section class="panel" aria-labelledby="active-title">
-        <div class="panel__head">
-          <h2 id="active-title">Projets actifs</h2>
-          <span class="panel__count" data-active-count>—</span>
-        </div>
-        <ol class="rows" data-active-list>
-          <li class="row-empty" data-skeleton>Lecture de l’état persisté…</li>
-        </ol>
-      </section>
-
-      <section class="panel panel--muted" aria-labelledby="recent-title">
-        <div class="panel__head">
-          <h2 id="recent-title">Récemment supervisés</h2>
-          <span class="panel__count" data-recent-count>—</span>
-        </div>
-        <ol class="rows rows--recent" data-recent-list>
-          <li class="row-empty" data-skeleton>Lecture de l’état persisté…</li>
-        </ol>
-      </section>
-
-      <p class="truncation-note" data-truncation hidden></p>
-
-      <section class="welcome" data-welcome hidden aria-labelledby="welcome-title">
-        <h2 id="welcome-title">Aucun projet supervisé pour l’instant</h2>
-        <p>
-          Le Supervisor est en écoute et n’a encore enregistré aucune session Claude.
-          La vue détaillée d’un projet s’ouvre depuis la ligne de commande.
-        </p>
-        <p class="welcome__command"><code>agentic-supervisor ui --project &lt;chemin&gt;</code></p>
-      </section>
-
-      <footer class="page-foot">
-        <p>Observation locale en lecture seule · données sensibles expurgées</p>
-      </footer>
-    </main>
+    </div>
   </body>
 </html>

@@ -155,6 +155,40 @@ CREATE INDEX IF NOT EXISTS human_requests_status_created_idx
   ON human_requests(status, created_at);
 `;
 
+/** Runs and the cross-project activity feed read events by session and by
+ *  time; these indexes keep both reads independent of the table's history. */
+const MIGRATION_005 = `
+CREATE INDEX IF NOT EXISTS events_session_created_idx ON events(session_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS events_created_idx ON events(created_at DESC);
+CREATE INDEX IF NOT EXISTS audits_created_idx ON audits(created_at DESC);
+`;
+
+/** Active sessions, newest signal first: the "runs" of the control center. */
+export function activeRunsSql(): string {
+  return `
+    SELECT s.id AS session_id, s.started_at, s.last_seen_at,
+      p.id AS project_id, p.path, p.name, p.route_slug
+    FROM sessions s JOIN projects p ON p.id = s.project_id
+    WHERE s.status = 'active' AND s.last_seen_at >= ?
+      AND EXISTS (SELECT 1 FROM events e WHERE e.session_id = s.id AND e.event_type = 'session.started')
+    ORDER BY s.last_seen_at DESC
+    LIMIT ?
+  `;
+}
+
+/** The latest events of a batch of sessions, in one ranked read. */
+export function runEventsBatchSql(marks: string): string {
+  return `
+    SELECT session_id, payload_json FROM (
+      SELECT e.session_id, e.payload_json, ROW_NUMBER() OVER (
+        PARTITION BY e.session_id ORDER BY e.created_at DESC, e.rowid DESC
+      ) AS session_rank
+      FROM events e
+      WHERE e.session_id IN (${marks})
+    ) WHERE session_rank <= ?
+  `;
+}
+
 /**
  * SQL of the control-center batch aggregates, exported so the query-plan test
  * asserts against the exact statements the daemon runs. All three key on
@@ -289,6 +323,18 @@ function rowToActivityProject(row: Row): ActivityProject {
   };
 }
 
+export interface ActiveRunRecord {
+  sessionId: string;
+  projectId: string;
+  projectPath: string;
+  projectName: string;
+  projectSlug: string;
+  startedAt: string;
+  lastSeenAt: string;
+  /** Newest first. */
+  events: NormalizedEvent[];
+}
+
 export interface EnqueueAuditInput {
   projectPath: string;
   claudeSessionId?: string | null;
@@ -344,6 +390,11 @@ export class SupervisorDatabase {
       if (!fourth) {
         this.database.exec(MIGRATION_004);
         this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(4, ?)").run(now());
+      }
+      const fifth = this.database.prepare("SELECT version FROM schema_migrations WHERE version = 5").get();
+      if (!fifth) {
+        this.database.exec(MIGRATION_005);
+        this.database.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(5, ?)").run(now());
       }
       this.database.exec("COMMIT;");
     } catch (error) {
@@ -788,6 +839,33 @@ export class SupervisorDatabase {
       Math.max(1, Math.min(limit, 500)),
     ) as Row[];
     return rows.map(rowToActivityProject);
+  }
+
+  /** Active runs with their recent events: two statements whatever the run count. */
+  public listActiveRuns(staleMs: number, limit = 50, eventsPerRun = 120): ActiveRunRecord[] {
+    const sessions = this.database.prepare(activeRunsSql())
+      .all(new Date(Date.now() - staleMs).toISOString(), Math.max(1, Math.min(limit, 200))) as Row[];
+    if (sessions.length === 0) return [];
+    const ids = sessions.map((row) => String(row.session_id));
+    const events = new Map<string, NormalizedEvent[]>();
+    const rows = this.database.prepare(runEventsBatchSql(placeholders(ids)))
+      .all(...ids, Math.max(1, Math.min(eventsPerRun, 500))) as Row[];
+    for (const row of rows) {
+      const key = String(row.session_id);
+      const list = events.get(key) ?? [];
+      list.push(JSON.parse(String(row.payload_json)) as NormalizedEvent);
+      events.set(key, list);
+    }
+    return sessions.map((row) => ({
+      sessionId: String(row.session_id),
+      projectId: String(row.project_id),
+      projectPath: String(row.path),
+      projectName: String(row.name),
+      projectSlug: String(row.route_slug),
+      startedAt: String(row.started_at),
+      lastSeenAt: String(row.last_seen_at),
+      events: events.get(String(row.session_id)) ?? [],
+    }));
   }
 
   public listOpenHumanRequests(limit = 50): OpenHumanRequestRecord[] {

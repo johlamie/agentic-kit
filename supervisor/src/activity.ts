@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { SUPERVISOR_VERSION, type SupervisorConfig } from "./config.js";
 import { SupervisorDatabase } from "./db.js";
 import { humanAttentionFromEvent } from "./human/attention.js";
+import { buildMissionControl } from "./mission-control.js";
 import { redactText, safeProjectLabel } from "./security/redact.js";
 import type {
   ActivityItem,
@@ -54,7 +55,7 @@ export class ActivityBus {
   }
 }
 
-const AUDIT_LABELS: Record<AuditRecord["audit_type"], string> = {
+export const AUDIT_LABELS: Record<AuditRecord["audit_type"], string> = {
   research: "Recherche et sources",
   architecture: "Architecture",
   code: "Code",
@@ -85,7 +86,7 @@ function sessionEndReason(value: unknown): string {
   return SESSION_END_REASONS[raw] ?? "non précisé";
 }
 
-function eventItem(event: NormalizedEvent): ActivityItem | null {
+export function eventItem(event: NormalizedEvent): ActivityItem | null {
   const attention = humanAttentionFromEvent(event);
   if (attention) {
     return {
@@ -188,7 +189,7 @@ function parseAuditResult(audit: AuditRecord): AuditResult | null {
   catch { return null; }
 }
 
-function auditTone(audit: AuditRecord): ActivityItemType {
+export function auditTone(audit: AuditRecord): ActivityItemType {
   if (audit.status === "failed") return "error";
   switch (audit.decision) {
     case "PASS": return "pass";
@@ -199,12 +200,12 @@ function auditTone(audit: AuditRecord): ActivityItemType {
   }
 }
 
-function auditLabel(audit: AuditRecord): string {
+export function auditLabel(audit: AuditRecord): string {
   if (audit.status === "failed") return "INDISPONIBLE";
   return audit.decision ?? (audit.status === "running" ? "EN COURS" : "PLANIFIÉ");
 }
 
-function auditItem(audit: AuditRecord): ActivityItem {
+export function auditItem(audit: AuditRecord): ActivityItem {
   const result = parseAuditResult(audit);
   const decision = audit.decision;
   const type = auditTone(audit);
@@ -277,7 +278,7 @@ const CONTROL_ATTENTION_LIMIT = 50;
 /** Hard bound on the rows a single snapshot may carry, active projects first. */
 const CONTROL_PROJECT_LIMIT = 200;
 
-function controlAuditSummary(audit: AuditRecord | null): ControlAuditSummary | null {
+export function controlAuditSummary(audit: AuditRecord | null): ControlAuditSummary | null {
   if (!audit) return null;
   return {
     type: audit.audit_type,
@@ -362,7 +363,7 @@ export function buildControlSnapshot(
       safeToContinue: request.safeToContinue,
     }));
   return {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     daemon: {
       version: SUPERVISOR_VERSION,
@@ -381,5 +382,12 @@ export function buildControlSnapshot(
     ],
     projectLimit: CONTROL_PROJECT_LIMIT,
     projectsTruncated,
+    missionControl: buildMissionControl(database, config, {
+      activeProjects,
+      recentProjects,
+      latestAudits: aggregates.audits,
+      openRequests: aggregates.requests,
+      attention,
+    }),
   };
 }

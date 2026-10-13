@@ -3,6 +3,42 @@
 Statut : **ratifié par le propriétaire le 20 août 2026** (voir le relevé de
 décisions dans le document jumeau `docs/CONTROL_CENTER_ARCHITECTURE.md`).
 
+## 0. Version 2 — centre de missions (octobre 2026)
+
+Cette version remplace la structure de l'écran (§4) et le langage visuel (§8)
+décrits plus bas ; les principes, états et règles d'accessibilité restent.
+Décisions du propriétaire : lecture directe des fichiers `.agentic` des
+projets, missions résumées même sans session active, **actions en copie
+seulement** (aucun bouton n'agit), lots A (missions, attente), B (runs,
+tâches) et D (portefeuille).
+
+- **Coquille d'application.** Barre latérale à gros groupes d'action — Vue
+  d'ensemble, En attente de toi, Bloqués, Runs en cours, Missions, Portes et
+  décisions, Audits, Activité — avec leurs compteurs, puis la section
+  **Projets** (projets à suivre, lien Portefeuille) et la santé du daemon en
+  pied. Sous 900 px elle devient un tiroir ouvert depuis une barre supérieure
+  qui garde les badges « à toi » et « bloqués ».
+- **Vue d'ensemble.** Question unique : « Qu'est-ce qui attend ta décision
+  maintenant ? ». Bloc *Maintenant* : trois actions maximum, chacune avec ce
+  qu'elle débloque, le pourquoi et la commande à copier (cible 44 px). Puis
+  bandeaux *Bloqué* et *À surveiller* (boucle de réparation ≥ 2/3, CHALLENGE,
+  run sans signal depuis 15 min), missions avec leurs portes G1–G4, runs en
+  cours avec sous-agents actifs, activité récente.
+- **Ordre de l'attente.** Demande Claude, porte à valider, audit BLOCK
+  (priorité 1) ; action mise en file par le garde, ligne « En attente de toi »
+  de la mission (2) ; autorisation `profile lab` manquante (3). Les titres sont
+  en français, même quand la raison du garde est en anglais.
+- **Page projet** (`#/projet/<clé>`). Attente du projet, fiche mission (profil
+  effectif, phase, prochaine étape, production, autorisations, dernier audit),
+  slices et verdicts Reviewer / QA / Visuel lus dans ORCHESTRATOR.md, boucles
+  de réparation, runs, Definition of Done, journal, dernières décisions. Le fil
+  détaillé `/<slug>` reste accessible.
+- **Portefeuille** (`#/projets`). Tous les projets sous `CLAUDE_PROJECTS_ROOT`
+  avec filtres par état ; sur mobile, chaque projet devient une carte.
+- **Langage visuel.** Thème sombre neutre (fond `#0b0b0d`, cartes `#141418`),
+  cinq tons sémantiques (pass, challenge, block, humain, info), texte en
+  français, horodatages relatifs, identifiants en police mono.
+
 ## 1. Intention
 
 Un opérateur unique ouvre le centre de contrôle par tunnel SSH, souvent après

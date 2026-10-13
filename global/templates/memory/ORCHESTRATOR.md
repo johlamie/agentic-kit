@@ -3,8 +3,11 @@
 > failing. Short and current; history belongs in DECISIONS.md and LESSONS.md.
 
 ## Routing
-| Slice / task | Role | Status | Notes |
-|---|---|---|---|
+One row per slice. Reviewer / QA / Visual hold the last verdict (PASS,
+CHALLENGE, FAIL, BLOCK) or stay empty. The Supervisor control center reads
+this table as is: keep the header exactly.
+| Slice | Role | Status | Reviewer | QA | Visual | Notes |
+|---|---|---|---|---|---|---|
 
 ## Repair loops (stop at 3 on the same approach)
 | Approach | Attempts | Last failure | Next alternative |
